@@ -360,6 +360,8 @@ d357855fa703d1378270d7740b2258d2
 My references:
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+http://www.andradesoto.com.br/2017/02/28/a-vulnerabilidade-path-traversal/
+https://www.abraweb.com.br/index.php/artigos/ataques-de-path-transversal
 https://www.certilience.fr/2019/03/tomcat-exploit-variant-host-manager/
 https://tomcat.apache.org/tomcat-7.0-doc/host-manager-howto.html
 https://stackoverflow.com/questions/4432684/tomcat-manager-remote-deploy-script

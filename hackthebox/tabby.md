@@ -381,9 +381,14 @@ https://www.hackingarticles.in/multiple-ways-to-exploit-tomcat-manager/
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-
-
-
+if i helped you, add + respect at my profile:
+<html>
+ <body>
+  <script src="https://www.hackthebox.eu/badge/148108"></script>
+ </body>
+ </html>
+ 
+ see ya
 
 
 

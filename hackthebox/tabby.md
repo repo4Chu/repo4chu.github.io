@@ -1,5 +1,5 @@
 
-Back to all write-ups: [Link](https://repo4chu.github.io/hackthebox/)
+Back to all write-ups: [here](https://repo4chu.github.io/hackthebox/)
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

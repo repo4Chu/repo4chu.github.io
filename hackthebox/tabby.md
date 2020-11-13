@@ -366,7 +366,13 @@ d357855fa703d1378270d7740b2258d2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ![image](https://i.imgur.com/j1WQB0s.png)
 
-:D
+if i helped you, add + respect at my profile :D
+<html>
+ <body>
+  <script src="https://www.hackthebox.eu/badge/148108"></script>
+ </body>
+ </html>
+ 
 
 My references:
 
@@ -380,15 +386,9 @@ https://www.hackingarticles.in/lxd-privilege-escalation/
 https://www.hackingarticles.in/multiple-ways-to-exploit-tomcat-manager/
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
-if i helped you, add + respect at my profile:
-<html>
- <body>
-  <script src="https://www.hackthebox.eu/badge/148108"></script>
- </body>
- </html>
- 
  see ya
+
+
 
 
 

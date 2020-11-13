@@ -1,10 +1,10 @@
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Back: [Link](https://repo4chu.github.io/hackthebox/)
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Back to all write-ups: [Link](https://repo4chu.github.io/hackthebox/)
 
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Tabby - HackTheBox - WriteUp
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ![image](https://i.imgur.com/sZmWkBU.png)
 
 

@@ -1,5 +1,6 @@
-Back: ![Link](https://repo4chu.github.io/hackthebox/)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Back: [Link](https://repo4chu.github.io/hackthebox/)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 Tabby - HackTheBox - WriteUp

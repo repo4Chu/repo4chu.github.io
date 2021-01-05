@@ -57,14 +57,16 @@ HOP RTT       ADDRESS
 
 Ao acessar a porta 80, somos redirecionados para o dominio: bucket.htb
 Portanto, vamos adiciona-lo no arquivo de hosts (/etc/hosts)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo 'bucket.htb  10.10.10.212' >> /etc/hosts
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Após isso conseguimos acessar a página web, após alguns testes, não foi possível encontrar outros diretórios e arquivos.
 
 ![Image](https://i.imgur.com/Wsd50kp.png)
 
-Ao analisar o código fonte, podemos ver que possuimos um subdomain:
+Ao analisar o código fonte, podemos ver que possuimos um subdomain (s3):
+![Image](https://i.imgur.com/tXc0CNj.png)
+
 
 Vamos tentar encontrar diretorios nele com o wfuzz:
 ![Image](https://i.imgur.com/VppmJzb.png)
@@ -82,6 +84,13 @@ Para interagir com esse serviço, vamos utilizar a tool da própria AWS, conheci
 Após algumas horas lendo documentações, finalmente temos o comando correto para interagir:
 
 ![Image](https://i.imgur.com/Kiz6WsO.png)
+
+e b00m, temos o nome da tabela que está rodando lá :D
+Vamos ver se conseguimos credenciais;
+
+
+![Image](https://i.imgur.com/P3J8y29.png)
+
 
 
 

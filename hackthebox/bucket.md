@@ -72,8 +72,10 @@ Vamos tentar encontrar diretorios nele com o wfuzz:
 ![Image](https://i.imgur.com/VppmJzb.png)
 
 Podemos encontrar 2 diretórios:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 health
 shell
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Ao acessar o diretório shell, podemos perceber o serviço 'DynamoDB'.
 ![Image](https://i.imgur.com/RXhjaJf.png)
@@ -84,13 +86,17 @@ Para interagir com esse serviço, vamos utilizar a tool da própria AWS, conheci
 Após algumas horas lendo documentações, finalmente temos o comando correto para interagir:
 
 ![Image](https://i.imgur.com/Kiz6WsO.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+aws dynamodb list-tables --endpoint-url http://s3.bucket.htb/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 e b00m, temos o nome da tabela que está rodando lá :D
 Vamos ver se conseguimos credenciais;
 
 
 ![Image](https://i.imgur.com/P3J8y29.png)
-
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+aws dynamodb scan --table-name users --endpoint-url http://s3.bucket.htb/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

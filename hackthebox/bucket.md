@@ -153,12 +153,14 @@ Precisamos fazer forward para conseguir enviar a requisição, então
 ![Image](https://i.imgur.com/ZAZDHJH.png)
 
 Agora podemos fazer nossa requisição.
+
 ![Image](https://i.imgur.com/UshHUgt.png)
 
 O arquivo agora foi criado na pasta /var/www/bucket-app/files/result.pdf
 ![Image](https://i.imgur.com/15FUBjs.png)
 
 Agora transferimos o arquivo PDF contendo o arquivo que inserimos na tabela para nossa máquina, utilizando o netcat.
+
 ![Image](https://i.imgur.com/kwRhhHi.png)
 
 Após baixarmos o arquivo para nossa máquina, podemos abri-lo como PDF, e lá está, nosso arquivo (id_rsa)

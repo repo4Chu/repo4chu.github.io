@@ -56,7 +56,7 @@ HOP RTT       ADDRESS
 
 
 Ao acessar a porta 80, somos redirecionados para o dominio: bucket.htb
-Portanto, vamos adiciona-lo no arquivo de hosts (/etc/hosts)
+Portanto, vamos adiciona-lo no arquivo de hosts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 echo 'bucket.htb  10.10.10.212' >> /etc/hosts
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -66,7 +66,9 @@ Após isso conseguimos acessar a página web, após alguns testes, não foi poss
 
 Ao analisar o código fonte, podemos ver que possuimos um subdomain (s3):
 ![Image](https://i.imgur.com/tXc0CNj.png)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+http://s3.bucket.htb/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Vamos tentar encontrar diretorios nele com o wfuzz:
 ![Image](https://i.imgur.com/VppmJzb.png)

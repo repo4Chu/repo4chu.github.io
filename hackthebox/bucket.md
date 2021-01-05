@@ -135,3 +135,42 @@ ee entãoo:
 Agora vamos melhorar nossa shell logando via SSH com o usuário 'Roy'
 ![Image](https://i.imgur.com/0q73Xnv.png)
 
+
+Após uma analise do que estava rodando na máquina, podemos perceber que o arquivo '/var/www/bucket-app/index.php' faz a criação de uma tabela e escreve um arquivo após a requisição correta.
+![Image](https://i.imgur.com/LDuapI6.png)
+
+
+Então, vamos tentar fazer a criação dessa tabela manualmente.
+![Image](https://i.imgur.com/894o4iV.png)
+
+ Agora que a tabela foi criada vamos escrever nosso arquivo desejado.
+![Image](https://i.imgur.com/SOPFNoe.png)
+
+Podemos validar se foi criado e escrito corretamente.
+![Image](https://i.imgur.com/2UCnT06.png)
+
+Precisamos fazer forward para conseguir enviar a requisição, então
+![Image](https://i.imgur.com/ZAZDHJH.png)
+
+Agora podemos fazer nossa requisição.
+![Image](https://i.imgur.com/UshHUgt.png)
+
+O arquivo agora foi criado na pasta /var/www/bucket-app/files/result.pdf
+![Image](https://i.imgur.com/15FUBjs.png)
+
+Agora transferimos o arquivo PDF contendo o arquivo que inserimos na tabela para nossa máquina, utilizando o netcat.
+![Image](https://i.imgur.com/kwRhhHi.png)
+
+Após baixarmos o arquivo para nossa máquina, podemos abri-lo como PDF, e lá está, nosso arquivo (id_rsa)
+![Image](https://i.imgur.com/TU7OLGp.png)
+
+E então, salvamos o arquivo em nossa máquina com permissão 600 e assim podemos fazer o login como root!
+![Image](https://i.imgur.com/wB66Uvu.png)
+
+
+
+
+references comming lolz
+
+
+

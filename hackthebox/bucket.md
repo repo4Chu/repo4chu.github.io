@@ -17,6 +17,8 @@ Bucket - HackTheBox - WriteUp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nmap
 awscli
+curl
+wfuzz
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,6 +64,24 @@ Após isso conseguimos acessar a página web, após alguns testes, não foi poss
 
 ![Image](https://i.imgur.com/Wsd50kp.png)
 
-Vamos tentar fazer uma busca por subdominios.
+Ao analisar o código fonte, podemos ver que possuimos um subdomain:
+
+Vamos tentar encontrar diretorios nele com o wfuzz:
+![Image](https://i.imgur.com/VppmJzb.png)
+
+Podemos encontrar 2 diretórios:
+health
+shell
+
+Ao acessar o diretório shell, podemos perceber o serviço 'DynamoDB'.
+![Image](https://i.imgur.com/RXhjaJf.png)
+
+
+Para interagir com esse serviço, vamos utilizar a tool da própria AWS, conhecida como aws-cli
+
+Após algumas horas lendo documentações, finalmente temos o comando correto para interagir:
+
+![Image](https://i.imgur.com/Kiz6WsO.png)
+
 
 

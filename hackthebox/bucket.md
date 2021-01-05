@@ -197,9 +197,17 @@ ssh root@bucket.htb -i id_rsa
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-
-
-references comming lolz
-
-
+if i helped you, add + respect at my profile :D
+<html>
+ <body>
+  <script src="https://www.hackthebox.eu/badge/148108"></script>
+ </body>
+ </html>
+ 
+my references
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+https://docs.aws.amazon.com/pt_br/amazondynamodb/latest/developerguide/Tools.CLI.html
+https://searchcloudsecurity.techtarget.com/feature/Hands-on-guide-to-S3-bucket-penetration-testing
+https://blogs.perficient.com/2019/08/27/how-to-use-the-aws-api-with-s3-buckets-in-your-pen-test/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

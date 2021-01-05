@@ -109,15 +109,27 @@ Sysadm:n2vM-<_K_Q:.Aa2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Listando os arquivos:
+
 ![Image](https://i.imgur.com/updbyQp.png)
 
 Após isso, tentamos fazer o upload de uma reverse shell para o servidor.
-No nosso caso vamos utilizar a shell do 'Pentest Monkeys' [Shell](http://pentestmonkey.net/tools/web-shells/php-reverse-shell)
+No nosso caso vamos utilizar a [shell](http://pentestmonkey.net/tools/web-shells/php-reverse-shell) do 'Pentest Monkeys' 
 
 ![Image](https://i.imgur.com/VLLIuAS.png)
 
+w00t temos uma shell como www-data, vamos tentar melhorar nossa shell com python
 
+![Image](https://i.imgur.com/24FbvOg.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Após testa-las, conseguimos realizar login via SSH com o usuário 'Roy'
+Com isso, temos uma shell interativa e encontramos um novo usuário chamado 'Roy'
+Portanto podemos testar as senhas já obtidas previamente para este usuário.
+
+ee entãoo:
+![Image](https://i.imgur.com/me6RqLL.png)
+
+Agora vamos melhorar nossa shell logando via SSH com o usuário 'Roy'
 ![Image](https://i.imgur.com/0q73Xnv.png)
 

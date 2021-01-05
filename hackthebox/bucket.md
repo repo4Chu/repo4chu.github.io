@@ -128,6 +128,7 @@ Com isso, temos uma shell interativa e encontramos um novo usuário chamado 'Roy
 Portanto podemos testar as senhas já obtidas previamente para este usuário.
 
 ee entãoo:
+
 ![Image](https://i.imgur.com/me6RqLL.png)
 
 Agora vamos melhorar nossa shell logando via SSH com o usuário 'Roy'

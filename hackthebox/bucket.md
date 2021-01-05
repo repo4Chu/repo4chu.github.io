@@ -108,7 +108,13 @@ Cloudadm:Welcome123!
 Sysadm:n2vM-<_K_Q:.Aa2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Listando os arquivos:
+![Image](https://i.imgur.com/updbyQp.png)
 
+Após isso, tentamos fazer o upload de uma reverse shell para o servidor.
+No nosso caso vamos utilizar a shell do 'Pentest Monkeys' ![Shell](http://pentestmonkey.net/tools/web-shells/php-reverse-shell)
+
+![Image](https://i.imgur.com/VLLIuAS.png)
 
 
 

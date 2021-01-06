@@ -17,6 +17,8 @@ Passage - HackTheBox - WriteUp
 nmap
 exiftool
 john
+BurpSuite
+netcat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -97,6 +99,7 @@ Vamos altera-la para .php e encaminhar a requisição
 ![Image](https://i.imgur.com/gO1W4Nl.png)
 
 Podemos perceber que a requisição foi bem sucedida
+
 ![Image](https://i.imgur.com/0CZunKi.png)
 
 Agora basta acessarmos nosso arquivo para poder executar comandos no servidor, para isso vamos até o diretório de arquivos: http://passage.htb/CuteNews/uploads/avatar_chu_chu.php 
@@ -109,7 +112,7 @@ Com isso temos uma execução de código remoto :D
 Ao pesquisar pelo nc, podemos ver que ele está instalado, portanto, vamos tentar utiliza-lo.
 ![Image](https://i.imgur.com/5NgSWmB.png)
 
-Vamos abrir uma porta em nossa máquina
+Vamos abrir uma porta em nossa máquina.
 ![Image](https://i.imgur.com/55Noqa6.png)
 
 Agora vamos enviar a conexão com o netcat

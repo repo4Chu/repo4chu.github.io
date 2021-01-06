@@ -83,7 +83,7 @@ Após conseguirmos o acesso inicial no CMS, podemos encontrar um campo de Upload
 Tentamos primeiro fazer upload de arquivos em php, porém, não foi possivel subir um arquivo com esta extensão...
 Como é um campo de upload de 'Avatar' podemos deduzir que o campo aceitará imagens, então, vamos inserir um código malicioso dentro de nossa imagem. 
 Para isso vamos utilizar o exiftool:
-![Image](https://i.imgur.com/d4iD8vk.png)
+![Image](https://i.imgur.com/yECy7Qo.png)
 
 Podemos conferir que conseguimos escrever o comentário dentro da imagem:
 ![Image](https://i.imgur.com/yECy7Qo.png)

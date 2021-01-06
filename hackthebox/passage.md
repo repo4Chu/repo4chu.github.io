@@ -164,6 +164,7 @@ egre55:egre55
 
 Listando a pasta /home podemos perceber que paul é um usuário válido, então tentamos acessa-lá:
 E conseguimos!
+
 ![Image](https://i.imgur.com/ydajewv.png)
 
 

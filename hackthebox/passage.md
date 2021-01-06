@@ -86,7 +86,7 @@ Para isso vamos utilizar o exiftool:
 ![Image](https://i.imgur.com/yECy7Qo.png)
 
 Podemos conferir que conseguimos escrever o comentário dentro da imagem:
-![Image](https://i.imgur.com/yECy7Qo.png)
+![Image](https://i.imgur.com/hHNNM0w.png)
 
 Agora vamos tentar fazer o upload.
 Primeiro vamos ligar o BurpSuite para interceptar a requisição

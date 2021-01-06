@@ -113,12 +113,14 @@ Ao pesquisar pelo nc, podemos ver que ele está instalado, portanto, vamos tenta
 ![Image](https://i.imgur.com/5NgSWmB.png)
 
 Vamos abrir uma porta em nossa máquina.
+
 ![Image](https://i.imgur.com/55Noqa6.png)
 
 Agora vamos enviar a conexão com o netcat
 ![Image](https://i.imgur.com/IrydT8Z.png)
 
 ![Image](https://i.imgur.com/FswUPdW.png)
+
 w00t, estamos dentro!
 
 Podemos melhorar nossa shell com python para ela se tornar interativa

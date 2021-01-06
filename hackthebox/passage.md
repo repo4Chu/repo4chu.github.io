@@ -176,6 +176,15 @@ Agora podemos nos conectar via ssh :D
 ![Image](https://i.imgur.com/GSIodbP.png)
 
 
+Após melhorar nossa conexão usando o SSH, analisando melhor a pasta /home/paul/.ssh/ podemor perceber que existe um arquivo de autorização (authorized_keys)...
+dentro dele temos uma chave pública.
+![Image](https://i.imgur.com/YrgxUDa.png)
+
+
+Então agora logamos como 'nadav'
+![Image](https://i.imgur.com/G7Ko2Uy.png)
+
+
 
 
 coming soon

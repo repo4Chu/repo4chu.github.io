@@ -201,5 +201,16 @@ Agora basta logarmos usando a chave
 ![Image](https://i.imgur.com/9UCzj7K.png)
 
 
+if i helped you, add + respect at my profile :D
+<html>
+ <body>
+  <script src="https://www.hackthebox.eu/badge/148108"></script>
+ </body>
+ </html>
 
 
+My references:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+https://www.exploit-db.com/exploits/48458
+https://unit42.paloaltonetworks.com/usbcreator-d-bus-privilege-escalation-in-ubuntu-desktop/
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

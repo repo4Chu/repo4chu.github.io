@@ -187,13 +187,19 @@ Então agora logamos como 'nadav'
 ![Image](https://i.imgur.com/G7Ko2Uy.png)
 
 Agora logados como 'nadav', começamos a procurar um maneira de escalar privilégios.
+![Image](https://i.imgur.com/n3aPLv7.png)
+
 Ao analisar os processos rodando como root, pude perceber que existe um processo chamado: 'usb-creator-helper'
 ![Image](https://i.imgur.com/RxRhFul.png)
 
 O [Artigo](https://unit42.paloaltonetworks.com/usbcreator-d-bus-privilege-escalation-in-ubuntu-desktop/) nos da uma boa pista(até o nome do user \o/)
 
+Com isso, podemos obter a chave RSA do root.
+![Image](https://i.imgur.com/RsLZba2.png)
+
+Agora basta logarmos usando a chave
+![Image](https://i.imgur.com/9UCzj7K.png)
 
 
-coming soon
 
 

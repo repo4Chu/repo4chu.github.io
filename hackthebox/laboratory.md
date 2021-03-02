@@ -58,16 +58,19 @@ https://laboratory.htb/
 https://git.laboratory.htb/
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Ao acessar o site https://git.laboratory.htb/ nos deparamos com um [GitLab](https://about.gitlab.com/)
+Ao acessar o site https://git.laboratory.htb/ nos deparamos com um [GitLab](https://about.gitlab.com/).
+
 Em seguida, vamos tentar nos cadastrar:
 ![Image](https://i.imgur.com/ZBrnqIP.png)
 
 Após o cadastro ser bem sucedido, temos acesso ao painel do GitLab, portanto, vamos tententar identificar a versão utilizada.
+
 Na página https://git.laboratory.htb/help podemos identificar a versão exata que está sendo utilizada:
 ![Image](https://i.imgur.com/Jf44fiC.png)
 
 
 Após encontrar a versão, podemos fazer buscas por exploits e falhas já conhecidas da versão...
+
 Um [report](https://hackerone.com/reports/827052) do site de bugbounty HackerOne é nosso ponto inicial.
 
 Portanto, devemos primeiramente criar dois projetos:

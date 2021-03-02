@@ -98,7 +98,7 @@ Dentro do issue iremos usar o mesmo payload do report
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Logo em seguida, vamos mover o Issue para o outro projeto. (em meu caso do projeto chu para stevenseagal)
-![Image]https://i.imgur.com/9r5mEnz.png
+![Image](https://i.imgur.com/9r5mEnz.png)
 
 Ao mover, dentro do projeto 2(stevenseagal) podemos perceber que ele já renomeou o arquivo em anexo chamado 'a' para o arquivo que queriamos (/etc/passwd)
 ![Image](https://i.imgur.com/OND9zlB.png)

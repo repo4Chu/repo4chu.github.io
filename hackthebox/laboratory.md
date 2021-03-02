@@ -76,6 +76,7 @@ Um [report](https://hackerone.com/reports/827052) do site de bugbounty HackerOne
 Portanto, devemos primeiramente criar dois projetos:
 
 Vou chamar um de 'chu' e outro de 'stevenseagal' (XD)
+
 Projeto 1 - chu:
 ![Image](https://i.imgur.com/xX8oTlp.png)
 
@@ -96,9 +97,9 @@ Dentro do issue iremos usar o mesmo payload do report
 ![a](/uploads/11111111111111111111111111111111/../../../../../../../../../../../../../../etc/passwd)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Logo em seguida, vamos move-lo para o outro projeto. (em meu caso do projeto chu para stevenseagal)
+Logo em seguida, vamos mover o Issue para o outro projeto. (em meu caso do projeto chu para stevenseagal)
+![Image]https://i.imgur.com/9r5mEnz.png
 
-
-
-
+Ao mover, dentro do projeto 2(stevenseagal) podemos perceber que ele já renomeou o arquivo em anexo chamado 'a' para o arquivo que queriamos (/etc/passwd)
+![Image](https://i.imgur.com/OND9zlB.png)
 

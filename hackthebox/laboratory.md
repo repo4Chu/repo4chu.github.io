@@ -67,12 +67,33 @@ Na página https://git.laboratory.htb/help podemos identificar a versão exata q
 ![Image](https://i.imgur.com/Jf44fiC.png)
 
 
+Após encontrar a versão, podemos fazer buscas por exploits e falhas já conhecidas da versão...
+Um [report](https://hackerone.com/reports/827052) do site de bugbounty HackerOne é nosso ponto inicial.
 
+Portanto, devemos primeiramente criar dois projetos:
 
+Vou chamar um de 'chu' e outro de 'stevenseagal' (XD)
+Projeto 1 - chu:
+![Image](https://i.imgur.com/xX8oTlp.png)
 
+Projeto 2 - stevenseagal: 
+![Image](https://i.imgur.com/EtNLpZ9.png)
 
+Podemos conferir os dois projetos criados:
+![Image](https://i.imgur.com/ntSr8u1.png)
 
+Depois de criarmos os dois projetos, vamos tentar simular o que foi feito no report do H1.
 
+Primeiro passo criar um novo Issue no projeto 'chu'
+![Image](https://i.imgur.com/xMcW43V.png)
+
+Dentro do issue iremos usar o mesmo payload do report
+![Image](https://i.imgur.com/xMcW43V.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+![a](/uploads/11111111111111111111111111111111/../../../../../../../../../../../../../../etc/passwd)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Logo em seguida, vamos move-lo para o outro projeto. (em meu caso do projeto chu para stevenseagal)
 
 
 

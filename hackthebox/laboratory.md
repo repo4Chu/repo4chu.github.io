@@ -215,5 +215,44 @@ production:
     -----END RSA PRIVATE KEY-----
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Podemos ver que o report inicial era sobre poder ler arquivos, mas lendo mais a seguir, podemos ver que é escalado para um RCE usando o gitlab-console.
+
+Para isso, devemos instalar o GitLab, vamos usar o curl para isso:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+curl -s https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | sudo bash
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Após a instalação, vamos reconfigurar o GitLab:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+gitlab-ctl reconfigure
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Editar o arquivo de configuração com a secret_key_base que obtemos do nosso alvo, podemos apenas comentar a linha antiga e adicionar uma nova:
+![Image](https://i.imgur.com/kI3d5jn.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nano /opt/gitlab/embedded/service/gitlab-rails/config/secrets.yml
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
+
+
+
+
 
 to escrevendo guenta aew
+
+
+if i helped you, add + respect at my profile :D
+<html>
+ <body>
+  <script src="https://www.hackthebox.eu/badge/148108"></script>
+ </body>
+ </html>
+
+
+My references:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+https://hackerone.com/reports/827052
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -16,6 +16,9 @@ Laboratory - HackTheBox - WriteUp
 **Tools** utilizadas:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nmap
+gitlab
+python
+curl
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 

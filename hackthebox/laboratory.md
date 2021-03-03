@@ -296,6 +296,36 @@ E estamos dentro!
 nc -vvnlp 1337
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Após conectar na máquina e fazer uma prévia enumeração, podemos perceber que estamos em um docker.
+Vamos tentar usar o gitlab-rails console da propria máquina para tentar resetar a senha do usuário com o ID 1.
+![Image](https://i.imgur.com/3MGG7K9.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+user = User.where(id: 1).first
+user.password = 'chu_was_here'
+user.password_confirmation = 'chu_was_here'
+user.save!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Com isso conseguimos resetar a senha do usuário de id 1, agora vamos tentar fazer o login com as novas creds.
+![Image](https://i.imgur.com/A815Ucu.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+dexter:chu_was_here
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Dentro do projeto 'SecureDocker' podemos encontrar chaves RSA.
+![Image](https://i.imgur.com/Qt7jhcB.png)
+
+
+Portanto salvamos em nossa maquina e tentamos usar.
+![Image](https://i.imgur.com/NnDuhNO.png)
+
+ee boom, we are in ~
+
+
+
+
+
+
 to escrevendo guenta aew
 
 

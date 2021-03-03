@@ -129,6 +129,7 @@ lars:G123HHrth234gRG
 No outro diretório do SMB, chamado dev:
 
 ![Image](https://i.imgur.com/Er6JZCu.png)
+
 Fazemos o download de todos esses arquivos para a nossa máquina para podermos analisarmos.
 
 Usamos o dnSpy para analisar os arquivos .exe

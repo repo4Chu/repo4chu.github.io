@@ -52,12 +52,15 @@ HOP RTT       ADDRESS
 2   224.76 ms 10.10.10.219
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 smbclient -L \\10.10.10.219 -N
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ![Image](https://i.imgur.com/Fvm7tk6.png)
 
 Vamos ao diretório kanban
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+smbclient -L \\10.10.10.219\\kanban -N
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ![Image](https://i.imgur.com/yIbnT0B.png)
 
 Podemos ver um arquivo chamado PortableKanban.pk3.bak que apararente ser um arquivo de backup, então vamos lê-lo
@@ -76,12 +79,22 @@ get pkb.zip
 
 Essa máquina, pela primeira vez tive que criar uma máquina Windows para usar como atacante...
 Extraímos os arquivos do nosso arquivo pkb.zip
-
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+![Image](https://i.imgur.com/u7nyOBw.png)
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Ao executarmos o arquivo PortableKanban.exe podemos perceber que ele faz a criação do arquivo PortableKanban.pk3.bak onde ele guarda as credenciais...
+Então vamos substituir pelo arquivo PortableKanban.pk3.bak que encontramos em nosso alvo.
+
+Ao substituir o arquivo PortableKanban.pk3.bak, precisamos de credenciais para conseguir acessar o programa.
+
+![Image](https://i.imgur.com/q1UFNLT.png)
+
+![Image](https://i.imgur.com/GSP4UQv.png)
+
+O que podemos fazer é tentar editar o arquivo que guarda as senhas para acessar~
 
 
 

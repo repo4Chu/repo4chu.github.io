@@ -53,9 +53,11 @@ HOP RTT       ADDRESS
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 smbclient -L \\10.10.10.219 -N
+
 ![Image](https://i.imgur.com/Fvm7tk6.png)
 
 Vamos ao diretório kanban
+
 ![Image](https://i.imgur.com/yIbnT0B.png)
 
 Podemos ver um arquivo chamado PortableKanban.pk3.bak que apararente ser um arquivo de backup, então vamos lê-lo
@@ -63,6 +65,26 @@ Podemos ver um arquivo chamado PortableKanban.pk3.bak que apararente ser um arqu
 
 Ao abri-lo, podemos ver que, dentro do arquivo existem senhas criptografadas:
 ![Image](https://i.imgur.com/m4DVEag.png)
+
+Começamos acessando o serviço SMB para copiar o programa para nossa maquina:
+
+![Image](https://i.imgur.com/Wkz1IMK.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+smbclient \\\\10.10.10.219\\kanban -N
+get pkb.zip
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Essa máquina, pela primeira vez tive que criar uma máquina Windows para usar como atacante...
+Extraímos os arquivos do nosso arquivo pkb.zip
+
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+
+
 
 
 

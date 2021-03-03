@@ -107,6 +107,7 @@ Primeiro, vamos remover a senha do usuário lars para conseguir a senha do usuá
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Após isso, tentamos acessar o programa com usuário 'lars' sem senha.
+
 ![Image](https://i.imgur.com/Af60F1P.png)
 
 

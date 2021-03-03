@@ -340,6 +340,7 @@ export PATH=/tmp:$PATH
 Após isso executamos o arquivo /usr/local/bin/docker-security
 
 E então...
+
 ![Image](https://i.imgur.com/1he8WVJ.png)
 
 we are root ~

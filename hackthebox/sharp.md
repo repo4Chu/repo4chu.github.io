@@ -79,6 +79,7 @@ get pkb.zip
 
 Essa máquina, pela primeira vez tive que criar uma máquina Windows para usar como atacante...
 Extraímos os arquivos do nosso arquivo pkb.zip
+
 ![Image](https://i.imgur.com/u7nyOBw.png)
 
 
@@ -120,8 +121,7 @@ Agora ao abrirmos o Kanban, usamos as credenciais de Administrator.
 Agora temos credenciais do usuário lars e do usuário Administrator:
 ![Image](https://i.imgur.com/tlGO5us.png)
 
-
-
+lars:G123HHrth234gRG
 
 
 

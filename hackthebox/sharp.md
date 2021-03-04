@@ -153,9 +153,9 @@ Pesquisando sobre como interagir com esse serviço, encontramos um exploit que i
 Podemos compilar ele em nossa máquina, ou já fazer o download dele [compilado](https://github.com/parteeksingh005/ExploitRemotingService_Compiled).
 
 Agora precisamos preparar nosso payload que enviaremos atraves do ExploitRemotingService.
-Para isso vamos precisar do python e também do [yososerial](https://github.com/pwntester/ysoserial.net).
+Para isso vamos precisar do python e também do [ysoserial](https://github.com/pwntester/ysoserial.net).
 
-Devemos compilar o yososerial ou baixa-lo já [compilado](https://github.com/pwntester/ysoserial.net/releases/tag/v1.34).
+Devemos compilar o ysoserial ou baixa-lo já [compilado](https://github.com/pwntester/ysoserial.net/releases/tag/v1.34).
 
 Após isso, devemos preparar nossa shell.
 Usaremos está [shell.ps1](https://gist.githubusercontent.com/staaldraad/204928a6004e89553a8d3db0ce527fd5/raw/fe5f74ecfae7ec0f2d50895ecf9ab9dafe253ad4/mini-reverse.ps1)

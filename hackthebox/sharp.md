@@ -202,6 +202,7 @@ move-item -path C:\users\lars\Documents\wcf.zip -destination c:\dev
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Após compactar e mover para pasta compartilhada no SMB, acessamos com credenciais já obtidas e baixamos para nossa máquina:
+
 ![Image](https://i.imgur.com/4QTDFQ5.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 smbclient \\\\10.10.10.219\\dev -U lars

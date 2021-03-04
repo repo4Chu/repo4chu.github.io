@@ -194,15 +194,19 @@ Para escalar nossos privilégios, vamos executar o 'winpeas.exe', portanto, deve
 
 
 Ao acessar a pasta C:\users\lars\Documents\ nos deparamos com uma pasta chamada wcf, vamos compacta-la e move-la para o diretório compartilhado do SMB.
+![Image](https://i.imgur.com/hgqNEMp.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Compress-Archive -LiteralPath C:\users\lars\Documents\wcf -DestinationPath C:\users\lars\Documents\wcf.zip
 move-item -path C:\users\lars\Documents\wcf.zip -destination c:\dev
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Após compactar e mover para pasta compartilhada no SMB, acessamos com credenciais já obtidas e baixamos para nossa máquina:
+![Image](https://i.imgur.com/4QTDFQ5.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 smbclient \\\\10.10.10.219\\dev -U lars
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+![Image](https://i.imgur.com/znyZr6A.png)
+
 
 Ao baixar o arquivo para nossa máquina, podemos abri-lo no VisualStudio:
 ![Image](https://i.imgur.com/yEePAM8.png)

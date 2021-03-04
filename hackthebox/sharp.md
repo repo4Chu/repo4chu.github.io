@@ -129,6 +129,9 @@ lars:G123HHrth234gRG
 No outro diretório do SMB, chamado dev:
 
 ![Image](https://i.imgur.com/Er6JZCu.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+smbclient \\\\10.10.10.219\\dev -U lars
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Fazemos o download de todos esses arquivos para a nossa máquina para podermos analisarmos.
 
@@ -139,9 +142,18 @@ Dentro do arquivo Client.exe, temos uma informação interessante:
 
 Temos uma credencial e um endereço:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-tcp://localhost:8888/SecretSharpDebugApplicationEndpoint
 debug:SharpApplicationDebugUserPassword123!
+tcp://localhost:8888/SecretSharpDebugApplicationEndpoint
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Pesquisando sobre como interagir com esse serviço, encontramos um exploit que interage com esse serviço através do Remoting.Channels.Tcp, o [ExploitRemotingService](https://github.com/tyranid/ExploitRemotingService).
+
+Podemos compilar ele em nossa máquina, ou já fazer o download dele [compilado](https://github.com/parteeksingh005/ExploitRemotingService_Compiled).
+
+Agora precisamos preparar nosso payload que enviaremos atraves do ExploitRemotingService.
+Para isso vamos precisar do python, netcat e também do yososerial.
+
+
 
 
 
@@ -161,5 +173,8 @@ if i helped you, add + respect at my profile :D
  
 my references
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-x
+https://parsiya.net/blog/2015-11-14-intro-to-.net-remoting-for-hackers/
+https://docs.microsoft.com/pt-br/dotnet/api/system.runtime.remoting.channels.tcp?view=netframework-4.8
+https://docs.microsoft.com/pt-br/dotnet/api/system.runtime.remoting.channels.tcp.tcpchannel?view=netframework-4.8
+https://github.com/tyranid/ExploitRemotingService
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

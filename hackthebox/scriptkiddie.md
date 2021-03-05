@@ -53,28 +53,53 @@ IP ID Sequence Generation: All zeros
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Acessando o serviço http da porta 5000, nos deparamos com um site de 'tools' hackers... ao testar alguns desses campos, o campo de upload chamou atenção, por ser um campo do [msfvenom](https://www.offensive-security.com/metasploit-unleashed/msfvenom/) e existir uma falha conhecida sobre Template Injection via APK.
+
 ![Image](https://i.imgur.com/aiQqHGN.png)
+
+Então vamos buscar por essa falha no metasploit:
 
 ![Image](https://i.imgur.com/Ur9uW3n.png)
 
+
+Olhamos os campos obrigatórios do exploit:
+
 ![Image](https://i.imgur.com/WOxQaQs.png)
+
+Setamos com nosso IP e porta desejada. Após executar o exploit ele criará um arquivo APK com nosso payload.
 
 ![Image](https://i.imgur.com/VoktRsV.png)
 
+Voltamos ao site da porta 5000 e setamos os campos como: 'Android' , '10.10.14.219' e selecionamos nosso arquivo
+
 ![Image](https://i.imgur.com/Q5tmarS.png)
 
+Após clicar em generate, a conexão chega em nosso netcat:
 
-net cat kid![Image](https://i.imgur.com/re79P0M.png)
+![Image](https://i.imgur.com/re79P0M.png)
+
+Usamos o python3 para melhorar nossa shell:
 
 ![Image](https://i.imgur.com/rSII9HK.png)
 
-![Image](https://i.imgur.com/sCZrZML.png)
+Geramos uma chave em nossa máquina:
 
 ![Image](https://i.imgur.com/eeXxCBN.png)
 
+Escrevemos uma chave RSA dentro do arquivo authorized_keys para conseguirmos uma conexão SSH.
+
+![Image](https://i.imgur.com/sCZrZML.png)
+
+
+Depois de escreve-la, fazemos a conexão via SSH.
+
 ![Image](https://i.imgur.com/pqg9EbZ.png)
 
+Listando as pastas da raiz do usuário kid, temos uma pasta chamada logs
+
 ![Image](https://i.imgur.com/UbfufK8.png)
+
+Dentro dessa pasta chamada logs, existe um arquivo chamado hackers que faz parte do grupo 'pwn'
 
 ![Image](https://i.imgur.com/W5ty0Le.png)
 

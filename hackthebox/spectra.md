@@ -128,10 +128,12 @@ Após um tempo, ao olhar o diretório /opt um arquivo chamado autologin.conf.ori
 ![Image](https://i.imgur.com/XlcFOEG.png)
 
 Dentro desse arquivo podemos perceber que ele tem um arquivo chamado passwd na pasta /etc/autologin, então vamos até ele
+
 ![Image](https://i.imgur.com/Jy72UQn.png)
 
 Com isso conseguimos outra senha... vamos testa-la
 Tentei com o usuário chronos mas sem sucesso, já com o user katie... :D
+
 ![Image](https://i.imgur.com/RjHHBDQ.png)
 
 Agora que temos nossa primeira flag, vamos para a escalação de privilégios
@@ -154,6 +156,7 @@ Vamos analisar o conteúdo do arquivo test.conf e procurar onde podemos usa-lo p
 
 Podemos ver que ele executa um NodeJS, então, vamos criar um payload para Node, no meu caso usei a [reverse shell node do Payload All The Things](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md#nodejs)
 Escrevemos ela no diretório /tmp com o nome de chu.js ( /tmp/chu.js )
+
 ![Image](https://i.imgur.com/XBa5q0e.png)
 
 Agora, vamos voltar ao nosso initctl e tentar executar o script test.conf

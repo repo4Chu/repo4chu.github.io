@@ -163,8 +163,13 @@ Listamos se temos permissão pra user algum programa com permissão de root, e t
 sudo -l
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
 O Metasploit permite executar comando shell mesmo dentro do framework :)
-Então, vamos escrever uma chave RSA no arquivo /root/.ssh/authorized_keys
+Geramos a chave em nossa máquina:
+
+![Image](https://i.imgur.com/JLVx2yJ.png)
+
+E então, vamos escrever uma chave RSA no arquivo /root/.ssh/authorized_keys
 
 ![Image](https://i.imgur.com/Rw4kvD9.png)
 

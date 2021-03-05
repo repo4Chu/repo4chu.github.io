@@ -86,10 +86,9 @@ Geramos uma chave em nossa máquina:
 
 ![Image](https://i.imgur.com/eeXxCBN.png)
 
-Escrevemos uma chave RSA dentro do arquivo authorized_keys para conseguirmos uma conexão SSH.
+Escrevemos a chave RSA dentro do arquivo authorized_keys para conseguirmos uma conexão SSH.
 
 ![Image](https://i.imgur.com/sCZrZML.png)
-
 
 Depois de escreve-la, fazemos a conexão via SSH.
 
@@ -103,15 +102,28 @@ Dentro dessa pasta chamada logs, existe um arquivo chamado hackers que faz parte
 
 ![Image](https://i.imgur.com/W5ty0Le.png)
 
+
+Na pasta do usuário pwn (/home/pwn) temos um bash script chamado scanlosers.sh que interage com o arquivo hackers, o qual temos permissão de escrita.
+
 ![Image](https://i.imgur.com/ktXrPA3.png)
+
+Portanto, usamos o echo para inserir um comando e quebrar a syntax do código scanlosers.sh e executar um comando nosso.
 
 ![Image](https://i.imgur.com/W8fDCUs.png)
 
+Ao fazer isso, recebemos a conexão já como usuário pwn :)
+
 ![Image](https://i.imgur.com/2t9MkbF.png)
+
 
 ![Image](https://i.imgur.com/a4gOhX0.png)
 
+O Metasploit permite executar comando shell mesmo dentro do framework :)
+Então, vamos escrever uma chave RSA no arquivo /root/.ssh/authorized_keys
+
 ![Image](https://i.imgur.com/Rw4kvD9.png)
+
+Agora usamos a chave e we are r00t ~
 
 ![Image](https://i.imgur.com/Rw1wh5f.png)
 

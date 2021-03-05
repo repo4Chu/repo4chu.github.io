@@ -11,7 +11,7 @@ Back to all write-ups: [here](https://repo4chu.github.io/hackthebox/)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Spectra - HackTheBox - WriteUp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-![image]()
+![image](https://i.imgur.com/HsXjN7y.png)
 
 **Tools** utilizadas:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

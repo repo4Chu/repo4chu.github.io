@@ -16,6 +16,7 @@ Spectra - HackTheBox - WriteUp
 **Tools** utilizadas:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nmap
+python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -62,6 +63,7 @@ No segundo link, recebemos um erro de falha ao conectar na database:
 ![Image](https://i.imgur.com/hvDZvvw.png)
 
 Porém, se tentarmos listar o diretório:
+
 ![Image](https://i.imgur.com/vRDHkb3.png)
 
 Um desses arquivo chama atenção, wp-config.php.save mas se tentarmos lê-lo:
@@ -95,6 +97,7 @@ exploit/unix/webapps/wp_admin_shell_upload
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Ajustamos as opções:
+
 ![Image](https://i.imgur.com/WFpoNvj.png)
 
 Conferimos antes de executar:
@@ -120,6 +123,7 @@ ssh nginx@spectra.htb -i nginx
 
 Agora que temos uma shell interativa, começamos a mapear o sistema...
 Após um tempo, ao olhar o diretório /opt um arquivo chamado autologin.conf.orig chama atenção...
+
 ![Image](https://i.imgur.com/XlcFOEG.png)
 
 Dentro desse arquivo podemos perceber que ele tem um arquivo chamado passwd na pasta /etc/autologin, então vamos até ele
@@ -137,6 +141,7 @@ Conseguimos executar o /sbin/initctl como root
 ![Image](https://i.imgur.com/InVFrcN.png)
 
 Podemos olhar os scripts que já estão feitos para tentar reusar algum deles
+
 ![Image](https://i.imgur.com/gIWmVAw.png)
 
 Dentro da pasta dos scripts, temos permissão de escrita em alguns arquivos:
@@ -151,6 +156,7 @@ Escrevemos ela no diretório /tmp com o nome de chu.js ( /tmp/chu.js )
 ![Image](https://i.imgur.com/XBa5q0e.png)
 
 Agora, vamos voltar ao nosso initctl e tentar executar o script test.conf
+
 ![Image](https://i.imgur.com/tiQYg4m.png)
 
 Abrimos nossa porta pré-definida em nossa máquina e aguardamos a conexão:

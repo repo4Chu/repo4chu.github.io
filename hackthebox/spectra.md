@@ -130,6 +130,7 @@ Tentei com o usuário chronos mas sem sucesso, já com o user katie... :D
 ![Image](https://i.imgur.com/RjHHBDQ.png)
 
 Agora que temos nossa primeira flag, vamos para a escalação de privilégios
+
 ![Image](https://i.imgur.com/PCFK9AS.png)
 
 Conseguimos executar o /sbin/initctl como root
@@ -142,6 +143,7 @@ Dentro da pasta dos scripts, temos permissão de escrita em alguns arquivos:
 ![Image](https://i.imgur.com/FO47HW1.png)
 
 Vamos analisar o conteúdo do arquivo test.conf e procurar onde podemos usa-lo para escalar privilégios.
+
 ![Image](https://i.imgur.com/nslaa1R.png)
 
 Podemos ver que ele executa um NodeJS, então, vamos criar um payload para Node, no meu caso usei a [reverse shell node do Payload All The Things](https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md#nodejs)
@@ -166,5 +168,6 @@ if i helped you, add + respect at my profile :D
 
 My references:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+https://linux.die.net/man/8/initctl
+https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md#nodejs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

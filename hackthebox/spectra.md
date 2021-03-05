@@ -16,6 +16,7 @@ Spectra - HackTheBox - WriteUp
 **Tools** utilizadas:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nmap
+metasploit
 python
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

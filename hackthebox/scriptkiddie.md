@@ -156,8 +156,12 @@ Ao fazer isso, recebemos a conexão já como usuário pwn :)
 nc -vvnlp 1337
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Listamos se temos permissão pra user algum programa com permissão de root, e temos o metasploit (lol)
 
 ![Image](https://i.imgur.com/a4gOhX0.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+sudo -l
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 O Metasploit permite executar comando shell mesmo dentro do framework :)
 Então, vamos escrever uma chave RSA no arquivo /root/.ssh/authorized_keys
@@ -167,6 +171,9 @@ Então, vamos escrever uma chave RSA no arquivo /root/.ssh/authorized_keys
 Agora usamos a chave e we are r00t ~
 
 ![Image](https://i.imgur.com/Rw1wh5f.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ssh root@scriptkiddie.htb -i r00t
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 if i helped you, add + respect at my profile :D

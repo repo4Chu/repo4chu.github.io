@@ -12,6 +12,10 @@ Passage - HackTheBox - WriteUp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ![Image](https://i.imgur.com/9iTXQiJ.png)
 
+
+• Nessa máquina vamos utilizar a falha Arbitrary File Upload utilizando uma técnica de enviar uma imagem com um código PHP dentro dela, e assim nos possibilitando a execução de código remoto.
+
+
 **Tools** utilizadas:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nmap
@@ -20,6 +24,7 @@ john
 BurpSuite
 netcat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
 
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

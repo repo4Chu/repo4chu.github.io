@@ -32,9 +32,9 @@ Usaremos o nmap para encontrar portas e serviços rodando na máquina:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nmap -v -sS -Pn -A 10.10.10.206
 
-_-v: verbose(output mais detalhado)._
-_-sS: syn scan._
-_-Pn: já sabemos que o host está ativo então desativamos o descovery._
+-v: verbose(output mais detalhado).
+-sS: syn scan.
+-Pn: já sabemos que o host está ativo então desativamos o descovery.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Nosso resultado:
@@ -149,10 +149,10 @@ Vamos abrir uma porta em nossa máquina.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nc -vvnlp 1337
 
-_vv: verbose 2
-_-n: nodns
-_-l: listen
-_-p: port
+-vv: verbose 2
+-n: nodns
+-l: listen
+-p: port
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Agora vamos enviar a conexão com o netcat

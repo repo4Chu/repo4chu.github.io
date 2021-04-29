@@ -29,13 +29,15 @@ netcat
 
 Usaremos o nmap para encontrar portas e serviços rodando na máquina:
 
-nmap -v -sS -Pn -A 10.10.10.206
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+nmap -v -sS -Pn -A 10.10.10.206
+
 _-v: verbose(output mais detalhado)._
 _-sS: syn scan._
 _-Pn: já sabemos que o host está ativo então desativamos o descovery._
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Nosso resultado:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PORT   STATE SERVICE VERSION
 22/tcp open  ssh     OpenSSH 7.2p2 Ubuntu 4 (Ubuntu Linux; protocol 2.0)
@@ -148,11 +150,8 @@ Vamos abrir uma porta em nossa máquina.
 nc -vvnlp 1337
 
 _vv: verbose 2
-
 _-n: nodns
-
 _-l: listen
-
 _-p: port
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

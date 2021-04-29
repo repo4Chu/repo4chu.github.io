@@ -15,7 +15,7 @@ Passage - HackTheBox - WriteUp
 Machine Maker: [ChefByzen](https://www.hackthebox.eu/home/users/profile/140851)
 
 
-• Nessa máquina vamos utilizar a falha [Arbitrary File Upload](https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload) utilizando uma técnica de enviar uma imagem com um código PHP dentro dela através da ediçaõ da requisição e assim nos possibilitando a execução de código remoto.
+• Nessa máquina vamos utilizar a falha [Arbitrary File Upload](https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload) utilizando uma técnica de enviar uma imagem com um código PHP dentro dela através da ediçaõ da requisição em nosso proxy(Burp Suite) e assim nos possibilitando a execução de código remoto.
 
 
 **Tools** utilizadas:
@@ -253,6 +253,7 @@ if i helped you, add + respect at my profile :D
 
 My references:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload
 https://www.exploit-db.com/exploits/48458
 https://unit42.paloaltonetworks.com/usbcreator-d-bus-privilege-escalation-in-ubuntu-desktop/
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

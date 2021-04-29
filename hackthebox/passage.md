@@ -22,7 +22,6 @@ Machine Maker: [ChefByzen](https://www.hackthebox.eu/home/users/profile/140851)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nmap
 exiftool
-john the ripper
 BurpSuite
 netcat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

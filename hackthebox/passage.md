@@ -1,4 +1,4 @@
-<html>
+\\\\\\<html>
  <body>
   <script src="https://www.hackthebox.eu/badge/148108"></script>
  </body>
@@ -27,8 +27,13 @@ BurpSuite
 netcat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+Usaremos o nmap para encontrar portas e serviços rodando na máquina:
+nmap -v -sS -Pn -A 10.10.10.206
 
-nmap -v -sS -Pn -A passage.htb
+_-v: verbose(output mais detalhado).
+_-sS: syn scan.
+_-Pn: já sabemos que o host está ativo então desativamos o descovery.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PORT   STATE SERVICE VERSION
 22/tcp open  ssh     OpenSSH 7.2p2 Ubuntu 4 (Ubuntu Linux; protocol 2.0)

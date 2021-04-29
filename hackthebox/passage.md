@@ -35,6 +35,7 @@ nmap -v -sS -Pn -A 10.10.10.206
 -v: verbose(output mais detalhado).
 -sS: syn scan.
 -Pn: já sabemos que o host está ativo então desativamos o descovery.
+-A: Detecção de OS, detecção de versão, script scanning, and traceroute
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Nosso resultado:

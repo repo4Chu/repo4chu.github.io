@@ -1,4 +1,4 @@
-\\\\\\<html>
+<html>
  <body>
   <script src="https://www.hackthebox.eu/badge/148108"></script>
  </body>

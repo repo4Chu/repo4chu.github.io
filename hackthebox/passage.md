@@ -28,13 +28,13 @@ netcat
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Usaremos o nmap para encontrar portas e serviços rodando na máquina:
+
 nmap -v -sS -Pn -A 10.10.10.206
-
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 _-v: verbose(output mais detalhado)._
-
 _-sS: syn scan._
-
 _-Pn: já sabemos que o host está ativo então desativamos o descovery._
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 PORT   STATE SERVICE VERSION
@@ -97,6 +97,7 @@ Após conseguirmos o acesso inicial no CMS, podemos encontrar um campo de Upload
 
 Tentamos primeiro fazer upload de arquivos em PHP, porém, não foi possivel subir um arquivo com esta extensão...
 Como é um campo de upload de 'Avatar' podemos deduzir que o campo aceitará imagens, então, vamos inserir um código malicioso dentro de nossa imagem. 
+Nosso código executa a função system do PHP através do parametro cmd recebido via GET.
 Para isso vamos utilizar o exiftool:
 
 ![Image](https://i.imgur.com/yECy7Qo.png)

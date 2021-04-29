@@ -127,7 +127,7 @@ Podemos perceber que a requisição foi bem sucedida(200)
 
 ![Image](https://i.imgur.com/0CZunKi.png)
 
-Agora basta acessarmos nosso arquivo para poder executar comandos no servidor, para isso vamos até o diretório de arquivos: http://passage.htb/CuteNews/uploads/avatar_chu_chu.php 
+Agora basta acessarmos nosso arquivo para poder executar comandos no servidor, para isso vamos até o diretório onde são salvos os avatares: http://passage.htb/CuteNews/uploads/avatar_chu_chu.php 
 ![Image](https://i.imgur.com/AXunvx1.png)
 
 Conseguimos acessar nosso arquivo, agora podemos passar comandos do Linux pelo parametro pré definido, em meu caso 'cmd'.
@@ -137,7 +137,7 @@ Com isso temos uma execução de código remoto :D
 http://passage.htb/CuteNews/uploads/avatar_chu_chu.php?cmd=id
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-Ao pesquisar pelo nc, podemos ver que ele está instalado, portanto, vamos tentar utiliza-lo para receber uma reverse shell.
+Ao pesquisar pelo nc, podemos ver que ele está instalado, portanto, vamos tentar utiliza-lo para receber uma [reverse shell](https://tiagosouza.com/reverse-shell-cheat-sheet-bind-shell/).
 ![Image](https://i.imgur.com/5NgSWmB.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 http://passage.htb/CuteNews/uploads/avatar_chu_chu.php?cmd=whereis nc
@@ -273,4 +273,5 @@ My references:
 https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload
 https://www.exploit-db.com/exploits/48458
 https://unit42.paloaltonetworks.com/usbcreator-d-bus-privilege-escalation-in-ubuntu-desktop/
+https://tiagosouza.com/reverse-shell-cheat-sheet-bind-shell/
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

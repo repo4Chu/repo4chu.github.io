@@ -8,7 +8,7 @@
 Back to all write-ups: [here](https://repo4chu.github.io/hackthebox/)
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-Passage - HackTheBox - WriteUp
+Passage - HackTheBox - WriteUp by [chu](https://app.hackthebox.eu/profile/148108)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 ![Image](https://i.imgur.com/9iTXQiJ.png)
 
@@ -260,7 +260,7 @@ ssh root@passage.htb -i id_rsa_root
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
-if i helped you, add + respect at my profile :D
+if i helped you, add + respect at my [profile](https://app.hackthebox.eu/profile/148108) :D
 <html>
  <body>
   <script src="https://www.hackthebox.eu/badge/148108"></script>

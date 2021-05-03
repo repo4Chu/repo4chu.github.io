@@ -9,6 +9,8 @@ hi all, here i will post more writeups
 
 [Passage](https://repo4chu.github.io/hackthebox/passage)
 
+[Sharp](https://repo4chu.github.io/hackthebox/sharp)
+
 [Tabby](https://repo4chu.github.io/hackthebox/tabby)
 
 

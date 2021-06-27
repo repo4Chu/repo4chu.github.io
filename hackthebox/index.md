@@ -13,6 +13,8 @@ hi all, here i will post more writeups
 
 [Sharp](https://repo4chu.github.io/hackthebox/sharp)
 
+[Spectra](https://repo4chu.github.io/hackthebox/spectra)
+
 [Tabby](https://repo4chu.github.io/hackthebox/tabby)
 
 

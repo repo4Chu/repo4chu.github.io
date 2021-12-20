@@ -10,11 +10,11 @@ Back to all write-ups: [here](https://repo4chu.github.io/hackthebox/)
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 Forge - HackTheBox
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-![Image](https://i.imgur.com/9iTXQiJ.png)
+![Image](https://i.imgur.com/uxucbR3.png)
 
 WriteUp by [chu](https://app.hackthebox.eu/profile/148108/)
 
-Machine Maker: [ChefByzen](https://www.hackthebox.eu/home/users/profile/140851)
+Machine Maker: [NoobHacker9999](https://www.hackthebox.eu/home/users/profile/393721)
 
 
 if i helped you, add + respect at my [profile](https://app.hackthebox.eu/profile/148108) :D

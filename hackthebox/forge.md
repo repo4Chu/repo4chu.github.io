@@ -76,6 +76,7 @@ Ao tentar passar um endereço local pela URL, pude perceber que havia uma blackl
 ![Image](https://i.imgur.com/Kf2xuEE.png)
 
 Um bypass simples foi utilizar caracteres maiusculos, isso fez com que eu fosse capaz de passar pela blacklist.
+
 ![Image](https://i.imgur.com/8vHOo8n.png)
 
 Com isso, recebemos o link do upload bem sucedido.
@@ -100,12 +101,44 @@ Podemos perceber que o nome http://admin.forge.htb esta sendo bloqueado do mesmo
 ![Image](https://i.imgur.com/U63kc2q.png)
 
 Vamos utilizar a mesma técnica de caracteres maiúsculos para conseguir um bypass para a página do admin.
+
 ![Image](https://i.imgur.com/v8AVy1Z.png)
 
 Utilizei o BurpSuite para facilitar a visualização da resposta.
+Com isso, conseguimos ler o conteúdo da página http://admin.forge.htb validando o bypass via SSRF.
+Podemos ver duas páginas além da index.html 
+/annoucements
+/upload
 ![Image](https://i.imgur.com/DbgET3k.png)
 
+Agora vamos passar o caminho completo para a página que queremos, http://admin.forge.HTB/annoucements
+![Image](https://i.imgur.com/AVukEsk.png)
 
+Na resposta da nossa request, conseguimos ler o conteúdo da página http://admin.forge.htb/annoucements e nela é possível obter credenciais de um serviço FTP interno.
+Além disso, também podemos ver uma mensagem dizendo que a página de upload agora suporta outros protocolos, como FTP e FTPS.
+Na terceira mensagem, temos o anuncio que diz como utilizar os parametros.
+![Image](https://i.imgur.com/7QHd3GX.png)
+
+
+Temos um servidor FTP rodando internamente, e podemos interagir com ele através da página http://admin.forge.htb/upload usando o protocolo FTP, podemos usar os parâmetros descritos no terceiro ponto.
+Como o endereço admin.forge.htb e localhost estão na blacklist, precisamos utilizar o bypass de caracteres maiusculos em ambos.
+Nossa query final http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT
+![Image](https://i.imgur.com/xGQ5AEt.png)
+
+
+Com isso, temos a resposta de nossa request a listagem do diretório FTP, no caso /home/user
+![Image](https://i.imgur.com/ZhcDSev.png)
+
+
+
+Conseguimos obter nossa primeira flag pasasndo o caminho completo do arquivo: http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT/user.txt
+![Image](https://i.imgur.com/kWC9bX4.png)
+
+
+![Image](https://i.imgur.com/9zcoRi0.png)
+![Image](https://i.imgur.com/wEXxVoP.png)
+![Image](https://i.imgur.com/fZ7sbPU.png)
+![Image](https://i.imgur.com/emiskYu.png)
 
 
 

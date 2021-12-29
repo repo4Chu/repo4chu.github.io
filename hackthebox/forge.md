@@ -131,15 +131,24 @@ Com isso, temos a resposta de nossa request a listagem do diretório FTP, no cas
 
 
 
-Conseguimos obter nossa primeira flag pasasndo o caminho completo do arquivo: http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT/user.txt
+Conseguimos obter o link para nossa primeira flag pasasndo o caminho completo do arquivo: http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT/user.txt
 ![Image](https://i.imgur.com/kWC9bX4.png)
 
-
+Com isso, recebemos nossa primeira flag
 ![Image](https://i.imgur.com/9zcoRi0.png)
+
+Tentei realizar o acesso via SSH utilizando as credenciais do servidor FTP, porém, o método de autenticação é através de chave pública.
 ![Image](https://i.imgur.com/wEXxVoP.png)
+
+Então vamos ler a chave RSA no diretório SSH do usuário.
+http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT/.ssh/id_rsa
 ![Image](https://i.imgur.com/fZ7sbPU.png)
+
+Com isso temos a chave RSA privada do usuário.
 ![Image](https://i.imgur.com/emiskYu.png)
 
+
+we are in
 
 
 if i helped you, add + respect at my [profile](https://app.hackthebox.eu/profile/148108) :D

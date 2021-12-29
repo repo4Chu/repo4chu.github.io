@@ -61,12 +61,49 @@ HOP RTT       ADDRESS
 Podemos ver duas portas abertas, a 22(SSH) e a 80(HTTP).
 
 Ao acessar o site pelo IP, somos redirecionados para o nome forge.htb, portanto, precisamos adicionar o nome forge.htb ao arquivo /etc/hosts
+
 ![Image](https://i.imgur.com/dPg1ZuS.png)
 
 
+Agora que conseguimos acessar o site, podemos ver um link para uma página de upload.
 
+![Image](https://i.imgur.com/AhOgfBm.png)
 
+Ao acessar, temos duas opções de upload. Podemos fazer uploads de arquivos localmente ou via URL. Fiz diversos testes através do upload local mas não obtive sucesso.
+![Image](https://i.imgur.com/TNrrX9G.png)
 
+Ao tentar passar um endereço local pela URL, pude perceber que havia uma blacklist ativa.
+![Image](https://i.imgur.com/Kf2xuEE.png)
+
+Um bypass simples foi utilizar caracteres maiusculos, isso fez com que eu fosse capaz de passar pela blacklist.
+![Image](https://i.imgur.com/8vHOo8n.png)
+
+Com isso, recebemos o link do upload bem sucedido.
+![Image](https://i.imgur.com/e17q2ik.png)
+
+Usando o 'curl' podemos ver o conteudo do arquivo com a index.html, o que significa que nossa falha de SSRF foi validada.
+![Image](https://i.imgur.com/cN0y3sm.png)
+
+Usando o ffuf para enumerar subdominios, temos um resultado interessante: admin.forge.htb
+![Image](https://i.imgur.com/o0XkqUU.png)
+
+Adicionamos o novo nome ao arquivo /etc/hosts.
+![Image](https://i.imgur.com/scTg9ay.png)
+
+Acessando a página http://admin.forge.htb, recebemos a mensagem de que só é possível o acesso local.
+![Image](https://i.imgur.com/az7HTPY.png)
+
+Vamos utilizar a tecnica já validada de SSRF na página http://forge.htb/upload para receber o conteúdo da página http://admin.forge.htb 
+![Image](https://i.imgur.com/Br3eofl.png)
+
+Podemos perceber que o nome http://admin.forge.htb esta sendo bloqueado do mesmo modo da tentativa feita realizada utilizando http://localhost
+![Image](https://i.imgur.com/U63kc2q.png)
+
+Vamos utilizar a mesma técnica de caracteres maiúsculos para conseguir um bypass para a página do admin.
+![Image](https://i.imgur.com/v8AVy1Z.png)
+
+Utilizei o BurpSuite para facilitar a visualização da resposta.
+![Image](https://i.imgur.com/DbgET3k.png)
 
 
 

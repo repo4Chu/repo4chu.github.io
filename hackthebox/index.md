@@ -1,5 +1,4 @@
->>
-hi all, here i will post more writeups
+>> Hackthebox
 
 [Bucket](https://repo4chu.github.io/hackthebox/bucket)
 
@@ -17,5 +16,3 @@ hi all, here i will post more writeups
 
 [Tabby](https://repo4chu.github.io/hackthebox/tabby)
 
-
-active b0x n0t list3d find it easily lol

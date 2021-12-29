@@ -147,8 +147,18 @@ http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT/.ssh/i
 Com isso temos a chave RSA privada do usuário.
 ![Image](https://i.imgur.com/emiskYu.png)
 
+Escrevemos a chave em um arquivo
+[Image](https://i.imgur.com/ZdTcv5o.png)
+
+E iniciamos a conexão via SSH utilizando a chave obtida.
+[Image](https://i.imgur.com/gnTYa4l.png)
 
 we are in
+
+
+[Image]()
+[Image]()
+
 
 
 if i helped you, add + respect at my [profile](https://app.hackthebox.eu/profile/148108) :D
@@ -161,5 +171,7 @@ if i helped you, add + respect at my [profile](https://app.hackthebox.eu/profile
 
 My references:
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
+https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Request%20Forgery
+https://portswigger.net/web-security/ssrf
+https://vickieli.medium.com/bypassing-ssrf-protection-e111ae70727b
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

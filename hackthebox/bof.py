@@ -1,6 +1,6 @@
 #created for htb fortress jet labs
 from pwn import * # https://docs.pwntools.com/en/stable/about.html
-tango=remote('10.13.37.10',65432) #connection
+p=process("./leak") #exec
 tango.recvuntil("Oops, I'm leaking! ") #collect leak like % --> "Oops, I'm leaking! 0x7ffed4437110" ref https://docs.pwntools.com/en/stable/tubes.html#pwnlib.tubes.tube.tube.recvuntil
 leak=int(tango.recvuntil("\n"),16) #save leak memory variable in int mode on leak variable
 print ("Int leak code:") ,leak # 140735484032624

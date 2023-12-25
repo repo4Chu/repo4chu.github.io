@@ -4,7 +4,9 @@
 
 [Buff](https://repo4chu.github.io/hackthebox/buff)
 
-[Coder](https://repo4chu.github.io/hackthebox/coder)
+[Coder - PT](https://repo4chu.github.io/hackthebox/coder)
+ 
+[Coder - EN](https://repo4chu.github.io/hackthebox/coder-en)
 
 [Laboratory](https://repo4chu.github.io/hackthebox/laboratory)
 

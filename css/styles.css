@@ -5,15 +5,15 @@ body {
 }
 
 h1, h2, h3, h4, h5, h6 {
-  color: #fded03;
+  color: #0011ff;
 }
 
 a {
-  color: #1b1a58;
+  color: #ff0000;
 }
 
 p {
-  color: #0abe0a;
+  color: #A6E22E;
   flex: 1 0 20%;
 }
 
@@ -24,7 +24,7 @@ li, ul {
 
 code {
   background-color: #000000;
-  color: #A6E22E;
+  color: #9211ce;
 }
 
 pre {

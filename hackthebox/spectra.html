@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>spectra — htb writeup · chu@antisec</title>
+    <meta name="description" content="writeup htb spectra (linux): wp-config.php.save exposto, admin shell upload no wordpress, senha no autologin.conf e privesc via initctl com payload node. em português.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <a class="skip" href="#main">skip to content</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="main">
+          <ul>
+            <li><a href="../index.html">home</a></li>
+            <li><a href="../research/index.html">research</a></li>
+            <li><a href="index.html" aria-current="page">writeups</a></li>
+            <li><a href="../about.html">about</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="wrap hero">
+
+        <p class="crumbs"><a href="index.html">← ../</a> writeups</p>
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat spectra.md</h1>
+        <div class="small dim"><script src="https://www.hackthebox.eu/badge/148108"></script></div>
+        <p class="cmd">Spectra - HackTheBox - WriteUp</p>
+
+        <ul class="meta">
+          <li class="chip">date=2026-03-08</li>
+          <li class="chip">os=linux</li>
+          <li class="chip">lang=pt-br</li>
+          <li class="chip chip--phos">status=root</li>
+        </ul>
+
+        <figure class="fig">
+          <a href="https://i.imgur.com/HsXjN7y.png"><img src="https://i.imgur.com/HsXjN7y.png" alt="image" loading="lazy"></a>
+          <figcaption class="fig-cap"><b>spectra</b> — card da máquina no hackthebox</figcaption>
+        </figure>
+
+        <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat tools.txt</p>
+        <p><strong>Tools</strong> utilizadas:</p>
+        <ul class="chips">
+          <li class="chip">nmap</li>
+          <li class="chip">ffuf</li>
+          <li class="chip">metasploit</li>
+          <li class="chip">python</li>
+        </ul>
+
+        <div class="prose">
+          <div class="code">
+            <div class="code-cap"><span class="dot">●</span> <span>nmap</span></div>
+            <pre><code>PORT     STATE SERVICE VERSION
+22/tcp   open  ssh     OpenSSH 8.1 (protocol 2.0)
+| ssh-hostkey:
+|_  4096 52:47:de:5c:37:4f:29:0e:8e:1d:88:6e:f9:23:4d:5a (RSA)
+80/tcp   open  http    nginx 1.17.4
+| http-methods:
+|_  Supported Methods: GET HEAD
+|_http-server-header: nginx/1.17.4
+|_http-title: Site doesn't have a title (text/html).
+3306/tcp open  mysql   MySQL (unauthorized)
+|_ssl-cert: ERROR: Script execution failed (use -d to debug)
+|_ssl-date: ERROR: Script execution failed (use -d to debug)
+|_sslv2: ERROR: Script execution failed (use -d to debug)
+|_tls-alpn: ERROR: Script execution failed (use -d to debug)
+|_tls-nextprotoneg: ERROR: Script execution failed (use -d to debug)
+No exact OS matches for host (If you know what OS is running on it, see https://nmap.org/submit/ ).
+TCP/IP fingerprint:
+OS:SCAN(V=7.91%E=4%D=2/27%OT=22%CT=1%CU=35715%PV=Y%DS=2%DC=T%G=Y%TM=603AA18
+OS:D%P=x86_64-pc-linux-gnu)SEQ(SP=100%GCD=1%ISR=107%TI=Z%CI=Z%II=I%TS=A)OPS
+OS:(O1=M54DST11NW7%O2=M54DST11NW7%O3=M54DNNT11NW7%O4=M54DST11NW7%O5=M54DST1
+OS:1NW7%O6=M54DST11)WIN(W1=FE88%W2=FE88%W3=FE88%W4=FE88%W5=FE88%W6=FE88)ECN
+OS:(R=Y%DF=Y%T=40%W=FAF0%O=M54DNNSNW7%CC=Y%Q=)T1(R=Y%DF=Y%T=40%S=O%A=S+%F=A
+OS:S%RD=0%Q=)T2(R=N)T3(R=N)T4(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F=R%O=%RD=0%Q=)T5(R
+OS:=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)T6(R=Y%DF=Y%T=40%W=0%S=A%A=Z%F
+OS:=R%O=%RD=0%Q=)T7(R=Y%DF=Y%T=40%W=0%S=Z%A=S+%F=AR%O=%RD=0%Q=)U1(R=Y%DF=N%
+OS:T=40%IPL=164%UN=0%RIPL=G%RID=G%RIPCK=G%RUCK=G%RUD=G)IE(R=Y%DFI=N%T=40%CD
+OS:=S)</code></pre>
+          </div>
+
+          <p>Após nosso scan no nmap, podemos perceber um serviço HTTP em nosso alvo.</p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/AXnKt2h.png"><img src="https://i.imgur.com/AXnKt2h.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>nmap</b> — resultado do scan</figcaption>
+          </figure>
+
+          <p>Ao acessar nos deparamos com essa página:</p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/5KTYuZG.png"><img src="https://i.imgur.com/5KTYuZG.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>landing</b> — dois links na página</figcaption>
+          </figure>
+
+          <p>O primeiro link, nos envia para o diretório /main/ que está rodando um site WordPress 5.4.2</p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/7H6BjiB.png"><img src="https://i.imgur.com/7H6BjiB.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>/main/</b> — wordpress no ar</figcaption>
+          </figure>
+
+          <p>No segundo link, recebemos um erro de falha ao conectar na database:</p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/hvDZvvw.png"><img src="https://i.imgur.com/hvDZvvw.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>testing</b> — erro de conexão com a db</figcaption>
+          </figure>
+
+          <p>Porém, se tentarmos listar o diretório:</p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/vRDHkb3.png"><img src="https://i.imgur.com/vRDHkb3.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>listing</b> — diretório listado</figcaption>
+          </figure>
+
+          <p>Um desses arquivo chama atenção, wp-config.php.save mas se tentarmos lê-lo:</p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/iUOTXqF.png"><img src="https://i.imgur.com/iUOTXqF.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>wp-config.php.save</b> — renderizado sem graça</figcaption>
+          </figure>
+
+          <p>Nesse ponto usamos o truque de visualizar o código fonte da página:</p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/esPgN4m.png"><img src="https://i.imgur.com/esPgN4m.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>view-source</b> — credenciais no código</figcaption>
+          </figure>
+
+          <p>E então temos credenciais :D~</p>
+
+          <div class="code">
+            <div class="code-cap"><span class="dot">●</span> <span>creds</span></div>
+            <pre><code>define( 'DB_NAME', 'dev' );
+define( 'DB_USER', 'devtest' );
+define( 'DB_PASSWORD', 'devteam01' );
+define( 'DB_HOST', 'localhost' );</code></pre>
+          </div>
+
+          <p>Se tentarmos acessar a página de login do site WordPress, percebemos que as credenciais não funcionam...</p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/ji0R1jc.png"><img src="https://i.imgur.com/ji0R1jc.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>wp-login</b> — credencial recusada</figcaption>
+          </figure>
+
+          <p>Ao continuar analisando o site WordPress, podemos perceber que o nome do usuário é 'administrator'</p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/vRSHfYy.png"><img src="https://i.imgur.com/vRSHfYy.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>post</b> — autor administrator</figcaption>
+          </figure>
+
+          <p>Então, vamos tentar logar com as credenciais administrator:devteam01
+            eee b00m, estamos dentro ~</p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/1d6rYmk.png"><img src="https://i.imgur.com/1d6rYmk.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>wp-admin</b> — painel do wordpress</figcaption>
+          </figure>
+
+          <p>Agora vamos utilizar o metasploit para criar uma conexão reversa com a máquina, para isso vamos usar o exploit: </p>
+
+          <figure class="fig">
+            <a href="https://i.imgur.com/FQIZS2a.png"><img src="https://i.imgur.com/FQIZS2a.png" alt="Image" loading="lazy"></a>
+            <figcaption class="fig-cap"><b>searchsploit</b> — exploit do wp no msf</figcaption>
+          </figure>
+
+          <div class="code">
+            <div class="code-cap"><span class="dot">●</span> <span>exploit</span></div>
+            <pre><code>exploit/unix/webapps/wp_admin_shell_upload</code></pre>
+        </div>
+
+        <p>Ajustamos as opções:</p>
+
+        <figure class="fig">
+          <a href="https://i.imgur.com/WFpoNvj.png"><img src="https://i.imgur.com/WFpoNvj.png" alt="Image" loading="lazy"></a>
+          <figcaption class="fig-cap"><b>options</b> — usuário e senha setados</figcaption>
+        </figure>
+
+        <p>Conferimos antes de executar:</p>
+
+        <figure class="fig">
+          <a href="https://i.imgur.com/LzDMsC5.png"><img src="https://i.imgur.com/LzDMsC5.png" alt="Image" loading="lazy"></a>
+          <figcaption class="fig-cap"><b>check</b> — opções conferidas</figcaption>
+        </figure>
+
+        <p>Após isso executamos nosso exploit e ganhamos nosso acesso:</p>
+
+        <figure class="fig">
+          <a href="https://i.imgur.com/uN7E8wF.png"><img src="https://i.imgur.com/uN7E8wF.png" alt="Image" loading="lazy"></a>
+          <figcaption class="fig-cap"><b>meterpreter</b> — sessão aberta</figcaption>
+        </figure>
+
+        <p>Após isso, em nossa máquina geramos uma chave RSA para escalarmos nosso acesso:</p>
+
+        <figure class="fig">
+          <a href="https://i.imgur.com/YUHgUGr.png"><img src="https://i.imgur.com/YUHgUGr.png" alt="Image" loading="lazy"></a>
+          <figcaption class="fig-cap"><b>ssh-keygen</b> — chave para o nginx</figcaption>
+        </figure>
+
+        <div class="code">
+          <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+          <pre><code>ssh-keygen</code></pre>
+      </div>
+
+      <p>No meterpreter, pedimos uma shell e escrevemos nossa chave RSA no arquivo /home/nginx/.ssh/authorized_keys para melhorarmos nossa shell.</p>
+
+      <figure class="fig">
+        <a href="https://i.imgur.com/JOhbtVl.png"><img src="https://i.imgur.com/JOhbtVl.png" alt="Image" loading="lazy"></a>
+        <figcaption class="fig-cap"><b>authorized_keys</b> — chave do nginx escrita</figcaption>
+      </figure>
+
+      <p>Após escreve-la, realizamos a conexão via SSH.</p>
+
+      <figure class="fig">
+        <a href="https://i.imgur.com/hlvKakv.png"><img src="https://i.imgur.com/hlvKakv.png" alt="Image" loading="lazy"></a>
+        <figcaption class="fig-cap"><b>ssh</b> — login como nginx</figcaption>
+      </figure>
+
+      <div class="code">
+        <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
+        <pre><code>ssh nginx@spectra.htb -i nginx</code></pre>
+    </div>
+
+    <p>Agora que temos uma shell interativa, começamos a mapear o sistema...
+      Após um tempo, ao olhar o diretório /opt um arquivo chamado autologin.conf.orig chama atenção...</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/XlcFOEG.png"><img src="https://i.imgur.com/XlcFOEG.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>/opt</b> — autologin.conf.orig</figcaption>
+    </figure>
+
+    <p>Dentro desse arquivo podemos perceber que ele tem um arquivo chamado passwd na pasta /etc/autologin, então vamos até ele</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/Jy72UQn.png"><img src="https://i.imgur.com/Jy72UQn.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>passwd</b> — senha no autologin</figcaption>
+    </figure>
+
+    <p>Com isso conseguimos outra senha... vamos testa-la
+      Tentei com o usuário chronos mas sem sucesso, já com o user katie... :D</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/RjHHBDQ.png"><img src="https://i.imgur.com/RjHHBDQ.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>katie</b> — login via ssh</figcaption>
+    </figure>
+
+    <p>Agora que temos nossa primeira flag, vamos para a escalação de privilégios</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/PCFK9AS.png"><img src="https://i.imgur.com/PCFK9AS.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>user flag</b> — primeira flag</figcaption>
+    </figure>
+
+    <p>Conseguimos executar o /sbin/initctl como root</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/InVFrcN.png"><img src="https://i.imgur.com/InVFrcN.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>sudo -l</b> — initctl liberado</figcaption>
+    </figure>
+
+    <p>Podemos olhar os scripts que já estão feitos para tentar reusar algum deles</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/gIWmVAw.png"><img src="https://i.imgur.com/gIWmVAw.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>initctl list</b> — scripts disponíveis</figcaption>
+    </figure>
+
+    <p>Dentro da pasta dos scripts, temos permissão de escrita em alguns arquivos:</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/FO47HW1.png"><img src="https://i.imgur.com/FO47HW1.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>/etc/init</b> — .conf escrevíveis</figcaption>
+    </figure>
+
+    <p>Vamos analisar o conteúdo do arquivo test.conf e procurar onde podemos usa-lo para escalar privilégios.</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/nslaa1R.png"><img src="https://i.imgur.com/nslaa1R.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>test.conf</b> — executa um script node</figcaption>
+    </figure>
+
+    <p>Podemos ver que ele executa um NodeJS, então, vamos criar um payload para Node, no meu caso usei a <a href="https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md#nodejs">reverse shell node do Payload All The Things</a>
+      Escrevemos ela no diretório /tmp com o nome de chu.js ( /tmp/chu.js )</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/XBa5q0e.png"><img src="https://i.imgur.com/XBa5q0e.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>chu.js</b> — payload node no /tmp</figcaption>
+    </figure>
+
+    <p>Agora, vamos voltar ao nosso initctl e tentar executar o script test.conf</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/tiQYg4m.png"><img src="https://i.imgur.com/tiQYg4m.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>initctl start</b> — test.conf no ar</figcaption>
+    </figure>
+
+    <p>Abrimos nossa porta pré-definida em nossa máquina e aguardamos a conexão:</p>
+
+    <figure class="fig">
+      <a href="https://i.imgur.com/seIe9JN.png"><img src="https://i.imgur.com/seIe9JN.png" alt="Image" loading="lazy"></a>
+      <figcaption class="fig-cap"><b>root</b> — shell recebida no listener</figcaption>
+    </figure>
+
+    <p>we are r00t</p>
+
+    <p>if i helped you, add + respect at my profile :D</p>
+  </div>
+
+  <section class="sec sec--flush">
+    <div class="sec-head">
+      <span class="sec-num" aria-hidden="true">[--]</span>
+      <h2 class="sec-title">My references:</h2>
+    </div>
+    <div class="code">
+      <div class="code-cap"><span class="dot">●</span> <span>references</span></div>
+      <pre><code><a href="https://linux.die.net/man/8/initctl">https://linux.die.net/man/8/initctl</a>
+<a href="https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md#nodejs">https://github.com/swisskyrepo/PayloadsAllTheThings/blob/master/Methodology%20and%20Resources/Reverse%20Shell%20Cheatsheet.md#nodejs</a></code></pre>
+    </div>
+  </section>
+
+  <nav class="post-nav" aria-label="writeup navigation">
+    <span>← prev:</span><a href="sharp.html">sharp</a>
+    <span>next →</span><a href="passage.html">passage</a>
+  </nav>
+
+</article>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-row">
+      <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
+    </div>
+    <div class="foot-row">
+      <p>© 2026 chu · <a href="../index.html">home</a> · <a href="index.html">writeups</a> · <a href="../about.html#contact">contact</a></p>
+    </div>
+  </div>
+</footer>
+<script src="../zoom.js" defer></script>
+</body>
+</html>

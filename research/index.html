@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>chu@antisec:~/research$ — vulnerability research</title>
+    <meta name="description" content="vulnerability research by chu: opencart, prestashop, octobercms, dolibarr. coordinated disclosure, full writeups.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+  </head>
+  <body>
+    <a class="skip" href="#main">skip to content</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/research$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="main">
+          <ul>
+            <li><a href="../index.html">home</a></li>
+            <li><a href="../research/index.html" aria-current="page">research</a></li>
+            <li><a href="../hackthebox/index.html">writeups</a></li>
+            <li><a href="../about.html">about</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <section class="wrap hero">
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/research$</span> ls -l</h1>
+        <ul class="ls">
+         <!--
+ <li><span class="ls-mode" aria-hidden="true">drwxr-xr-x</span><time class="ls-date" datetime="2026-09">2026-09</time><a class="ls-name" href="dolibarr-erp-audit.html">dolibarr-erp-audit/</a><span class="ls-size">partial</span></li>-->
+          <li><span class="ls-mode" aria-hidden="true">drwxr-xr-x</span><time class="ls-date" datetime="2026-06">2026-06</time><a class="ls-name" href="opencart-api-case-confusion.html">opencart-api-case-confusion/</a><span class="ls-size">draft</span></li>
+          <li><span class="ls-mode" aria-hidden="true">drwxr-xr-x</span><time class="ls-date" datetime="2026-06">2026-06</time><a class="ls-name" href="prestashop-admin-api-scope-privesc.html">prestashop-admin-api-scope-privesc/</a><span class="ls-size">draft</span></li>
+          <li><span class="ls-mode" aria-hidden="true">drwxr-xr-x</span><time class="ls-date" datetime="2026-06">2026-06</time><a class="ls-name" href="octobercms-safemode-sandbox-rce.html">octobercms-safemode-sandbox-rce/</a><span class="ls-size">draft</span></li>
+        </ul>
+      </section>
+
+      <section class="wrap sec">
+
+        <article class="card">
+          <header class="card-head">
+            <h2 class="card-title"><a href="prestashop-admin-api-scope-privesc.html">prestashop 9.x — admin api oauth2 scope self-escalation → rce</a></h2>
+            <span class="badge badge--draft">draft</span>
+          </header>
+          <p class="card-file">~/research/prestashop-admin-api-scope-privesc.md</p>
+          <p>an api client holding only <code>api_client_write</code> can self-grant broader scopes through
+            the api-clients endpoint — the command never checks who delegated what, and scope finalization
+            honors the rewritten list. from <code>module_write</code> it's one archive upload to code exec.
+            no admin session needed.</p>
+          <ul class="chips">
+            <li class="chip">vendor=prestashop</li>
+            <li class="chip">product=9.0.0–9.2.0</li>
+            <li class="chip chip--amber">--cvss=8.8</li>
+            <li class="chip">--cwe=269</li>
+            <li class="chip">id=reserved (cve pending)</li>
+            <li class="chip chip--amber">fixed_in=none yet</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <header class="card-head">
+            <h2 class="card-title"><a href="opencart-api-case-confusion.html">opencart 4.1.x — api route case confusion → unauthenticated account takeover</a></h2>
+            <span class="badge badge--draft">draft</span>
+          </header>
+          <p class="card-file">~/research/opencart-api-case-confusion.md</p>
+          <p>route matching is case-sensitive at the auth guard and case-insensitive at the router.
+            request <code>/api/v1/users/PASSWORDRESET</code> instead of the canonical path and the guard never
+            fires. chain it with the password reset flow and you take over any user account with zero
+            credentials — the admin panel is not in reach, the advisory is explicit about that.
+            ghsa drafted, not filed yet; no vendor response on file.</p>
+          <ul class="chips">
+            <li class="chip">vendor=opencart</li>
+            <li class="chip">product=4.1.x</li>
+            <li class="chip chip--crit">--cvss=9.8</li>
+            <li class="chip">--cwe=178</li>
+            <li class="chip">--cwe=287</li>
+            <li class="chip">id=ghsa (draft)</li>
+          </ul>
+        </article>
+
+        <article class="card">
+          <header class="card-head">
+            <h2 class="card-title"><a href="octobercms-safemode-sandbox-rce.html">october cms — safe-mode twig sandbox escape → rce</a></h2>
+            <span class="badge badge--draft">draft</span>
+          </header>
+          <p class="card-file">~/research/octobercms-safemode-sandbox-rce.md</p>
+          <p>bypass of the fix for cve-2026-22692: a nested callable slips through the safe-mode sandbox
+            via <code>SafeCollection</code> and lands in rce territory. patched in 4.2.25, tracked by the
+            vendor as ghsa-8rgj-g632-3qfp with researcher credit.</p>
+          <ul class="chips">
+            <li class="chip">vendor=octobercms</li>
+            <li class="chip">product=&lt; 4.2.25</li>
+            <li class="chip chip--amber">--severity=high</li>
+            <li class="chip">--cwe=94</li>
+            <li class="chip chip--phos">id=ghsa-8rgj-g632-3qfp</li>
+            <li class="chip chip--phos">fixed=4.2.25</li>
+          </ul>
+        </article>
+<!--
+        <article class="card">
+          <header class="card-head">
+            <h2 class="card-title"><a href="dolibarr-erp-audit.html">dolibarr erp 19.0–24.0 — ten findings, one codebase tour</a></h2>
+            <span class="badge badge--partial">partial disclosure</span>
+          </header>
+          <p class="card-file">~/research/dolibarr-erp-audit.md</p>
+          <p>the batch report: idor in the holiday module, unsafe deserialization in the import wizard,
+            stored xss in the agenda, and the headliner — sql injection in stock movements,
+            tracked as CVE-2026-78804. one is out with a public poc, the rest wait on disclosure.</p>
+          <ul class="chips">
+            <li class="chip">vendor=dolibarr</li>
+            <li class="chip">product=19.0–24.0</li>
+            <li class="chip chip--amber">--severity=high</li>
+            <li class="chip">--cwe=89</li>
+            <li class="chip chip--phos">id=cve-2026-78804</li>
+            <li class="chip">findings=10</li>
+            <li class="chip">public=1/10</li>
+          </ul>
+        </article>
+-->
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <div class="foot-row">
+          <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
+        </div>
+        <div class="foot-row">
+          <p>© 2026 chu · <a href="../index.html">home</a> · <a href="../about.html#contact">contact</a></p>
+        </div>
+      </div>
+    </footer>
+    <script src="../zoom.js" defer></script>
+  </body>
+</html>

@@ -87,6 +87,7 @@ body::after{
 .nav ul{display:flex;flex-wrap:wrap;gap:.1rem 1.15rem;list-style:none;margin:0;padding:0}
 .nav a{color:var(--ink-2);font-size:.92rem}
 .nav a::before{content:"$ ";color:var(--ink-3)}
+.nav li.lang a::before{content:none}
 .nav a:hover{color:var(--ink);text-decoration:none}
 .nav a:hover::before,.nav a[aria-current]::before{color:var(--phos)}
 .nav a[aria-current]{color:var(--phos)}
@@ -324,3 +325,21 @@ kbd{
   border:1px solid var(--line-2);border-radius:var(--rad);
   background:var(--bg-1);
 }
+
+/* ---------- artigo: mcpmanagementservice (syntax + cell colors) ---------- */
+/* token + cell classes kept verbatim from the source article, mapped to template colors */
+.code .cmt{color:var(--ink-3);font-style:italic}       /* = tk-c */
+.code .kw{color:var(--phos)}                          /* = tk-k */
+.code .str{color:var(--mint)}                         /* = tk-s */
+.code .fn{color:var(--ink);font-weight:600}           /* = tk-f */
+td.ok,td .ok{color:var(--phos);font-weight:600}       /* article cell: success */
+td.bad,td .bad{color:var(--crit);font-weight:600}     /* article cell: failure */
+td.warn,td .warn{color:var(--amber);font-weight:600}  /* article cell: caution */
+
+/* ---------- language flags (nav, always both) ---------- */
+.lang{display:flex;align-items:center;gap:.4rem}
+.lang a{display:flex;align-items:center}
+.lang svg{width:20px;height:13px;display:block;border-radius:2px;outline:1px solid var(--line)}
+.lang a:hover svg{outline-color:var(--phos)}
+.lang .flag-cur{display:flex;align-items:center}
+.lang .flag-cur svg{opacity:.45}

@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>forge — writeup htb · chu@antisec</title>
+    <meta name="description" content="htb forge — ssrf com bypass de blacklist por caracteres maiúsculos, ftp interno e chave rsa do usuário.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="alternate" hreflang="pt-BR" href="forge.html">
+    <link rel="alternate" hreflang="en" href="../../hackthebox/forge.html">
+    <link rel="alternate" hreflang="x-default" href="../../hackthebox/forge.html">
+  </head>
+  <body>
+    <a class="skip" href="#main">pular para o conteúdo</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
+          <ul>
+            <li><a href="../../index.html">início</a></li>
+            <li><a href="../index.html">pesquisa</a></li>
+            <li><a href="index.html" aria-current="page">writeups</a></li>
+            <li><a href="../about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../../hackthebox/forge.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="wrap hero">
+
+        <p class="crumbs"><a href="index.html">← ../</a> writeups</p>
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat forge.md</h1>
+        <div class="small dim">
+          <script src="https://www.hackthebox.eu/badge/148108"></script>
+        </div>
+        <p class="cmd">Forge - HackTheBox</p>
+
+        <ul class="meta">
+          <li class="chip">date=2025-09-30</li>
+          <li class="chip">os=linux</li>
+          <li class="chip">ip=10.10.11.111</li>
+          <li class="chip">lang=pt-br</li>
+          <li class="chip chip--phos">status=root</li>
+        </ul>
+
+        <div class="prose">
+          <p>Back to all write-ups: <a href="index.html">here</a></p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/uxucbR3.png" alt="Forge - HackTheBox" loading="lazy">
+            <figcaption class="fig-cap">Forge - HackTheBox</figcaption>
+          </figure>
+
+          <p>WriteUp by <a href="https://app.hackthebox.eu/profile/148108/">chu</a></p>
+
+          <p>Machine Maker: <a href="https://www.hackthebox.eu/home/users/profile/393721">NoobHacker9999</a></p>
+
+          <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat tools.txt</p>
+          <p><strong>Tools</strong> utilizadas:</p>
+          <ul class="chips">
+            <li class="chip">nmap</li>
+            <li class="chip">BurpSuite</li>
+            <li class="chip">netcat</li>
+          </ul>
+
+          <p>Usaremos o nmap para encontrar portas e serviços rodando na máquina:</p>
+
+          <div class="code">
+            <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
+            <pre><code>nmap -sS -Pn -A 10.10.11.111 -p 22,80
+
+-v: verbose(output mais detalhado).
+-sS: syn scan.
+-Pn: já sabemos que o host está ativo então desativamos o discovery.
+-A: Detecção de OS, detecção de versão, script scanning, and traceroute
+-p: especifica as portas</code></pre>
+          </div>
+
+          <p>Nosso resultado:</p>
+
+          <div class="code">
+            <div class="code-cap"><span class="dot" aria-hidden="true">●</span> nmap</div>
+            <pre><code>PORT   STATE SERVICE VERSION
+22/tcp open  ssh     OpenSSH 8.2p1 Ubuntu 4ubuntu0.3 (Ubuntu Linux; protocol 2.0)
+| ssh-hostkey: 
+|   3072 4f:78:65:66:29:e4:87:6b:3c:cc:b4:3a:d2:57:20:ac (RSA)
+|   256 79:df:3a:f1:fe:87:4a:57:b0:fd:4e:d0:54:c6:28:d9 (ECDSA)
+|_  256 b0:58:11:40:6d:8c:bd:c5:72:aa:83:08:c5:51:fb:33 (ED25519)
+80/tcp open  http    Apache httpd 2.4.41
+|_http-server-header: Apache/2.4.41 (Ubuntu)
+|_http-title: Gallery
+Warning: OSScan results may be unreliable because we could not find at least 1 open and 1 closed port
+Aggressive OS guesses: Linux 4.15 - 5.6 (95%), Linux 5.3 - 5.4 (95%), Linux 2.6.32 (95%), Linux 5.0 - 5.3 (95%), Linux 3.1 (95%), Linux 3.2 (95%), AXIS 210A or 211 Network Camera (Linux 2.6.17) (94%), ASUS RT-N56U WAP (Linux 3.4) (93%), Linux 3.16 (93%), Linux 5.0 (93%)
+No exact OS matches for host (test conditions non-ideal).
+Network Distance: 2 hops
+Service Info: Host: 10.10.11.111; OS: Linux; CPE: cpe:/o:linux:linux_kernel
+
+TRACEROUTE (using port 80/tcp)
+HOP RTT       ADDRESS
+1   207.80 ms 10.10.14.1
+2   207.98 ms forge.htb (10.10.11.111)</code></pre>
+          </div>
+
+          <p>Podemos ver duas portas abertas, a 22(SSH) e a 80(HTTP).</p>
+
+          <p>Ao acessar o site pelo IP, somos redirecionados para o nome forge.htb, portanto, precisamos adicionar o nome forge.htb ao arquivo /etc/hosts</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/dPg1ZuS.png" alt="Ao acessar o site pelo IP, somos redirecionados para o nome forge.htb, portanto, precisamos…" loading="lazy">
+            <figcaption class="fig-cap">Ao acessar o site pelo IP, somos redirecionados para o nome forge.htb, portanto, precisamos…</figcaption>
+          </figure>
+
+          <p>Agora que conseguimos acessar o site, podemos ver um link para uma página de upload.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/AhOgfBm.png" alt="Agora que conseguimos acessar o site, podemos ver um link para uma página de upload." loading="lazy">
+            <figcaption class="fig-cap">Agora que conseguimos acessar o site, podemos ver um link para uma página de upload.</figcaption>
+          </figure>
+
+          <p>Ao acessar, temos duas opções de upload. Podemos fazer uploads de arquivos localmente ou via URL. Fiz diversos testes através do upload local mas não obtive sucesso.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/TNrrX9G.png" alt="Ao acessar, temos duas opções de upload. Podemos fazer uploads de arquivos localmente ou via URL.…" loading="lazy">
+            <figcaption class="fig-cap">Ao acessar, temos duas opções de upload. Podemos fazer uploads de arquivos localmente ou via URL.…</figcaption>
+          </figure>
+
+          <p>Ao tentar passar um endereço local pela URL, pude perceber que havia uma blacklist ativa.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/Kf2xuEE.png" alt="Ao tentar passar um endereço local pela URL, pude perceber que havia uma blacklist ativa." loading="lazy">
+            <figcaption class="fig-cap">Ao tentar passar um endereço local pela URL, pude perceber que havia uma blacklist ativa.</figcaption>
+          </figure>
+
+          <p>Um bypass simples foi utilizar caracteres maiusculos, isso fez com que eu fosse capaz de passar pela blacklist.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/8vHOo8n.png" alt="Um bypass simples foi utilizar caracteres maiusculos, isso fez com que eu fosse capaz de passar…" loading="lazy">
+            <figcaption class="fig-cap">Um bypass simples foi utilizar caracteres maiusculos, isso fez com que eu fosse capaz de passar…</figcaption>
+          </figure>
+
+          <p>Com isso, recebemos o link do upload bem sucedido.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/e17q2ik.png" alt="Com isso, recebemos o link do upload bem sucedido." loading="lazy">
+            <figcaption class="fig-cap">Com isso, recebemos o link do upload bem sucedido.</figcaption>
+          </figure>
+
+          <p>Usando o 'curl' podemos ver o conteudo do arquivo com a index.html, o que significa que nossa falha de SSRF foi validada.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/cN0y3sm.png" alt="Usando o &#x27;curl&#x27; podemos ver o conteudo do arquivo com a index.html, o que significa que nossa falha…" loading="lazy">
+            <figcaption class="fig-cap">Usando o 'curl' podemos ver o conteudo do arquivo com a index.html, o que significa que nossa falha…</figcaption>
+          </figure>
+
+          <p>Usando o ffuf para enumerar subdominios, temos um resultado interessante: admin.forge.htb</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/o0XkqUU.png" alt="Usando o ffuf para enumerar subdominios, temos um resultado interessante: admin.forge.htb" loading="lazy">
+            <figcaption class="fig-cap">Usando o ffuf para enumerar subdominios, temos um resultado interessante: admin.forge.htb</figcaption>
+          </figure>
+
+          <p>Adicionamos o novo nome ao arquivo /etc/hosts.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/scTg9ay.png" alt="Adicionamos o novo nome ao arquivo /etc/hosts." loading="lazy">
+            <figcaption class="fig-cap">Adicionamos o novo nome ao arquivo /etc/hosts.</figcaption>
+          </figure>
+
+          <p>Acessando a página <a href="http://admin.forge.htb">http://admin.forge.htb</a>, recebemos a mensagem de que só é possível o acesso local.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/az7HTPY.png" alt="Acessando a página http://admin.forge.htb, recebemos a mensagem de que só é possível o acesso local." loading="lazy">
+            <figcaption class="fig-cap">Acessando a página http://admin.forge.htb, recebemos a mensagem de que só é possível o acesso local.</figcaption>
+          </figure>
+
+          <p>Vamos utilizar a tecnica já validada de SSRF na página <a href="http://forge.htb/upload">http://forge.htb/upload</a> para receber o conteúdo da página <a href="http://admin.forge.htb">http://admin.forge.htb</a></p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/Br3eofl.png" alt="Vamos utilizar a tecnica já validada de SSRF na página http://forge.htb/upload para receber o…" loading="lazy">
+            <figcaption class="fig-cap">Vamos utilizar a tecnica já validada de SSRF na página http://forge.htb/upload para receber o…</figcaption>
+          </figure>
+
+          <p>Podemos perceber que o nome <a href="http://admin.forge.htb">http://admin.forge.htb</a> esta sendo bloqueado do mesmo modo da tentativa feita realizada utilizando <a href="http://localhost">http://localhost</a></p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/U63kc2q.png" alt="Podemos perceber que o nome http://admin.forge.htb esta sendo bloqueado do mesmo modo da tentativa…" loading="lazy">
+            <figcaption class="fig-cap">Podemos perceber que o nome http://admin.forge.htb esta sendo bloqueado do mesmo modo da tentativa…</figcaption>
+          </figure>
+
+          <p>Vamos utilizar a mesma técnica de caracteres maiúsculos para conseguir um bypass para a página do admin.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/v8AVy1Z.png" alt="Vamos utilizar a mesma técnica de caracteres maiúsculos para conseguir um bypass para a página do…" loading="lazy">
+            <figcaption class="fig-cap">Vamos utilizar a mesma técnica de caracteres maiúsculos para conseguir um bypass para a página do…</figcaption>
+          </figure>
+
+          <p>Utilizei o BurpSuite para facilitar a visualização da resposta. Com isso, conseguimos ler o conteúdo da página <a href="http://admin.forge.htb">http://admin.forge.htb</a> validando o bypass via SSRF. Podemos ver duas páginas além da index.html /annoucements /upload</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/DbgET3k.png" alt="Utilizei o BurpSuite para facilitar a visualização da resposta. Com isso, conseguimos ler o…" loading="lazy">
+            <figcaption class="fig-cap">Utilizei o BurpSuite para facilitar a visualização da resposta. Com isso, conseguimos ler o…</figcaption>
+          </figure>
+
+          <p>Agora vamos passar o caminho completo para a página que queremos, <a href="http://admin.forge.HTB/annoucements">http://admin.forge.HTB/annoucements</a></p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/AVukEsk.png" alt="Agora vamos passar o caminho completo para a página que queremos…" loading="lazy">
+            <figcaption class="fig-cap">Agora vamos passar o caminho completo para a página que queremos…</figcaption>
+          </figure>
+
+          <p>Na resposta da nossa request, conseguimos ler o conteúdo da página <a href="http://admin.forge.htb/annoucements">http://admin.forge.htb/annoucements</a> e nela é possível obter credenciais de um serviço FTP interno. Além disso, também podemos ver uma mensagem dizendo que a página de upload agora suporta outros protocolos, como FTP e FTPS. Na terceira mensagem, temos o anuncio que diz como utilizar os parametros.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/7QHd3GX.png" alt="Na resposta da nossa request, conseguimos ler o conteúdo da página…" loading="lazy">
+            <figcaption class="fig-cap">Na resposta da nossa request, conseguimos ler o conteúdo da página…</figcaption>
+          </figure>
+
+          <p>Temos um servidor FTP rodando internamente, e podemos interagir com ele através da página <a href="http://admin.forge.htb/upload">http://admin.forge.htb/upload</a> usando o protocolo FTP, podemos usar os parâmetros descritos no terceiro ponto. Como o endereço admin.forge.htb e localhost estão na blacklist, precisamos utilizar o bypass de caracteres maiusculos em ambos. Nossa query final <a href="http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT">http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT</a></p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/xGQ5AEt.png" alt="Temos um servidor FTP rodando internamente, e podemos interagir com ele através da página…" loading="lazy">
+            <figcaption class="fig-cap">Temos um servidor FTP rodando internamente, e podemos interagir com ele através da página…</figcaption>
+          </figure>
+
+          <p>Com isso, temos a resposta de nossa request a listagem do diretório FTP, no caso /home/user</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/ZhcDSev.png" alt="Com isso, temos a resposta de nossa request a listagem do diretório FTP, no caso /home/user" loading="lazy">
+            <figcaption class="fig-cap">Com isso, temos a resposta de nossa request a listagem do diretório FTP, no caso /home/user</figcaption>
+          </figure>
+
+          <p>Conseguimos obter o link para nossa primeira flag pasasndo o caminho completo do arquivo: <a href="http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT/user.txt">http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT/user.txt</a></p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/kWC9bX4.png" alt="Conseguimos obter o link para nossa primeira flag pasasndo o caminho completo do arquivo:…" loading="lazy">
+            <figcaption class="fig-cap">Conseguimos obter o link para nossa primeira flag pasasndo o caminho completo do arquivo:…</figcaption>
+          </figure>
+
+          <p>Com isso, recebemos nossa primeira flag</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/9zcoRi0.png" alt="Com isso, recebemos nossa primeira flag" loading="lazy">
+            <figcaption class="fig-cap">Com isso, recebemos nossa primeira flag</figcaption>
+          </figure>
+
+          <p>Tentei realizar o acesso via SSH utilizando as credenciais do servidor FTP, porém, o método de autenticação é através de chave pública.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/wEXxVoP.png" alt="Tentei realizar o acesso via SSH utilizando as credenciais do servidor FTP, porém, o método de…" loading="lazy">
+            <figcaption class="fig-cap">Tentei realizar o acesso via SSH utilizando as credenciais do servidor FTP, porém, o método de…</figcaption>
+          </figure>
+
+          <p>Então vamos ler a chave RSA no diretório SSH do usuário. <a href="http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT/.ssh/id_rsa">http://admin.forge.HTB/upload?u=ftp://user:heightofsecurity123!@LoCaLhOsT/.ssh/id_rsa</a></p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/fZ7sbPU.png" alt="Então vamos ler a chave RSA no diretório SSH do usuário.…" loading="lazy">
+            <figcaption class="fig-cap">Então vamos ler a chave RSA no diretório SSH do usuário.…</figcaption>
+          </figure>
+
+          <p>Com isso temos a chave RSA privada do usuário.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/emiskYu.png" alt="Com isso temos a chave RSA privada do usuário." loading="lazy">
+            <figcaption class="fig-cap">Com isso temos a chave RSA privada do usuário.</figcaption>
+          </figure>
+
+          <p>Escrevemos a chave em um arquivo</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/ZdTcv5o.png" alt="Escrevemos a chave em um arquivo" loading="lazy">
+            <figcaption class="fig-cap">Escrevemos a chave em um arquivo</figcaption>
+          </figure>
+
+          <p>E iniciamos a conexão via SSH utilizando a chave obtida.</p>
+
+          <figure class="fig">
+            <img src="https://i.imgur.com/gnTYa4l.png" alt="E iniciamos a conexão via SSH utilizando a chave obtida." loading="lazy">
+            <figcaption class="fig-cap">E iniciamos a conexão via SSH utilizando a chave obtida.</figcaption>
+          </figure>
+
+          <p>we are in</p>
+
+          <div class="photo">[Image]() <span class="hl">— sem url no arquivo original</span></div>
+
+          <div class="photo">[Image]() <span class="hl">— sem url no arquivo original</span></div>
+
+          <p>if i helped you, add + respect at my <a href="https://app.hackthebox.eu/profile/148108">profile</a> :D</p>
+
+          <div class="small dim">
+            
+          </div>
+
+          <p>My references:</p>
+
+          <div class="code">
+            <div class="code-cap"><span class="dot" aria-hidden="true">●</span> references</div>
+            <pre><code>https://github.com/swisskyrepo/PayloadsAllTheThings/tree/master/Server%20Side%20Request%20Forgery
+https://portswigger.net/web-security/ssrf
+https://vickieli.medium.com/bypassing-ssrf-protection-e111ae70727b</code></pre>
+          </div>
+        </div>
+
+        <nav class="post-nav" aria-label="writeup navigation">
+          <span>← prev:</span><a href="scriptkiddie.html">scriptkiddie</a>
+          <span>next →</span><a href="tabby.html">tabby</a>
+          <span>·</span><a href="index.html">todas as writeups</a>
+        </nav>
+
+      </article>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <div class="foot-row">
+          <p>chu@antisec — long life for the hacking and  the cats!<span aria-hidden="true"></span></p>
+        </div>
+        <div class="foot-row">
+          <p>← <a href="index.html">writeups</a> · <a href="../about.html">sobre</a> · <a href="../about.html#contact">contato</a></p>
+        </div>
+      </div>
+    </footer>
+    <script src="../../zoom.js" defer></script>
+  </body>
+</html>

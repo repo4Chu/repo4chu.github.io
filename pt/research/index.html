@@ -1,33 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>chu@antisec:~/research$ — vulnerability research</title>
-    <meta name="description" content="vulnerability research by chu: mcpmanagementservice, opencart, prestashop, octobercms, dolibarr. coordinated disclosure, full writeups.">
+    <title>chu@antisec:~/research$ — pesquisa em vulnerabilidades</title>
+    <meta name="description" content="pesquisa em vulnerabilidades por chu: mcpmanagementservice, opencart, prestashop, octobercms e dolibarr. disclosure coordenada, writeups completos — tudo em pt-br e english.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="alternate" hreflang="pt-BR" href="../pt/research/index.html">
-    <link rel="alternate" hreflang="en" href="index.html">
-    <link rel="alternate" hreflang="x-default" href="index.html">
+    <link rel="alternate" hreflang="en" href="../../index.html">
+    <link rel="alternate" hreflang="pt-BR" href="index.html">
+    <link rel="alternate" hreflang="x-default" href="../../index.html">
+    <link rel="stylesheet" href="../../styles.css">
   </head>
   <body>
-    <a class="skip" href="#main">skip to content</a>
+    <a class="skip" href="#main">pular para o conteúdo</a>
 
     <header class="chrome">
       <div class="wrap chrome-in">
-        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/research$<span class="cursor" aria-hidden="true">▌</span></a>
-        <nav class="nav" aria-label="main">
+        <a class="brand" href="../../index.html">chu<span class="host">@antisec</span>:~/research$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
           <ul>
-            <li><a href="../index.html">home</a></li>
-            <li><a href="../research/index.html" aria-current="page">research</a></li>
+            <li><a href="../../index.html">início</a></li>
+            <li><a href="index.html" aria-current="page">pesquisa</a></li>
             <li><a href="../hackthebox/index.html">writeups</a></li>
-            <li><a href="../about.html">about</a></li>
-            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
-            <li class="lang"><a href="../pt/research/index.html" hreflang="pt-BR" lang="pt-BR" title="versão em português" aria-label="mudar para português"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></a><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></span></li>
+            <li><a href="../about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../../index.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
           </ul>
         </nav>
       </div>
@@ -37,8 +37,9 @@
       <section class="wrap hero">
         <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/research$</span> ls -l</h1>
         <ul class="ls">
-         <!--
- <li><span class="ls-mode" aria-hidden="true">drwxr-xr-x</span><time class="ls-date" datetime="2026-09">2026-09</time><a class="ls-name" href="dolibarr-erp-audit.html">dolibarr-erp-audit/</a><span class="ls-size">partial</span></li>-->
+          <!--
+          <li><span class="ls-mode" aria-hidden="true">drwxr-xr-x</span><time class="ls-date" datetime="2026-09">2026-09</time><a class="ls-name" href="dolibarr-erp-audit.html">dolibarr-erp-audit/</a><span class="ls-size">partial</span></li>
+          -->
           <li><span class="ls-mode" aria-hidden="true">drwxr-xr-x</span><time class="ls-date" datetime="2026-10">2026-10</time><a class="ls-name" href="mcpmanagementservice-seimpersonate-system.html">mcpmanagementservice-seimpersonate-system/</a><span class="ls-size">draft</span></li>
           <li><span class="ls-mode" aria-hidden="true">drwxr-xr-x</span><time class="ls-date" datetime="2026-06">2026-06</time><a class="ls-name" href="opencart-api-case-confusion.html">opencart-api-case-confusion/</a><span class="ls-size">draft</span></li>
           <li><span class="ls-mode" aria-hidden="true">drwxr-xr-x</span><time class="ls-date" datetime="2026-06">2026-06</time><a class="ls-name" href="prestashop-admin-api-scope-privesc.html">prestashop-admin-api-scope-privesc/</a><span class="ls-size">draft</span></li>
@@ -57,12 +58,12 @@
           <p>own-lab technique research: a dcom activation-with-storage primitive — the
             <code>objref-in-Stat</code> trick — turns <code>SeImpersonatePrivilege</code> into
             <code>NT AUTHORITY\SYSTEM</code>. validated on server 2022, server 2025 and windows 11 25h2,
-            cold-start and session 0 included. write-up in english — <a href="../pt/research/mcpmanagementservice-seimpersonate-system.html">versão pt-br ↗</a>.</p>
+            cold-start and session 0 included. artigo em pt-br — <a href="../../research/mcpmanagementservice-seimpersonate-system.html" hreflang="en" lang="en">versão em inglês ↗</a>.</p>
           <ul class="chips">
             <li class="chip">vendor=microsoft</li>
             <li class="chip">os=windows</li>
             <li class="chip chip--phos">primitive=objref-in-stat</li>
-            <li class="chip">lang=en</li>
+            <li class="chip">lang=pt-br</li>
           </ul>
         </article>
 
@@ -72,10 +73,11 @@
             <span class="badge badge--draft">draft</span>
           </header>
           <p class="card-file">~/research/prestashop-admin-api-scope-privesc.md</p>
-          <p>an api client holding only <code>api_client_write</code> can self-grant broader scopes through
-            the api-clients endpoint — the command never checks who delegated what, and scope finalization
-            honors the rewritten list. from <code>module_write</code> it's one archive upload to code exec.
-            no admin session needed.</p>
+          <p>um client de api com apenas <code>api_client_write</code> consegue se autoconceder escopos mais
+            amplos pelo próprio endpoint de api clients — a operação nunca verifica o que o chamador já
+            detém, e a finalização de escopos honra a lista reescrita. com <code>module_write</code>, um
+            upload de módulo basta para execução de código. sem sessão de admin envolvida.</p>
+          <p><a href="../../research/prestashop-admin-api-scope-privesc.html" hreflang="en" lang="en">ler em inglês ↗</a></p>
           <ul class="chips">
             <li class="chip">vendor=prestashop</li>
             <li class="chip">product=9.0.0–9.2.0</li>
@@ -92,11 +94,11 @@
             <span class="badge badge--draft">draft</span>
           </header>
           <p class="card-file">~/research/opencart-api-case-confusion.md</p>
-          <p>route matching is case-sensitive at the auth guard and case-insensitive at the router.
-            request <code>/api/v1/users/PASSWORDRESET</code> instead of the canonical path and the guard never
-            fires. chain it with the password reset flow and you take over any user account with zero
-            credentials — the admin panel is not in reach, the advisory is explicit about that.
-            ghsa drafted, not filed yet; no vendor response on file.</p>
+          <p>o casamento de rotas diferencia maiúsculas no guard de autenticação e ignora caixa no router:
+            pedir <code>/api/v1/users/PASSWORDRESET</code> em vez do caminho canônico e o guard nunca
+            dispara. encadeado ao fluxo de redefinição de senha, permite takeover de qualquer conta de
+            cliente sem credenciais — o painel admin não está no alcance, como o advisory deixa explícito.</p>
+          <p><a href="../../research/opencart-api-case-confusion.html" hreflang="en" lang="en">ler em inglês ↗</a></p>
           <ul class="chips">
             <li class="chip">vendor=opencart</li>
             <li class="chip">product=4.1.x</li>
@@ -113,9 +115,10 @@
             <span class="badge badge--draft">draft</span>
           </header>
           <p class="card-file">~/research/octobercms-safemode-sandbox-rce.md</p>
-          <p>bypass of the fix for cve-2026-22692: a nested callable slips through the safe-mode sandbox
-            via <code>SafeCollection</code> and lands in rce territory. patched in 4.2.25, tracked by the
-            vendor as ghsa-8rgj-g632-3qfp with researcher credit.</p>
+          <p>bypass da correção do cve-2026-22692: um callable aninhado escapa do sandbox do safe mode via
+            <code>SafeCollection</code> e chega a território de rce. corrigido em 4.2.25, rastreado pelo
+            vendor como ghsa-8rgj-g632-3qfp com crédito do pesquisador.</p>
+          <p><a href="../../research/octobercms-safemode-sandbox-rce.html" hreflang="en" lang="en">ler em inglês ↗</a></p>
           <ul class="chips">
             <li class="chip">vendor=octobercms</li>
             <li class="chip">product=&lt; 4.2.25</li>
@@ -128,13 +131,13 @@
 <!--
         <article class="card">
           <header class="card-head">
-            <h2 class="card-title"><a href="dolibarr-erp-audit.html">dolibarr erp 19.0–24.0 — ten findings, one codebase tour</a></h2>
+            <h2 class="card-title"><a href="../../research/dolibarr-erp-audit.html">dolibarr erp 19.0–24.0 — ten findings, one codebase tour</a></h2>
             <span class="badge badge--partial">partial disclosure</span>
           </header>
           <p class="card-file">~/research/dolibarr-erp-audit.md</p>
-          <p>the batch report: idor in the holiday module, unsafe deserialization in the import wizard,
-            stored xss in the agenda, and the headliner — sql injection in stock movements,
-            tracked as CVE-2026-78804. one is out with a public poc, the rest wait on disclosure.</p>
+          <p>o relatório em lote: idor no módulo de férias, desserialização insegura no assistente de
+            importação, xss armazenado na agenda e o headliner — sql injection em movimentação de estoque,
+            rastreado como CVE-2026-78804. um finding está público com poc, os demais aguardam disclosure.</p>
           <ul class="chips">
             <li class="chip">vendor=dolibarr</li>
             <li class="chip">product=19.0–24.0</li>
@@ -155,10 +158,10 @@
           <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
         </div>
         <div class="foot-row">
-          <p>© 2026 chu · <a href="../index.html">home</a> · <a href="../about.html#contact">contact</a></p>
+          <p>© 2026 chu · <a href="../../index.html">início</a> · <a href="../about.html#contact">contato</a></p>
         </div>
       </div>
     </footer>
-    <script src="../zoom.js" defer></script>
+    <script src="../../zoom.js" defer></script>
   </body>
 </html>

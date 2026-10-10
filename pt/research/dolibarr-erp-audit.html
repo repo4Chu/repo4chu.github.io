@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>dolibarr erp 19.0–24.0 — dez achados, um tour pelo código · chu@antisec</title>
+    <meta name="description" content="um tour de baixo privilégio pelo dolibarr erp 19.0–24.0: dez achados confirmados, um público (cve-2026-78804, sql injection no limite de alerta de estoque), oito aguardando divulgação, um avaliado como não reportável.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="alternate" hreflang="pt-BR" href="dolibarr-erp-audit.html">
+    <link rel="alternate" hreflang="en" href="../../research/dolibarr-erp-audit.html">
+    <link rel="alternate" hreflang="x-default" href="../../research/dolibarr-erp-audit.html">
+  </head>
+  <body>
+    <a class="skip" href="#main">pular para o conteúdo</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../../index.html">chu<span class="host">@antisec</span>:~/research$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
+          <ul>
+            <li><a href="../../index.html">início</a></li>
+            <li><a href="index.html" aria-current="page">pesquisa</a></li>
+            <li><a href="../hackthebox/index.html">writeups</a></li>
+            <li><a href="../about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../../research/dolibarr-erp-audit.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="wrap hero">
+
+        <p class="crumbs"><a href="index.html">← ../</a> dolibarr-erp-audit</p>
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/research$</span> cat dolibarr-erp-audit.md</h1>
+        <p class="cmd">dolibarr erp 19.0–24.0 — dez achados, um tour pelo código</p>
+
+        <ul class="meta">
+          <li class="chip">vendor=dolibarr</li>
+          <li class="chip">versions=19.0–24.0</li>
+          <li class="chip chip--amber">--severity=high</li>
+          <li class="chip chip--phos">id=cve-2026-78804</li>
+          <li class="chip">findings=10</li>
+          <li class="chip">--cwe=89</li>
+          <li class="chip">public=1/10</li>
+          <li class="chip chip--phos">found_by=chu</li>
+          <li class="badge badge--partial">divulgação parcial</li>
+        </ul>
+
+        <blockquote class="stdout stdout--tldr">
+          <p>eu me sentei no assento mais barato que o dolibarr pode entregar — uma conta interna comum,
+            às vezes com um único direito de módulo ordinário — e perguntei até onde a aplicação deixa
+            você andar. a resposta: bem longe. esta auditoria rendeu <strong>dez achados
+              confirmados</strong> em todas as majors estáveis mantidas e no branch de desenvolvimento,
+            validados com <strong>mais de 35 confirmações ao vivo</strong> contra instâncias reais.</p>
+          <p>um achado já é público: <strong>CVE-2026-78804</strong>, uma sql injection no limite de
+            alerta de estoque por armazém que transforma um direito de edição de catálogo em leitura do
+            banco inteiro. os outros nove estão redigidos e aguardam divulgação privada — esta página
+            cita o componente e a classe deles, e nada além disso. um dos nove foi avaliado como
+            <em>não reportável</em> sob a política do próprio projeto.</p>
+        </blockquote>
+
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[01]</span>
+          <h2 class="sec-title">como a auditoria foi</h2>
+          <span class="sec-tail">escopo · método · confirmações</span>
+        </div>
+        <div class="prose">
+          <h3>escopo</h3>
+          <p>o dolibarr/erp é um erp/crm em php com um backoffice muito grande: catálogo, estoque,
+            pedidos, faturas, notas de despesa, rh, documentos, um portal do cliente, uma api rest e um
+            conjunto crescente de módulos mais novos. o alvo era o <strong>backoffice de um ponto de
+              observação de baixo privilégio</strong> — não a superfície anônima, e nem o painel de
+            admin. a política do vendor cobre as últimas cinco majors estáveis mais o branch de
+            desenvolvimento, então a matriz da auditoria foi
+            <strong>19.0, 20.0, 21.0, 22.0, 23.0 e develop (24.0)</strong>.</p>
+          <h3>método</h3>
+          <ul>
+            <li>cada major estável rodou como instância própria a partir das imagens oficiais, com o
+              hardening recomendado pelo vendor ligado (flag de produção, intenção de https forçado,
+              modo estrito de token csrf, sem ferramentas de debug ou builder) — então nada aqui depende
+              de uma instalação desleixada.</li>
+            <li>o teste foi manual e autenticado: ler o caminho de código e depois dirigi-lo como um
+              usuário restrito, com um sufixo de user-agent de teste para que operadores reconheçam o
+              tráfego.</li>
+            <li>cada candidato foi reverificado por versão. um achado só entrou na lista se foi
+              reproduzido ao vivo, não apenas inferido do código-fonte.</li>
+          </ul>
+          <h3>confirmações</h3>
+          <p>sete achados reproduziram nas <strong>cinco</strong> majors estáveis mantidas — só isso já
+            são <strong>35 confirmações ao vivo</strong> — e os dois achados limitados por versão foram
+            confirmados onde o código deles realmente existe: um introduzido no 23.0, outro presente
+            só no branch de desenvolvimento. tudo na tabela abaixo é, portanto, evidência, não teoria.
+            os dez que entraram na lista são os que sobreviveram ao triage; uma cauda longa de variantes
+            de controle de acesso colapsou em um punhado de causas-raiz compartilhadas, e essa é a
+            história real deste codebase.</p>
+        </div>
+
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[02]</span>
+          <h2 class="sec-title">achados</h2>
+          <span class="sec-tail">1 publicado · 8 pendentes · 1 não reportável</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <caption class="skip">achados da auditoria dolibarr</caption>
+            <thead>
+              <tr><th scope="col">id</th><th scope="col">componente / módulo</th><th scope="col">tipo</th><th scope="col">status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>F-01</td><td>módulo website</td><td>execução remota de código</td><td>retido — divulgação pendente</td></tr>
+              <tr><td><a href="https://github.com/repo4Chu/CVE-2026-78804_Dolibarr_authenticated_SQL_injection" target="_blank" rel="noopener">CVE-2026-78804</a></td><td>produto / estoque</td><td>sql injection (cwe-89)</td><td><span class="badge badge--published">publicado</span></td></tr>
+              <tr><td>F-03</td><td>usuários</td><td>referência direta a objeto insegura</td><td>retido — divulgação pendente</td></tr>
+              <tr><td>F-04</td><td>portal do cliente</td><td>referência direta a objeto insegura</td><td>retido — divulgação pendente</td></tr>
+              <tr><td>F-05</td><td>api rest — notas de despesa</td><td>autorização quebrada no nível de objeto</td><td>retido — divulgação pendente</td></tr>
+              <tr><td>F-06</td><td>autenticação (ldap)</td><td>injeção de filtro ldap</td><td>não reportável</td></tr>
+              <tr><td>F-07</td><td>webdav</td><td>controle de acesso quebrado</td><td>retido — divulgação pendente</td></tr>
+              <tr><td>F-08</td><td>assistente de ia</td><td>autorização quebrada no nível de objeto</td><td>retido — divulgação pendente</td></tr>
+              <tr><td>F-09</td><td>usuários / permissões</td><td>escalação de privilégio vertical</td><td>retido — divulgação pendente</td></tr>
+              <tr><td>F-10</td><td>pedidos de venda</td><td>referência direta a objeto insegura</td><td>retido — divulgação pendente</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small dim">as linhas marcadas como <em>retido</em> carregam de propósito só o componente
+          e a classe de vulnerabilidade — sem endpoints, sem parâmetros, sem payloads — até as correções
+          chegarem e os advisories saírem. o F-06 foi avaliado contra a política de segurança do projeto
+          e considerado sem direito a relatório (veja <a href="#disclosure">status da divulgação</a>).</p>
+
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[03]</span>
+          <h2 class="sec-title">o achado público — CVE-2026-78804</h2>
+          <span class="sec-tail">sql injection · limite de alerta de estoque</span>
+        </div>
+        <div class="prose">
+          <p>a aba estoque de um produto permite definir um limite de alerta por armazém. o valor desse
+            limite é lido da requisição como string crua e depois concatenado direto num
+            <code>UPDATE</code> — numa posição numérica sem aspas, sem cast e sem binding de parâmetro.
+            o filtro de input padrão do framework remove html e caracteres de caminho, mas não faz nada
+            contra metacaracteres sql, então o filtro que parece sanitização não é. como o ponto de
+            injeção fica entre aspas, o atacante controla uma expressão sql completa dentro do
+            statement, o que torna possíveis subqueries arbitrárias — e, com elas, extração cega
+            baseada em tempo. o caminho de insert do mesmo registro repete o padrão.</p>
+          <p>o direito necessário para chegar lá é <code>product → create</code> (ou o seu gêmeo de
+            serviço) — um direito comum de gerente de catálogo que ninguém trata como perigoso.</p>
+        </div>
+
+        <figure class="fig">
+          <pre>  usuário de catálogo (produit→creer)      página produto/estoque            banco de dados
+    │                                          │                              │
+    │  define o limite de alerta por armazém ──►│                              │
+    │  valor usado como vem, sem cast/binding  │  UPDATE … threshold = <span class="hl">&lt;expressão do atacante&gt;</span> ──►│
+    │                                          │                              │
+    │  ◄── resposta rápida (condição falsa) ───│◄─────────────────────────────│
+    │ ◄─ resposta lenta (condição verdadeira) ─│   <span class="hl">tempo = 1 bit</span>                │
+    │                                          │                              │
+    │  repete por bit ⇒ hashes, chaves de api, <span class="hl">qualquer linha que a conta do banco possa ler</span></pre>
+          <figcaption class="fig-cap"><b>fig 01</b> — loop de extração cega: uma requisição, um bit, o schema inteiro.</figcaption>
+        </figure>
+
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[04]</span>
+        <h2 class="sec-title">impacto</h2>
+        <span class="sec-tail">e o teto honesto</span>
+      </div>
+      <ul class="ls">
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">leitura arbitrária do banco inteiro, cega, a partir de um direito de editar catálogo</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">hashes de senha, chaves de api, segredos de configuração, os dados de todos os módulos</span><span class="ls-extra">→ c:h</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">takeover condicional de conta via uma chave de api de administrador ou hash extraída</span></li>
+      </ul>
+      <div class="prose">
+        <p>o teto importa tanto quanto o alcance. a injeção fica no valor de um
+          <code>UPDATE</code> e o dolibarr emite statements únicos via mysqli, então não há queries
+          empilhadas; a conta padrão do banco não tem privilégio <code>FILE</code> e
+          <code>secure_file_priv</code> é null, então leitura/escrita de arquivo e truques com udf ficam
+          fora da mesa. <strong>nenhuma leitura direta de arquivo, nenhum rce direto pelo motor
+            sql.</strong> a escalação só é alcançável pela aplicação e só condicionalmente — por exemplo
+          puxando uma chave de api de administrador, se existir, e usando a api rest com ela. o rótulo
+          honesto é comprometimento total da confidencialidade do banco mais takeover potencial de
+          conta.</p>
+        <p>afetado: <strong>19.0 até 24.0</strong> — reproduzido ao vivo em 19.0.4, 20.0.4, 21.0.4,
+          22.0.5, 23.0.3 e no develop atual. os interruptores de hardening do vendor não o atrasam: a
+          requisição é um post autenticado normal carregando um token csrf válido.</p>
+      </div>
+
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[05]</span>
+        <h2 class="sec-title">poc</h2>
+        <span class="sec-tail">só em laboratório · publicado</span>
+      </div>
+      <p class="small dim">a ferramenta completa de extração (login, confirmação da injeção, recuperação
+        por busca binária, opções de proxy e delay) mora no repositório público:
+        <a href="https://github.com/repo4Chu/CVE-2026-78804_Dolibarr_authenticated_SQL_injection" target="_blank" rel="noopener">repo4Chu/CVE-2026-78804_Dolibarr_authenticated_SQL_injection</a>.
+        rode-a só contra uma instância sua. a requisição abaixo está sanitizada — credenciais e tokens
+        são placeholders.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> requisição — ação de definir o limite <span class="cap-right">http · placeholders, não um alvo real</span></figcaption>
+        <pre><code><span class="tk-c">POST /product/stock/product.php?id=&lt;productId&gt; HTTP/1.1</span>
+<span class="tk-c">Host: &lt;your-lab&gt;</span>
+<span class="tk-c">Cookie: DOLSESSID_&lt;session-placeholder&gt;</span>
+<span class="tk-c">Content-Type: application/x-www-form-urlencoded</span>
+
+action=addlimitstockwarehouse&amp;token=<span class="tk-s">&lt;csrf&gt;</span>&amp;id=<span class="tk-n">1</span>&amp;fk_entrepot=<span class="tk-n">1</span>&amp;desiredstock=<span class="tk-n">1</span>
+&amp;seuil_stock_alerte=<span class="tk-s">(SELECT IF((&lt;condition&gt;),SLEEP(3),0))</span>
+
+<span class="tk-c"># medido numa instância de laboratório:</span>
+<span class="tk-c">#   condição verdadeira  -&gt; resposta em 3.009 s</span>
+<span class="tk-c">#   condição falsa -&gt; resposta em 0.008 s</span></code></pre>
+      </figure>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> a forma do bug <span class="cap-right">php · simplificado</span></figcaption>
+        <pre><code><span class="tk-c">// o valor do limite chega à query sem tipo, numa posição numérica sem aspas</span>
+$sql = <span class="tk-s">"UPDATE "</span>.MAIN_DB_PREFIX.<span class="tk-s">"product_stock SET seuil_stock_alerte = "</span>
+     . $threshold .<span class="tk-s">" WHERE …"</span>;   <span class="tk-c">// sem (float)/price2num, sem binding</span></code></pre>
+      </figure>
+
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[06]</span>
+        <h2 class="sec-title">remediação</h2>
+        <span class="sec-tail">para devs + admins</span>
+      </div>
+      <div class="prose">
+        <h3>se você mantém o código</h3>
+        <ul>
+          <li>faça cast do limite (e dos campos numéricos irmãos no mesmo statement) antes de usar:
+            <code>(float) price2num(GETPOST(...))</code> ou um <code>(int)</code> explícito.</li>
+          <li>prefira prepared statements / parâmetros vinculados para todo valor dinâmico dessa
+            classe — tanto no caminho de update quanto no de insert.</li>
+          <li>o campo pode chegar como um array chaveado por armazém: valide o tipo de <strong>cada
+              elemento</strong>, não só do primeiro nível.</li>
+          <li>varra o codebase em busca do mesmo padrão de construção; posições numéricas sem aspas
+            são uma classe, não um bug.</li>
+        </ul>
+        <h3>se você opera dolibarr hoje</h3>
+        <ul>
+          <li>conceda <code>product/service → create</code> só a quem realmente cria itens de catálogo;
+            audite quem o detém.</li>
+          <li>rotacione chaves de api e revise contas privilegiadas depois de aplicar o patch — uma
+            leitura do banco pode já ter acontecido em silêncio, e a extração cega não deixa pegada de
+            payload nos dados armazenados.</li>
+          <li>observe anomalias de tempo de resposta na página de estoque de um produto isolado; é o
+            único sinal que esse bug deixa.</li>
+        </ul>
+      </div>
+
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[07]</span>
+        <h2 class="sec-title">cadeias, em alto nível</h2>
+        <span class="sec-tail">conceitual — sem detalhes</span>
+      </div>
+      <div class="prose">
+        <p>individualmente os achados são modestos; compostos, não. mantido deliberadamente
+          conceitual — as peças individuais são descritas só pela classe, e as retidas continuam
+          retidas.</p>
+        <ul>
+          <li><strong>um direito comum → as chaves do reino.</strong> um direito de editar catálogo
+            compra uma leitura do banco (a sql injection pública); o que você faz com essa leitura —
+            uma chave de api aqui, um hash ali — decide se para nos dados ou sobe até um
+            administrador.</li>
+          <li><strong>um direito de editar conteúdo → execução de código.</strong> uma permissão feita
+            para conteúdo de página pode ser empurrada através de uma fronteira de permissão de código
+            que nunca deveria cruzar, e o resultado fica alcançável para qualquer um que depois consiga
+            carregar a página.</li>
+          <li><strong>uma permissão de autoatendimento → um trampolim.</strong> o direito de ajustar as
+            próprias permissões vira a concessão de praticamente qualquer direito não administrativo,
+            o que te devolve a uma das duas cadeias acima. a flag de admin em si continua protegida —
+            o teto é alcançado pelas cadeias, não diretamente.</li>
+          <li><strong>zero permissões ainda dói.</strong> uma conta novinha sem direito nenhum já
+            alcança dados bancários de folha de pagamento, o repositório de documentos e ações que
+            afetam as finanças — fraude e exfiltração em massa sem nenhum passo de escalação de
+            privilégio.</li>
+        </ul>
+        <p>leitura defensiva: conserte primeiro os dois caminhos baratos de "um direito → tudo", depois
+          o trio de zero permissões, e por fim os padrões de controle de acesso compartilhados por trás
+          do resto — as mesmas duas ou três causas-raiz cobrem a maior parte da lista.</p>
+      </div>
+
+      <figure class="fig">
+        <pre>  uma conta comum ───┬─ direito comum de módulo ───► <span class="hl">leitura do banco</span> ──► admin (condicional)
+                     ├─ direito de editar conteúdo ──► <span class="hl">execução de código</span>
+                     ├─ direito de auto-permissão ──► <span class="hl">trampolim</span> ──► qualquer direito não-admin ──► (acima)
+                     └─ <span class="hl">nenhum direito</span> ───────────► folha de pagamento · repositório de documentos · ações financeiras</pre>
+      <figcaption class="fig-cap"><b>fig 02</b> — onde uma conta mínima acaba. só classes; os detalhes esperam a divulgação.</figcaption>
+    </figure>
+
+    <div class="sec-head" id="disclosure">
+      <span class="sec-num" aria-hidden="true">[08]</span>
+      <h2 class="sec-title">status da divulgação</h2>
+      <span class="sec-tail">o que saiu, o que espera</span>
+    </div>
+    <ul class="tl">
+      <li class="is-done"><span class="t-date">janela da auditoria</span><span class="t-what">dez achados confirmados</span>
+        <span class="t-note">validados ao vivo no 19.0–23.0 e no develop; evidência por versão guardada para cada relatório.</span></li>
+      <li class="is-done"><span class="t-date">2026-09-10</span><span class="t-what">CVE-2026-78804 publicado</span>
+        <span class="t-note">a sql injection do limite de estoque foi a público com uma ferramenta de poc no github.</span></li>
+      <li class="is-now"><span class="t-date">agora</span><span class="t-what">oito achados redigidos</span>
+        <span class="t-note">cada um está sendo escrito como relatório privado próprio — o projeto rejeita relatórios
+          combinados — e cada um será revalidado contra o branch de desenvolvimento atual antes do envio.
+          os detalhes aqui ficam retidos até as correções saírem.</span></li>
+      <li class="is-now"><span class="t-date">agora</span><span class="t-what">um achado fora do reporting</span>
+        <span class="t-note">o F-06 (injeção de filtro ldap no login) só existe quando a instância é configurada
+          para autenticação ldap, e o impacto demonstrado cai dentro da zona de exclusão da política —
+          avaliado como não reportável. ele será oferecido ao upstream como um patch de hardening.</span></li>
+    </ul>
+    <div class="prose">
+      <p>posição, para constar: o dolibarr é um projeto voluntário — <strong>sem bounty, só
+          crédito</strong>, e espera-se que os relatórios sejam escritos por um humano. tudo bem. o
+        objetivo são as correções, e os oito retidos permanecem privados exatamente até os mantenedores
+        terem tido uma chance justa com eles.</p>
+    </div>
+
+    <blockquote class="stdout">
+      <p>crédito: todos os dez achados encontrados, reproduzidos e documentados por <strong>chu</strong>
+        (ricardo), 2026. a poc pública do CVE-2026-78804 mora em
+        <a href="https://github.com/repo4Chu/CVE-2026-78804_Dolibarr_authenticated_SQL_injection" target="_blank" rel="noopener">github.com/repo4Chu</a>.
+        dúvidas → <a href="../about.html#contact">contato</a>.</p>
+    </blockquote>
+
+  </article>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-row">
+      <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
+    </div>
+    <div class="foot-row">
+      <p>© 2026 chu · <a href="../../index.html">início</a> · <a href="../about.html#contact">contato</a></p>
+    </div>
+  </div>
+</footer>
+<script src="../../zoom.js" defer></script>
+</body>
+</html>

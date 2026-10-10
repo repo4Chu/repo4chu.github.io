@@ -1,0 +1,327 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>dolibarr erp 19.0–24.0 — ten findings, one codebase tour · chu@antisec</title>
+    <meta name="description" content="a low-privilege tour of dolibarr erp 19.0–24.0: ten confirmed findings, one public (CVE-2026-78804, stock threshold sql injection), eight pending disclosure, one assessed not reportable.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" hreflang="pt-BR" href="../pt/research/dolibarr-erp-audit.html">
+    <link rel="alternate" hreflang="en" href="dolibarr-erp-audit.html">
+    <link rel="alternate" hreflang="x-default" href="dolibarr-erp-audit.html">
+  </head>
+  <body>
+    <a class="skip" href="#main">skip to content</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/research$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="main">
+          <ul>
+            <li><a href="../index.html">home</a></li>
+            <li><a href="../research/index.html" aria-current="page">research</a></li>
+            <li><a href="../hackthebox/index.html">writeups</a></li>
+            <li><a href="../about.html">about</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
+            <li class="lang"><a href="../pt/research/dolibarr-erp-audit.html" hreflang="pt-BR" lang="pt-BR" title="versão em português" aria-label="mudar para português"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></a><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></span></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+      <article class="wrap hero">
+
+        <p class="crumbs"><a href="../research/index.html">← ../</a> dolibarr-erp-audit</p>
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~/research$</span> cat dolibarr-erp-audit.md</h1>
+        <p class="cmd">dolibarr erp 19.0–24.0 — ten findings, one codebase tour</p>
+
+        <ul class="meta">
+          <li class="chip">vendor=dolibarr</li>
+          <li class="chip">versions=19.0–24.0</li>
+          <li class="chip chip--amber">--severity=high</li>
+          <li class="chip chip--phos">id=cve-2026-78804</li>
+          <li class="chip">findings=10</li>
+          <li class="chip">--cwe=89</li>
+          <li class="chip">public=1/10</li>
+          <li class="chip chip--phos">found_by=chu</li>
+          <li class="badge badge--partial">partial disclosure</li>
+        </ul>
+
+        <blockquote class="stdout stdout--tldr">
+          <p>i sat down in the cheapest seat dolibarr can hand out — a plain internal account, sometimes
+            with a single ordinary module right — and asked how far the application lets you walk. the
+            answer: a long way. this audit landed <strong>ten confirmed findings</strong> across every
+            maintained stable major and the development branch, validated with <strong>35+ live
+              confirmations</strong> against real instances.</p>
+          <p>one finding is already public: <strong>CVE-2026-78804</strong>, a sql injection in the
+            per-warehouse stock alert threshold that turns a catalog-edit right into a read of the whole
+            database. the other nine are drafted and wait on private disclosure — this page names their
+            component and class, and nothing more. one of the nine was assessed as <em>not reportable</em>
+            under the project's own policy.</p>
+        </blockquote>
+
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[01]</span>
+          <h2 class="sec-title">how the audit went</h2>
+          <span class="sec-tail">scope · method · confirmations</span>
+        </div>
+        <div class="prose">
+          <h3>scope</h3>
+          <p>dolibarr/erp is a php erp/crm with a very large backoffice: catalog, stock, orders, invoices,
+            expense reports, hr, documents, a customer portal, a rest api, and a growing set of newer
+            modules. the target was the <strong>backoffice from a low-privilege vantage point</strong> —
+            not the anonymous surface, and not the admin panel. the vendor's policy covers the last five
+            stable majors plus the development branch, so the audit matrix was
+            <strong>19.0, 20.0, 21.0, 22.0, 23.0 and develop (24.0)</strong>.</p>
+          <h3>method</h3>
+          <ul>
+            <li>each stable major ran as its own instance from the official images, with the vendor's
+              recommended hardening switched on (production flag, forced https intent, strict csrf token
+              mode, no debug or builder tools) — so nothing here depends on a sloppy install.</li>
+            <li>testing was manual and authenticated: read the code path, then drive it as a restricted
+              user, with a test-user-agent suffix so operators can recognise the traffic.</li>
+            <li>every candidate was re-checked per version. a finding only made the list if it was
+              reproduced live, not just inferred from source.</li>
+          </ul>
+          <h3>confirmations</h3>
+          <p>seven findings reproduced on <strong>all five</strong> maintained stables — that's
+            <strong>35 live confirmations</strong> on its own — and both version-gated findings were
+            confirmed where their code actually exists: one introduced in 23.0, one present only on the
+            development branch. everything in the table below is therefore evidence, not theory. the ten
+            that made the list are the ones that survived triage; a long tail of access-control variants
+            collapsed into a handful of shared root causes, which is the real story of this codebase.</p>
+        </div>
+
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[02]</span>
+          <h2 class="sec-title">findings</h2>
+          <span class="sec-tail">1 published · 8 pending · 1 not reportable</span>
+        </div>
+        <div class="tbl-wrap">
+          <table>
+            <caption class="skip">dolibarr audit findings</caption>
+            <thead>
+              <tr><th scope="col">id</th><th scope="col">component / module</th><th scope="col">type</th><th scope="col">status</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>F-01</td><td>website module</td><td>remote code execution</td><td>withheld — pending disclosure</td></tr>
+              <tr><td><a href="https://github.com/repo4Chu/CVE-2026-78804_Dolibarr_authenticated_SQL_injection" target="_blank" rel="noopener">CVE-2026-78804</a></td><td>product / stock</td><td>sql injection (cwe-89)</td><td><span class="badge badge--published">published</span></td></tr>
+              <tr><td>F-03</td><td>users</td><td>insecure direct object reference</td><td>withheld — pending disclosure</td></tr>
+              <tr><td>F-04</td><td>customer portal</td><td>insecure direct object reference</td><td>withheld — pending disclosure</td></tr>
+              <tr><td>F-05</td><td>rest api — expense reports</td><td>broken object-level authorization</td><td>withheld — pending disclosure</td></tr>
+              <tr><td>F-06</td><td>authentication (ldap)</td><td>ldap filter injection</td><td>not reportable</td></tr>
+              <tr><td>F-07</td><td>webdav</td><td>broken access control</td><td>withheld — pending disclosure</td></tr>
+              <tr><td>F-08</td><td>ai assistant</td><td>broken object-level authorization</td><td>withheld — pending disclosure</td></tr>
+              <tr><td>F-09</td><td>users / permissions</td><td>vertical privilege escalation</td><td>withheld — pending disclosure</td></tr>
+              <tr><td>F-10</td><td>sales orders</td><td>insecure direct object reference</td><td>withheld — pending disclosure</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="small dim">rows marked <em>withheld</em> intentionally carry only the component and the
+          vulnerability class — no endpoints, no parameters, no payloads — until fixes land and advisories
+          go out. F-06 was assessed against the project's security policy and judged not eligible for a
+          report (see <a href="#disclosure">disclosure status</a>).</p>
+
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[03]</span>
+          <h2 class="sec-title">the public one — CVE-2026-78804</h2>
+          <span class="sec-tail">sql injection · stock alert threshold</span>
+        </div>
+        <div class="prose">
+          <p>the stock tab of a product lets you set a per-warehouse alert threshold. the value for that
+            threshold is read out of the request as a raw string and later concatenated straight into an
+            <code>UPDATE</code> — in an unquoted numeric position, with no cast and no parameter binding.
+            the framework's default input filter strips html and path characters, but it does nothing
+            against sql metacharacters, so the filter that feels like sanitization isn't. because the
+            injection point sits between quotes, an attacker controls a complete sql expression inside the
+            statement, which makes arbitrary subqueries — and therefore blind, time-based extraction —
+            possible. the insert path for the same record repeats the pattern.</p>
+          <p>the right required to reach it is <code>product → create</code> (or its service twin) — an
+            ordinary catalog-manager right that nobody treats as dangerous.</p>
+        </div>
+
+        <figure class="fig">
+          <pre>  catalog user (produit→creer)            product/stock page                database
+    │                                          │                              │
+    │  set per-warehouse alert threshold  ────►│                              │
+    │  value used as-is, no cast/binding       │  UPDATE … threshold = <span class="hl">&lt;attacker expr&gt;</span> ──►│
+    │                                          │                              │
+    │  ◄── fast answer (condition false) ──────│◄─────────────────────────────│
+    │  ◄── slow answer (condition true)  ──────│   <span class="hl">time = 1 bit</span>                │
+    │                                          │                              │
+    │  repeat per bit ⇒ hashes, api keys, <span class="hl">any row the db account can read</span></pre>
+        <figcaption class="fig-cap"><b>fig 01</b> — blind extraction loop: one request, one bit, the whole schema.</figcaption>
+      </figure>
+
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[04]</span>
+        <h2 class="sec-title">impact</h2>
+        <span class="sec-tail">and its honest ceiling</span>
+      </div>
+      <ul class="ls">
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">arbitrary read of the entire database, blind, from a catalog-edit right</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">password hashes, api keys, configuration secrets, every module's data</span><span class="ls-extra">→ c:h</span></li>
+        <li><span class="ls-mode" aria-hidden="true">$</span><span class="ls-name">conditional account takeover via an extracted administrator api key or hash</span></li>
+      </ul>
+      <div class="prose">
+        <p>the ceiling matters as much as the reach. the injection sits in the value of an
+          <code>UPDATE</code> and dolibarr issues single statements through mysqli, so there are no
+          stacked queries; the default database account has no <code>FILE</code> privilege and
+          <code>secure_file_priv</code> is null, so file read/write and udf tricks are off the table.
+          <strong>no direct file read, no direct rce through the sql engine.</strong> escalation is
+          reachable only through the application and only conditionally — for example pulling an
+          administrator's api key, if one exists, and using the rest api with it. the honest label is
+          full database confidentiality compromise plus potential account takeover.</p>
+        <p>affected: <strong>19.0 through 24.0</strong> — reproduced live on 19.0.4, 20.0.4, 21.0.4,
+          22.0.5, 23.0.3 and current develop. the vendor's hardening switches do not slow it down: the
+          request is a normal authenticated post carrying a valid csrf token.</p>
+      </div>
+
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[05]</span>
+        <h2 class="sec-title">poc</h2>
+        <span class="sec-tail">lab only · published</span>
+      </div>
+      <p class="small dim">the full extraction tool (login, injection confirmation, binary-search
+        retrieval, proxy and delay options) lives in the public repository:
+        <a href="https://github.com/repo4Chu/CVE-2026-78804_Dolibarr_authenticated_SQL_injection" target="_blank" rel="noopener">repo4Chu/CVE-2026-78804_Dolibarr_authenticated_SQL_injection</a>.
+        run it only against an instance you own. request below is sanitized — credentials and tokens are placeholders.</p>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> request — set threshold action <span class="cap-right">http · placeholders, not a live target</span></figcaption>
+        <pre><code><span class="tk-c">POST /product/stock/product.php?id=&lt;productId&gt; HTTP/1.1</span>
+<span class="tk-c">Host: &lt;your-lab&gt;</span>
+<span class="tk-c">Cookie: DOLSESSID_&lt;session-placeholder&gt;</span>
+<span class="tk-c">Content-Type: application/x-www-form-urlencoded</span>
+
+action=addlimitstockwarehouse&amp;token=<span class="tk-s">&lt;csrf&gt;</span>&amp;id=<span class="tk-n">1</span>&amp;fk_entrepot=<span class="tk-n">1</span>&amp;desiredstock=<span class="tk-n">1</span>
+&amp;seuil_stock_alerte=<span class="tk-s">(SELECT IF((&lt;condition&gt;),SLEEP(3),0))</span>
+
+<span class="tk-c"># measured on a lab instance:</span>
+<span class="tk-c">#   true condition  -&gt; response in 3.009 s</span>
+<span class="tk-c">#   false condition -&gt; response in 0.008 s</span></code></pre>
+      </figure>
+      <figure class="code">
+        <figcaption class="code-cap"><span class="dot">●</span> shape of the bug <span class="cap-right">php · simplified</span></figcaption>
+        <pre><code><span class="tk-c">// the threshold value reaches the query untyped, in an unquoted numeric position</span>
+$sql = <span class="tk-s">"UPDATE "</span>.MAIN_DB_PREFIX.<span class="tk-s">"product_stock SET seuil_stock_alerte = "</span>
+     . $threshold .<span class="tk-s">" WHERE …"</span>;   <span class="tk-c">// no (float)/price2num, no binding</span></code></pre>
+      </figure>
+
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[06]</span>
+        <h2 class="sec-title">remediation</h2>
+        <span class="sec-tail">for devs + admins</span>
+      </div>
+      <div class="prose">
+        <h3>if you maintain the code</h3>
+        <ul>
+          <li>cast the threshold (and the sibling numeric fields in the same statement) before use:
+            <code>(float) price2num(GETPOST(...))</code> or an explicit <code>(int)</code>.</li>
+          <li>prefer prepared statements / bound parameters for every dynamic value in that class —
+            both the update and the insert path.</li>
+          <li>the field can arrive as an array keyed per warehouse: type-check <strong>each
+              element</strong>, not just the first level.</li>
+          <li>sweep for the same build pattern elsewhere in the codebase; unquoted numeric positions
+            are a class, not a bug.</li>
+        </ul>
+        <h3>if you run dolibarr today</h3>
+        <ul>
+          <li>grant <code>product/service → create</code> only to people who genuinely create catalog
+            items; audit who holds it.</li>
+          <li>rotate api keys and review privileged accounts after patching — a database read may have
+            already happened silently, and blind extraction leaves no payload footprint in stored data.</li>
+          <li>watch response-time anomalies on the stock page of a single product; it's the only signal
+            this bug leaves behind.</li>
+        </ul>
+      </div>
+
+      <div class="sec-head">
+        <span class="sec-num" aria-hidden="true">[07]</span>
+        <h2 class="sec-title">chains, at a high level</h2>
+        <span class="sec-tail">conceptual — no detail</span>
+      </div>
+      <div class="prose">
+        <p>individually the findings are modest; composed they aren't. kept deliberately conceptual —
+          the individual pieces are described by their class only, and the withheld ones stay withheld.</p>
+        <ul>
+          <li><strong>one ordinary right → the keys to the kingdom.</strong> a catalog-edit right buys a
+            database read (the public sql injection); what you do with that read — an api key here, a
+            hash there — decides whether it stops at data or climbs to an administrator.</li>
+          <li><strong>one content-edit right → code execution.</strong> a permission meant for page
+            content can be pushed across a code-permission boundary it was never supposed to cross,
+            and the result is reachable by anyone who can then load the page.</li>
+          <li><strong>a self-service permission → a bootstrap.</strong> the right to adjust your own
+            permissions becomes a grant of practically any non-administrative right, which lands you
+            back at either of the two chains above. the admin flag itself stays protected — the ceiling
+            is reached through the chains, not directly.</li>
+          <li><strong>zero permissions still hurts.</strong> a brand-new account with no rights at all
+            already reaches payroll bank details, the document store, and finance-affecting actions —
+            fraud and mass exfiltration without any privilege-escalation step.</li>
+        </ul>
+        <p>defensive reading: fix the two low-cost "one right → everything" paths first, then the
+          zero-permission trio, then the shared access-control patterns behind the rest — the same two
+          or three root causes cover most of the list.</p>
+      </div>
+
+      <figure class="fig">
+        <pre>  one plain account ──┬─ ordinary module right ──► <span class="hl">database read</span> ──► (conditional) admin
+                      ├─ content-edit right ──────► <span class="hl">code execution</span>
+                      ├─ self-permission right ───► <span class="hl">bootstrap</span> ──► any non-admin right ──► (above)
+                      └─ <span class="hl">no rights at all</span> ────────► payroll data · document store · finance actions</pre>
+      <figcaption class="fig-cap"><b>fig 02</b> — where a minimal account ends up. classes only; details wait on disclosure.</figcaption>
+    </figure>
+
+    <div class="sec-head" id="disclosure">
+      <span class="sec-num" aria-hidden="true">[08]</span>
+      <h2 class="sec-title">disclosure status</h2>
+      <span class="sec-tail">what's out, what waits</span>
+    </div>
+    <ul class="tl">
+      <li class="is-done"><span class="t-date">audit window</span><span class="t-what">ten findings confirmed</span>
+        <span class="t-note">validated live across 19.0–23.0 and develop; per-version evidence kept for every report.</span></li>
+      <li class="is-done"><span class="t-date">2026-09-10</span><span class="t-what">CVE-2026-78804 published</span>
+        <span class="t-note">the stock threshold sql injection went public with a poc tool on github.</span></li>
+      <li class="is-now"><span class="t-date">now</span><span class="t-what">eight findings drafted</span>
+        <span class="t-note">each is being written up as its own private report — the project rejects combined
+          reports — and each will be re-validated against the current development branch before filing.
+          details here stay withheld until fixes ship.</span></li>
+      <li class="is-now"><span class="t-date">now</span><span class="t-what">one finding retired from reporting</span>
+        <span class="t-note">F-06 (ldap filter injection at login) only exists when an instance is configured
+          for ldap authentication, and its demonstrated impact falls inside the policy's exclusion zone —
+          assessed as not reportable. it will be offered upstream as a hardening patch instead.</span></li>
+    </ul>
+    <div class="prose">
+      <p>stance, for the record: dolibarr is a volunteer project — <strong>no bounty, credit
+          only</strong>, and reports are expected to be written by a human. that's fine. the goal is
+        fixes, and the withheld eight stay private exactly until the maintainers have had a fair shot
+        at them.</p>
+    </div>
+
+    <blockquote class="stdout">
+      <p>credit: all ten findings found, reproduced and documented by <strong>chu</strong> (ricardo),
+        2026. the public poc for CVE-2026-78804 lives at
+        <a href="https://github.com/repo4Chu/CVE-2026-78804_Dolibarr_authenticated_SQL_injection" target="_blank" rel="noopener">github.com/repo4Chu</a>.
+        questions → <a href="../about.html#contact">contact</a>.</p>
+    </blockquote>
+
+  </article>
+</main>
+
+<footer class="foot">
+  <div class="wrap">
+    <div class="foot-row">
+      <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
+    </div>
+    <div class="foot-row">
+      <p>© 2026 chu · <a href="../research/index.html">← research</a> · <a href="../about.html#contact">contact</a></p>
+    </div>
+  </div>
+</footer>
+<script src="../zoom.js" defer></script>
+</body>
+</html>

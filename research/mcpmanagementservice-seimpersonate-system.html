@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>exploring mcpmanagementservice — from registry recon to system token · chu@antisec</title>
+    <title>SeImpersonatePrivilege - Privilege escalation exploring mcpmanagementservice from registry · chu@antisec</title>
     <meta name="description" content="own-lab windows research: a dcom activation-with-storage primitive (objref-in-Stat) that lets a process holding seimpersonateprivilege capture a system token on windows server 2019, server 2022, server 2025 and windows 11 25h2 — including cold-start and session 0. systematic svchost enumeration across the four lab platforms found 363 com classes without impersonation override and confirmed three exploitable services: mcpmanagementservice (universal), printnotify (server 2022/2019) and cIEaxiinstallerservice (24h2+/server 2019). one registry value closes it per svchost group.">
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' fill='%23080b09'/%3E%3Crect x='3' y='3' width='6' height='10' fill='%235df27f'/%3E%3C/svg%3E">
     <link rel="preconnect" href="https://fonts.googleapis.com">
